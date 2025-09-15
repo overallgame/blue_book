@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/md_theme_surfaceContainer"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/md_theme_surface"
+        android:elevation="2dp">
+
+        <ImageButton
+            android:id="@+id/search_back"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:src="@drawable/_chevron_left1" />
+
+        <EditText
+            android:id="@+id/search_comment"
+            android:layout_width="0dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="1dp"
+            android:layout_weight="9"
+            android:background="@drawable/shape1"
+            android:drawableStart="@drawable/search_icon2"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:padding="5dp"
+            android:textColor="@color/md_theme_primary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/search_search"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="搜索"
+            android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="历史记录"
+        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/history_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="猜你想搜"
+        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/suggested_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="热点"
+        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/hot_topics_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false" />
+
+</LinearLayout>

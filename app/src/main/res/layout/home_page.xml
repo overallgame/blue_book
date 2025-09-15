@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/md_theme_surfaceContainer">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RadioGroup
+            android:id="@+id/main_pager_navRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/md_theme_surfaceContainer"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/main_pager_navButton"
+                style="@style/RadioGroupButtonStyle"
+                android:background="@drawable/sidebar_background1"
+                android:backgroundTint="@color/md_theme_onSurfaceVariant_highContrast" />
+
+            <RadioButton
+                android:id="@+id/no1"
+                style="@style/RadioGroupButtonStyle1" />
+
+            <RadioButton
+                android:id="@+id/main_pager_focus"
+                style="@style/RadioGroupButtonStyle"
+                android:text="关注"
+                android:textColor="@color/navigation_item_selector" />
+
+            <RadioButton
+                android:id="@+id/main_pager_find"
+                style="@style/RadioGroupButtonStyle"
+                android:text="发现"
+                android:textColor="@color/navigation_item_selector" />
+
+            <RadioButton
+                android:id="@+id/main_pager_region"
+                style="@style/RadioGroupButtonStyle"
+                android:text="本地"
+                android:textColor="@color/navigation_item_selector" />
+
+            <RadioButton
+                android:id="@+id/no2"
+                style="@style/RadioGroupButtonStyle1" />
+
+            <RadioButton
+                android:id="@+id/main_pager_search"
+                style="@style/RadioGroupButtonStyle"
+                android:background="@drawable/search_background"
+                android:backgroundTint="@color/md_theme_onSurfaceVariant_highContrast" />
+
+        </RadioGroup>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/main_pager_viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/main_pager_navigationView"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/md_theme_surfaceContainerLow"
+        app:menu="@menu/main_bottom_navigation" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

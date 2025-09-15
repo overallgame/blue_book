@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mine_swipeRefreshLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/layout_mine"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#333232"
+            android:orientation="vertical">
+
+            <androidx.drawerlayout.widget.DrawerLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/mine_backgroundImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/mine_navButton"
+                        style="@style/NoMaterialButtonStyle"
+                        android:layout_width="50dp"
+                        android:layout_height="60dp"
+                        android:background="@drawable/sidebar_background2" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:id="@+id/mine_avatar"
+                            android:layout_width="80dp"
+                            android:layout_height="90dp"
+                            android:layout_marginStart="20dp"
+                            android:src="@drawable/default_avatar" />
+
+                        <TextView
+                            android:id="@+id/mine_nickname"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="20dp"
+                            android:text="爱吃鱼"
+                            android:textColor="#C8CBCC"
+                            android:textSize="18sp" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/mine_introduction"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="15dp"
+                        android:maxLines="2"
+                        android:text="人生苦短，何妨一试"
+                        android:textColor="#C8CBCC" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="25dp"
+                        android:layout_marginEnd="20dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/mine_focus"
+                            android:layout_width="40dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/mine_focus_number"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_horizontal"
+                                android:text="0"
+                                android:textColor="@android:color/white"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_horizontal"
+                                android:text="关注"
+                                android:textColor="#C8CBCC"
+                                android:textSize="10sp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/mine_fan"
+                            android:layout_width="40dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/mine_fan_number"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_horizontal"
+                                android:text="0"
+                                android:textColor="@android:color/white"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_horizontal"
+                                android:text="粉丝"
+                                android:textColor="#C8CBCC"
+                                android:textSize="10sp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/mine_rev_love"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/mine_rev_love_number"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_horizontal"
+                                android:text="0"
+                                android:textColor="@android:color/white"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_horizontal"
+                                android:text="获赞与收藏"
+                                android:textColor="#C8CBCC"
+                                android:textSize="10sp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:background="@android:color/transparent"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/mine_edit_userProfile"
+                                style="@style/NoMaterialButtonStyle"
+                                android:layout_width="100dp"
+                                android:layout_height="35dp"
+                                android:layout_gravity="center_horizontal"
+                                android:background="@drawable/shape4"
+                                android:text="修改资料"
+                                android:textSize="10sp" />
+
+                            <ImageButton
+                                android:id="@+id/mine_make_video"
+                                android:layout_width="50dp"
+                                android:layout_height="35dp"
+                                android:layout_gravity="center_horizontal"
+                                android:layout_marginStart="15dp"
+                                android:background="@drawable/shape4"
+                                android:src="@drawable/upload_video_icon" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.drawerlayout.widget.DrawerLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.5">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <RadioGroup
+                        android:id="@+id/mine_navRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/md_theme_surfaceContainerLow"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:elevation="2dp">
+
+                        <RadioButton
+                            android:id="@+id/no0"
+                            style="@style/RadioGroupButtonStyle1" />
+
+                        <RadioButton
+                            android:id="@+id/no1"
+                            style="@style/RadioGroupButtonStyle1" />
+
+                        <RadioButton
+                            android:id="@+id/mine_work"
+                            style="@style/RadioGroupButtonStyle"
+                            android:text="笔记"
+                            android:textColor="@color/navigation_item_selector" />
+
+                        <RadioButton
+                            android:id="@+id/mine_collection"
+                            style="@style/RadioGroupButtonStyle"
+                            android:text="收藏"
+                            android:textColor="@color/navigation_item_selector" />
+
+                        <RadioButton
+                            android:id="@+id/mine_love"
+                            style="@style/RadioGroupButtonStyle"
+                            android:text="点赞"
+                            android:textColor="@color/navigation_item_selector" />
+
+                        <RadioButton
+                            android:id="@+id/no2"
+                            style="@style/RadioGroupButtonStyle1" />
+
+                        <RadioButton
+                            android:id="@+id/no3"
+                            style="@style/RadioGroupButtonStyle1" />
+
+                    </RadioGroup>
+
+                    <androidx.viewpager2.widget.ViewPager2
+                        android:id="@+id/mine_viewPager"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@color/md_theme_surfaceContainer"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/mine_pager_navigationView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="@color/md_theme_surfaceContainerLow"
+            app:menu="@menu/main_bottom_navigation" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

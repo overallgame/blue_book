@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/md_theme_surfaceContainer">
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/main_viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <RadioGroup
+        android:id="@+id/main_navRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_theme_surface"
+        android:elevation="2dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/main"
+            style="@style/RadioGroupButtonStyle"
+            android:text="首页"
+            android:textColor="@color/navigation_item_selector" />
+
+        <RadioButton
+            android:id="@+id/picture"
+            style="@style/RadioGroupButtonStyle"
+            android:text="图片"
+            android:textColor="@color/navigation_item_selector" />
+
+        <RadioButton
+            android:id="@+id/message"
+            style="@style/RadioGroupButtonStyle"
+            android:text="消息"
+            android:textColor="@color/navigation_item_selector" />
+
+        <RadioButton
+            android:id="@+id/mine"
+            style="@style/RadioGroupButtonStyle"
+            android:text="我"
+            android:textColor="@color/navigation_item_selector" />
+
+    </RadioGroup>
+
+</LinearLayout>

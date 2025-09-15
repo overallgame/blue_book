@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/md_theme_surfaceContainer"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/load_back"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:src="@drawable/_chevron_left1" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="11"
+            android:background="@android:color/transparent" />
+
+        <Button
+            android:id="@+id/load_share"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:backgroundTint="@color/md_theme_onSurfaceVariant_mediumContrast"
+            android:padding="2dp"
+            android:text="发表"
+            android:textColor="@color/md_theme_onPrimary" />
+
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/load_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="24dp"
+        android:background="@android:color/transparent"
+        android:hint="这一刻的想法..."
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:textColorHint="@color/md_theme_outline"
+        android:textSize="16sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="24dp"
+        android:background="@color/md_theme_outline" />
+
+    <EditText
+        android:id="@+id/load_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="24dp"
+        android:background="@android:color/transparent"
+        android:hint="##"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:textColorHint="@color/md_theme_outline"
+        android:textSize="14sp" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/transparent"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/tagsSection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tag1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#动漫"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#影视"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#生活"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#摄影"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#cos"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#ACG"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#绘画"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tag8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tag_background"
+                android:padding="8dp"
+                android:text="#头像"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/load_linearLayout1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:orientation="vertical"
+            android:visibility="invisible">
+
+            <ImageView
+                android:id="@+id/load_image"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/load_linearLayout2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/load_addImage"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp"
+                android:background="#E8E6E6"
+                android:scaleType="centerInside"
+                android:src="@drawable/add" />
+
+        </LinearLayout>
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+</LinearLayout>

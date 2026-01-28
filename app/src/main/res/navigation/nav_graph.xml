@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/nav_graph"
+	app:startDestination="@id/authEntryFragment">
+
+	<fragment
+		android:id="@+id/authEntryFragment"
+		android:name="com.example.blue_book.presentation.auth.entry.AuthEntryFragment"
+		android:label="auth_entry" >
+		<action
+			android:id="@+id/action_authEntry_to_login"
+			app:destination="@id/loginFragment" />
+		<action
+			android:id="@+id/action_authEntry_to_register"
+			app:destination="@id/registerFragment" />
+	</fragment>
+
+	<fragment
+		android:id="@+id/loginFragment"
+		android:name="com.example.blue_book.presentation.auth.login.LoginFragment"
+		android:label="login" >
+		<action
+			android:id="@+id/action_login_to_home"
+			app:destination="@id/mainTabsFragment"
+			app:popUpTo="@id/authEntryFragment"
+			app:popUpToInclusive="true" />
+	</fragment>
+
+	<fragment
+		android:id="@+id/registerFragment"
+		android:name="com.example.blue_book.presentation.auth.register.RegisterFragment"
+		android:label="register" >
+		<action
+			android:id="@+id/action_register_to_home"
+			app:destination="@id/mainTabsFragment"
+			app:popUpTo="@id/authEntryFragment"
+			app:popUpToInclusive="true" />
+	</fragment>
+
+	<fragment
+		android:id="@+id/mainTabsFragment"
+		android:name="com.example.blue_book.presentation.main.MainTabsFragment"
+		android:label="main_tabs" />
+
+	<fragment
+		android:id="@+id/videoFragment"
+		android:name="com.example.blue_book.presentation.video.VideoFragment"
+		android:label="video" />
+
+	<fragment
+		android:id="@+id/searchFragment"
+		android:name="com.example.blue_book.presentation.search.SearchFragment"
+		android:label="search" />
+
+	<fragment
+		android:id="@+id/afterSearchFragment"
+		android:name="com.example.blue_book.presentation.search.AfterSearchFragment"
+		android:label="search_result" >
+		<argument
+			android:name="keyword"
+			app:argType="string"
+			android:defaultValue="" />
+	</fragment>
+
+	<fragment
+		android:id="@+id/userProfileEditFragment"
+		android:name="com.example.blue_book.presentation.profile.UserProfileEditFragment"
+		android:label="user_profile_edit" />
+
+	<fragment
+		android:id="@+id/homeFragment"
+		android:name="com.example.blue_book.presentation.home.HomeFragment"
+		android:label="home" >
+	</fragment>
+
+	<fragment
+		android:id="@+id/mineFragment"
+		android:name="com.example.blue_book.presentation.mine.MineFragment"
+		android:label="mine" >
+	</fragment>
+
+</navigation>
+
+

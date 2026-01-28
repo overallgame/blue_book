@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -26,7 +26,7 @@
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
             android:maxLines="2"
-            android:text="你的小红书封斋"
+            android:text="描述"
             android:textColor="@color/md_theme_onSurface"
             android:textSize="14sp" />
 
@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:maxLength="6"
-                android:text="阿呆"
+                android:text="昵称"
                 android:textColor="@color/md_theme_onSurface"
                 android:textSize="10sp" />
 
@@ -73,7 +73,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_marginStart="5dp"
-                android:text="1.2万"
+                android:text="0"
                 android:textColor="@color/md_theme_onSurface"
                 android:textSize="10sp" />
 
@@ -81,6 +81,6 @@
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>
 
 

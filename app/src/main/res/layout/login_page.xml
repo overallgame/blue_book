@@ -71,7 +71,7 @@
             android:textColor="@color/md_theme_onSurfaceVariant"
             android:textColorHint="@color/md_theme_outline" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/log_button"
             style="@style/NoMaterialButtonStyle"
             android:layout_width="match_parent"

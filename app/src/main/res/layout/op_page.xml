@@ -31,7 +31,7 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/op_login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
         android:elevation="4dp"
         style="@style/NoMaterialButtonStyle"/>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/op_register"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

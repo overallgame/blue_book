@@ -173,7 +173,7 @@
                             android:background="@android:color/transparent"
                             android:orientation="horizontal">
 
-                            <Button
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/mine_edit_userProfile"
                                 style="@style/NoMaterialButtonStyle"
                                 android:layout_width="100dp"

@@ -14,7 +14,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.blue_book.R
@@ -44,7 +46,7 @@ class GalleryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = view.findViewById(R.id.galleryRecyclerView)
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
-        galleryAdapter = GalleryAdapter(emptyList()) { uri ->
+        galleryAdapter = GalleryAdapter { uri ->
             (activity as? ImagePickerActivity)?.openCrop(uri, tag)
         }
         recyclerView.adapter = galleryAdapter
@@ -80,10 +82,7 @@ class GalleryFragment : Fragment() {
 
     private fun loadAndShowImages() {
         val images = loadImages()
-        galleryAdapter = GalleryAdapter(images) { uri ->
-            (activity as? ImagePickerActivity)?.openCrop(uri, tag)
-        }
-        recyclerView.adapter = galleryAdapter
+        galleryAdapter.submitList(images)
     }
 
     private fun loadImages(): List<Uri> {
@@ -116,9 +115,8 @@ class GalleryFragment : Fragment() {
     }
 
     class GalleryAdapter(
-        private val items: List<Uri>,
         private val onClick: (Uri) -> Unit
-    ) : RecyclerView.Adapter<GalleryAdapter.VH>() {
+    ) : ListAdapter<Uri, GalleryAdapter.VH>(UriDiffCallback()) {
 
         inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val imageView: androidx.appcompat.widget.AppCompatImageView =
@@ -131,15 +129,23 @@ class GalleryFragment : Fragment() {
             return VH(v)
         }
 
-        override fun getItemCount(): Int = items.size
-
         override fun onBindViewHolder(holder: VH, position: Int) {
-            val uri = items[position]
+            val uri = getItem(position)
             Glide.with(holder.imageView.context)
                 .load(uri)
                 .centerCrop()
                 .into(holder.imageView)
             holder.itemView.setOnClickListener { onClick(uri) }
+        }
+    }
+
+    private class UriDiffCallback : DiffUtil.ItemCallback<Uri>() {
+        override fun areItemsTheSame(oldItem: Uri, newItem: Uri): Boolean {
+            return oldItem == newItem
+        }
+
+        override fun areContentsTheSame(oldItem: Uri, newItem: Uri): Boolean {
+            return oldItem == newItem
         }
     }
 

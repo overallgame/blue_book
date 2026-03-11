@@ -2,7 +2,12 @@ package com.example.blue_book.presentation.video
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.SeekBar
+import androidx.media3.common.util.UnstableApi
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blue_book.common.bean.VideoCardInfo
 import com.example.blue_book.databinding.VideoItemViewBinding
@@ -12,9 +17,6 @@ import com.example.blue_book.core.player.ExoPlayerEngine
 import com.example.blue_book.core.player.gl.GlVideoSurfaceView
 import com.example.blue_book.core.player.gl.GlSurfaceProvider
 import com.example.blue_book.core.player.gl.FilterType
-import android.view.View
-import android.widget.SeekBar
-import androidx.media3.common.util.UnstableApi
 import com.example.blue_book.core.player.PlayerEvents
 
 @UnstableApi
@@ -24,13 +26,18 @@ class VideoAdapter(
     private val onClickCollect: (VideoCardInfo) -> Unit,
     private val onPlayerError: (String) -> Unit,
     private val onRequestPlayUrl: (VideoCardInfo) -> Unit
-) : RecyclerView.Adapter<VideoAdapter.ViewHolder>() {
+) : ListAdapter<VideoCardInfo, VideoAdapter.ViewHolder>(VideoDiffCallback()) {
 
-	private val videoList: MutableList<VideoCardInfo> = mutableListOf()
     private val viewHolderMap = mutableMapOf<Int, ViewHolder>()
     private val enginePool = PlayerEnginePool(maxSize = 3) { ExoPlayerEngine(context) }
     private val useGl = true
     private val retryCountByUrl = mutableMapOf<String, Int>()
+
+    init {
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long = getItem(position).aid
 
     inner class ViewHolder(private val binding: VideoItemViewBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -154,6 +161,14 @@ class VideoAdapter(
             }
         }
 
+        fun updateLike(like: Int, isLike: Boolean) {
+            binding.videoItemLoveNumber.text = formatCount(like)
+        }
+
+        fun updateCollect(collect: Int) {
+            binding.videoItemCollectionNumber.text = formatCount(collect)
+        }
+
         private fun attachEvents(playerEngine: PlayerEngine, url: String) {
             val bridge = object : PlayerEvents {
                 override fun onReady() { retryCountByUrl.remove(url) }
@@ -200,28 +215,28 @@ class VideoAdapter(
         holder.release()
     }
 
-    override fun getItemCount(): Int = videoList.size
+    override fun getItemCount(): Int = itemCount
 
     fun addFirstVideo(video: VideoCardInfo) {
-        videoList.add(0, video)
+        val newList = mutableListOf(video).apply { addAll(currentList) }
+        submitList(newList)
     }
 
     fun submitAppend(newVideos: List<VideoCardInfo>) {
         val uniqueNewVideos = newVideos.filterNot { newVideo ->
-            videoList.any { existingVideo -> existingVideo.aid == newVideo.aid }
+            currentList.any { existingVideo -> existingVideo.aid == newVideo.aid }
         }
         if (uniqueNewVideos.isNotEmpty()) {
-            val start = videoList.size
-            videoList.addAll(uniqueNewVideos)
-            notifyItemRangeInserted(start, uniqueNewVideos.size)
+            val newList = currentList.toMutableList().apply { addAll(uniqueNewVideos) }
+            submitList(newList)
         }
     }
 
     fun updateVideoList(video: VideoCardInfo) {
-        videoList.indexOfFirst { it.aid == video.aid }.takeIf { it != -1 }?.let { index ->
-            videoList[index] = video
-            notifyItemChanged(index)
-        }
+        val idx = currentList.indexOfFirst { it.aid == video.aid }
+        if (idx == -1) return
+        val newList = currentList.toMutableList().apply { this[idx] = video }
+        submitList(newList)
     }
 
     fun playAtPosition(position: Int) { viewHolderMap[position]?.play() }
@@ -233,8 +248,8 @@ class VideoAdapter(
     private fun formatCount(v: Int): String = if (v > 10000) "%.1fw".format(v / 10000.0) else v.toString()
 
     fun preloadByPosition(pos: Int) {
-        if (pos in 0 until videoList.size) {
-            val url = videoList[pos].playUrl
+        if (pos in 0 until itemCount) {
+            val url = getItem(pos).playUrl
             if (url.isNotBlank()) {
                 enginePool.preload(url, url)
             }
@@ -242,11 +257,37 @@ class VideoAdapter(
     }
 
     fun releaseByPosition(pos: Int) {
-        if (pos in 0 until videoList.size) {
-            val url = videoList[pos].playUrl
+        if (pos in 0 until itemCount) {
+            val url = getItem(pos).playUrl
             if (url.isNotBlank()) {
                 enginePool.release(url)
             }
+        }
+    }
+
+    private sealed interface VideoPayload {
+        data class LikeChanged(val like: Int, val isLike: Boolean) : VideoPayload
+        data class CollectChanged(val collect: Int) : VideoPayload
+    }
+
+    private class VideoDiffCallback : DiffUtil.ItemCallback<VideoCardInfo>() {
+        override fun areItemsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo): Boolean {
+            return oldItem.aid == newItem.aid
+        }
+
+        override fun areContentsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo): Boolean {
+            return oldItem == newItem
+        }
+
+        override fun getChangePayload(oldItem: VideoCardInfo, newItem: VideoCardInfo): Any? {
+            val payloads = mutableListOf<VideoPayload>()
+            if (oldItem.isLike != newItem.isLike || oldItem.like != newItem.like) {
+                payloads.add(VideoPayload.LikeChanged(newItem.like, newItem.isLike))
+            }
+            if (oldItem.collection != newItem.collection) {
+                payloads.add(VideoPayload.CollectChanged(newItem.collection))
+            }
+            return if (payloads.isNotEmpty()) payloads else null
         }
     }
 }

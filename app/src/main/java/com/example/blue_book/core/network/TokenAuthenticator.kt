@@ -31,10 +31,16 @@ class TokenAuthenticator @Inject constructor(
 		val path = request.url.encodedPath
 		if (path.startsWith("/api/v2/auth/refresh")) return null
 
-		if (responseCount(response) >= 2) return null
+		if (responseCount(response) >= 2) {
+			clearAuthData()
+			return null
+		}
 
 		val refreshToken = preferences.getRefreshToken()?.trim().orEmpty()
-		if (refreshToken.isBlank()) return null
+		if (refreshToken.isBlank()) {
+			clearAuthData()
+			return null
+		}
 
 		synchronized(lock) {
 			val currentToken = preferences.getAuthToken()?.trim().orEmpty()
@@ -45,7 +51,11 @@ class TokenAuthenticator @Inject constructor(
 					.build()
 			}
 
-			val refreshResult = refresh(refreshToken) ?: return null
+			val refreshResult = refresh(refreshToken)
+			if (refreshResult == null) {
+				clearAuthData()
+				return null
+			}
 			preferences.setAuthToken(refreshResult.token)
 			preferences.setRefreshToken(refreshResult.refreshToken)
 
@@ -53,6 +63,10 @@ class TokenAuthenticator @Inject constructor(
 				.header("Authorization", "Bearer ${refreshResult.token}")
 				.build()
 		}
+	}
+
+	private fun clearAuthData() {
+		preferences.clear()
 	}
 
 	private fun refresh(refreshToken: String): AuthV2TokenResponseDto? {

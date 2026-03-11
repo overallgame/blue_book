@@ -63,7 +63,6 @@ class RegisterViewModel @Inject constructor(
                 setState {
                     copy(
                         isLoading = false,
-                        serverVerificationCode = "",
                         message = "验证码已发送，请查收短信"
                     )
                 }
@@ -82,6 +81,7 @@ class RegisterViewModel @Inject constructor(
                 state.nickname.isBlank() -> "请输入昵称"
                 state.phone.length != 11 -> "请输入正确的手机号"
                 state.password.isBlank() || state.confirmPassword.isBlank() -> "请输入密码"
+                state.password.length < 6 -> "密码至少需要6位"
                 state.password != state.confirmPassword -> "两次输入的密码不一致"
                 state.verificationCode.isBlank() -> "请输入验证码"
                 else -> "请完善注册信息"
@@ -103,7 +103,14 @@ class RegisterViewModel @Inject constructor(
                 )
             },
             onSuccess = {
-                setState { copy(isLoading = false) }
+                setState {
+                    copy(
+                        isLoading = false,
+                        password = "",
+                        confirmPassword = "",
+                        verificationCode = ""
+                    )
+                }
                 sendEffect(RegisterUiEffect.NavigateHome)
             },
             onFailure = { throwable ->

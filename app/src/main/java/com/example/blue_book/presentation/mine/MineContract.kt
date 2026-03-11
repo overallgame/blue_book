@@ -21,6 +21,7 @@ data class MineUiState(
 
 sealed interface MineEffect : UiEffect {
     data class ShowToast(val message: String) : MineEffect
+    data object NavigateToLogin : MineEffect
 }
 
 

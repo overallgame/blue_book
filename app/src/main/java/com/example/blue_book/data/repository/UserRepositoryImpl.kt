@@ -35,7 +35,9 @@ class UserRepositoryImpl @Inject constructor(
 ) : UserRepository {
 
     override suspend fun isLoggedIn(): Boolean {
-        return localDataResource.getCurrentUserPhone() != null
+        val phone = localDataResource.getCurrentUserPhone()
+        val token = preferences.getAuthToken()
+        return phone != null && !token.isNullOrBlank()
     }
 
     override suspend fun login(credentials: LoginCredentials): Result<UserAccount> {

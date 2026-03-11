@@ -39,7 +39,9 @@ class AuthEntryFragment : Fragment() {
 				if (isLoggedInUseCase()) {
 					findNavController().navigate(com.example.blue_book.R.id.mainTabsFragment)
 				}
-			} catch (_: Throwable) { }
+			} catch (e: Throwable) {
+				android.util.Log.e("AuthEntryFragment", "检查登录状态失败: ${e.message}", e)
+			}
 		}
 	}
 

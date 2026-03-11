@@ -12,17 +12,20 @@ class AuthInterceptor @Inject constructor(
 ): Interceptor {
 
 	override fun intercept(chain: Interceptor.Chain): Response {
-		val token = preferences.getAuthToken()?.trim().orEmpty()
 		val original = chain.request()
 		val path = original.url.encodedPath
 		if (path.startsWith("/api/v2/auth/refresh")) {
 			return chain.proceed(original)
 		}
-		val newReq = if (token.isNotBlank()) {
-			original.newBuilder()
-				.header("Authorization", "Bearer $token")
-				.build()
-		} else original
+
+		val token = preferences.getAuthToken()?.trim().orEmpty()
+		if (token.isBlank()) {
+			return chain.proceed(original)
+		}
+
+		val newReq = original.newBuilder()
+			.header("Authorization", "Bearer $token")
+			.build()
 		return chain.proceed(newReq)
 	}
 }

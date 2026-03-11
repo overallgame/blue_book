@@ -56,6 +56,7 @@ class MineViewModel @Inject constructor(
         logoutUseCase()
         setState { copy(user = null) }
         sendEffect(MineEffect.ShowToast("已退出登录"))
+        sendEffect(MineEffect.NavigateToLogin)
     }
 
     private suspend fun updateAvatar(uri: String) {

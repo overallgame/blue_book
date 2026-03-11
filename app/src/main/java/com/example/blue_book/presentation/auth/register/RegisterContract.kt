@@ -20,7 +20,6 @@ data class RegisterUiState(
     val password: String = "",
     val confirmPassword: String = "",
     val verificationCode: String = "",
-    val serverVerificationCode: String = "",
     val isLoading: Boolean = false,
     val countdownSeconds: Int = 0,
     val message: String? = null

@@ -186,6 +186,9 @@ class MineFragment : Fragment() {
                                 effect.message,
                                 Toast.LENGTH_SHORT
                             ).show()
+                            is MineEffect.NavigateToLogin -> {
+                                findNavController().navigate(R.id.authEntryFragment)
+                            }
                         }
                     }
                 }

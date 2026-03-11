@@ -35,7 +35,7 @@ class LoginViewModel @Inject constructor(
             onStart = { setState { copy(isLoading = true, message = null) } },
             call = { loginUseCase(LoginCredentials(currentState.phone, currentState.password)) },
             onSuccess = {
-                setState { copy(isLoading = false) }
+                setState { copy(isLoading = false, password = "") }
                 sendEffect(LoginUiEffect.NavigateHome)
             },
             onFailure = { throwable ->

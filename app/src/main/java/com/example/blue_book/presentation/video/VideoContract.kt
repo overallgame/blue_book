@@ -10,6 +10,8 @@ sealed interface VideoIntent : UiIntent {
 	data class InitSearch(val keyword: String) : VideoIntent
 	data object LoadMore : VideoIntent
     data class RequestPlayUrl(val aid: Long, val cid: Long) : VideoIntent
+    data class ToggleLike(val video: VideoCardInfo) : VideoIntent
+    data class ToggleCollect(val video: VideoCardInfo) : VideoIntent
 }
 
 data class VideoUiState(
@@ -17,7 +19,9 @@ data class VideoUiState(
 	val isLoading: Boolean = false,
 	val message: String? = null,
 	val mode: Mode = Mode.Random,
-	val keyword: String = ""
+	val keyword: String = "",
+	val cursorId: Long? = null,
+	val hasMore: Boolean = true
 ): UiState {
 	enum class Mode { Random, Search }
 }

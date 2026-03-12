@@ -8,8 +8,8 @@ class FetchVideosByKeywordUseCase @Inject constructor(
 	private val repository: VideoRepository
 ) {
 
-	suspend operator fun invoke(keyword: String): Result<List<Video>> {
-		return repository.fetchByKeyword(keyword)
+	suspend operator fun invoke(keyword: String, cursorId: Long? = null, size: Int? = 20): Result<List<Video>> {
+		return repository.fetchByKeyword(keyword, cursorId, size)
 	}
 }
 

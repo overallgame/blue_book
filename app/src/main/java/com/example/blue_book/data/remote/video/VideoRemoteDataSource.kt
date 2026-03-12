@@ -14,6 +14,10 @@ class VideoRemoteDataSource @Inject constructor(
         return apiCall { api.feed(cursorId, size) }
     }
 
+    suspend fun searchVideos(keyword: String, cursorId: Long?, size: Int?): Result<FeedResponseDto> {
+        return apiCall { api.searchVideos(keyword, cursorId, size) }
+    }
+
     suspend fun getVideoDto(videoId: Long): Result<Video2Dto> {
         return apiCall { api.getVideoDto(videoId) }
     }
@@ -24,5 +28,9 @@ class VideoRemoteDataSource @Inject constructor(
 
     suspend fun collectVideo(videoId: Long, collected: Boolean): Result<Unit> {
         return apiUnitCall { api.collectVideo(videoId, collected) }
+    }
+
+    suspend fun getPlayUrl(videoId: Long, cid: Long): Result<String> {
+        return apiCall { api.getPlayUrl(videoId, cid) }
     }
 }

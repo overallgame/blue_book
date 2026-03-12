@@ -8,8 +8,8 @@ class FetchRandomVideosUseCase @Inject constructor(
 	private val repository: VideoRepository
 ) {
 
-	suspend operator fun invoke(): Result<List<Video>> {
-		return repository.fetchRandom()
+	suspend operator fun invoke(cursorId: Long? = null, size: Int? = 10): Result<List<Video>> {
+		return repository.fetchRandom(cursorId, size)
 	}
 }
 

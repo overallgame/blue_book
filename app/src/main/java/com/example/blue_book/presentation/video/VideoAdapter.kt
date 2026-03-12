@@ -195,12 +195,12 @@ class VideoAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         viewHolderMap[position] = holder
-        holder.bind(videoList[position])
+        holder.bind(getItem(position))
         // 非 GL 路径：预加载下一条
         if (!useGl) {
             val next = position + 1
-            if (next < videoList.size) {
-                val nv = videoList[next]
+            if (next < itemCount) {
+                val nv = getItem(next)
                 val nextUrl = nv.playUrl
                 if (nextUrl.isNotBlank()) {
                     enginePool.preload(nextUrl, nextUrl)
@@ -287,7 +287,7 @@ class VideoAdapter(
             if (oldItem.collection != newItem.collection) {
                 payloads.add(VideoPayload.CollectChanged(newItem.collection))
             }
-            return if (payloads.isNotEmpty()) payloads else null
+            return payloads.ifEmpty { null }
         }
     }
 }

@@ -40,8 +40,8 @@ class VideoFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		adapter = VideoAdapter(
 			requireContext(),
-			onClickLike = { video -> toggleLike(video) },
-			onClickCollect = { video -> toggleCollect(video) },
+			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
+			onClickCollect = { video -> viewModel.dispatch(VideoIntent.ToggleCollect(video)) },
 			onPlayerError = { msg ->
 				Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
 			},
@@ -118,18 +118,6 @@ class VideoFragment : Fragment() {
 				}
 			}
 		}
-	}
-
-	private fun toggleLike(video: VideoCardInfo) {
-		val newStatus = !video.isLike
-		val newLikeNumber = video.like + if (newStatus) +1 else -1
-		adapter.updateVideoList(video.copy(isLike = newStatus, like = newLikeNumber))
-	}
-
-	private fun toggleCollect(video: VideoCardInfo) {
-		val newStatus = !video.isCollect
-		val newCollectionNumber = video.collection + if (newStatus) +1 else -1
-		adapter.updateVideoList(video.copy(isCollect = newStatus, collection = newCollectionNumber))
 	}
 
 	override fun onPause() {

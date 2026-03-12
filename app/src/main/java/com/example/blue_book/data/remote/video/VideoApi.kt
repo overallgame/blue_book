@@ -17,6 +17,13 @@ interface VideoApi {
         @Query("size") size: Int? = null
     ): Response<ApiResponse<FeedResponseDto>>
 
+    @GET("/api/v2/videos/search")
+    suspend fun searchVideos(
+        @Query("keyword") keyword: String,
+        @Query("cursorId") cursorId: Long? = null,
+        @Query("size") size: Int? = null
+    ): Response<ApiResponse<FeedResponseDto>>
+
     @GET("/api/v2/videos/{videoId}/dto")
     suspend fun getVideoDto(
         @Path("videoId") videoId: Long
@@ -33,4 +40,10 @@ interface VideoApi {
         @Path("videoId") videoId: Long,
         @Query("collected") collected: Boolean
     ): Response<ApiResponse<Any>>
+
+    @GET("/api/v2/videos/{videoId}/playUrl")
+    suspend fun getPlayUrl(
+        @Path("videoId") videoId: Long,
+        @Query("cid") cid: Long
+    ): Response<ApiResponse<String>>
 }

@@ -161,7 +161,7 @@ class VideoAdapter(
             }
         }
 
-        fun updateLike(like: Int, isLike: Boolean) {
+        fun updateLike(like: Int, @Suppress("UNUSED_PARAMETER") isLike: Boolean) {
             binding.videoItemLoveNumber.text = formatCount(like)
         }
 

@@ -2,6 +2,7 @@ package com.example.blue_book.di
 
 import com.example.blue_book.data.remote.account.AccountApi
 import com.example.blue_book.data.remote.auth.AuthApi
+import com.example.blue_book.data.remote.comment.CommentApi
 import com.example.blue_book.data.remote.file.FileApi
 import com.example.blue_book.data.remote.user.UserApi
 import com.example.blue_book.data.remote.video.VideoApi
@@ -112,5 +113,11 @@ object NetworkModule {
     @Singleton
     fun provideVideoApi(@Named("backend") retrofit: Retrofit): VideoApi {
         return retrofit.create(VideoApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCommentApi(@Named("backend") retrofit: Retrofit): CommentApi {
+        return retrofit.create(CommentApi::class.java)
     }
 }

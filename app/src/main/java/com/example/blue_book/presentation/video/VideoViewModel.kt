@@ -104,7 +104,12 @@ class VideoViewModel @Inject constructor(
 
         // 发送网络请求
         runResult(
-            call = { withContext(Dispatchers.IO) { likeVideoUseCase(video.aid, newStatus) } },
+            call = { withContext(Dispatchers.IO) {
+                likeVideoUseCase(
+                    video.aid,
+                    newStatus
+                )
+            } },
             onSuccess = { /* 已经更新了 */ },
             onFailure = { e ->
                 // 失败回滚

@@ -62,13 +62,12 @@ class HomeFindViewModel @Inject constructor(
 			copy(items = items.map { if (it.aid == item.aid && it.cid == item.cid) updated else it })
 		}
 		sendEffect(HomeFindEffect.UpdateItem(updated))
-		val result = likeVideoUseCase(item.aid, item.cid, targetLiked)
+		val result = likeVideoUseCase(item.aid, targetLiked)
 		result.onFailure { e ->
-			val rollback = item
 			setState {
-				copy(items = items.map { if (it.aid == item.aid && it.cid == item.cid) rollback else it })
+				copy(items = items.map { if (it.aid == item.aid && it.cid == item.cid) item else it })
 			}
-			sendEffect(HomeFindEffect.UpdateItem(rollback))
+			sendEffect(HomeFindEffect.UpdateItem(item))
 			sendEffect(HomeFindEffect.ShowToast(e.message ?: "点赞失败"))
 		}
 	}

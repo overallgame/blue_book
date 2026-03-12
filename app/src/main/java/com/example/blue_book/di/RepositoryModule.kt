@@ -1,7 +1,9 @@
 package com.example.blue_book.di
 
+import com.example.blue_book.data.repository.CommentRepositoryImpl
 import com.example.blue_book.data.repository.UserRepositoryImpl
 import com.example.blue_book.data.repository.VideoRepositoryImpl
+import com.example.blue_book.domain.repository.CommentRepository
 import com.example.blue_book.domain.repository.UserRepository
 import com.example.blue_book.domain.repository.VideoRepository
 import dagger.Binds
@@ -21,5 +23,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindVideoRepository(impl: VideoRepositoryImpl): VideoRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCommentRepository(impl: CommentRepositoryImpl): CommentRepository
 }
 

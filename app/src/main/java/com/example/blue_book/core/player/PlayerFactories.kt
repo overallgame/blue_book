@@ -1,4 +1,4 @@
-@file:OptIn(androidx.media3.common.util.UnstableApi::class)
+@file:Suppress("UnstableApi")
 package com.example.blue_book.core.player
 
 import android.content.Context

@@ -9,6 +9,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.blue_book.R
 import com.example.blue_book.common.bean.VideoCardInfo
 import com.example.blue_book.databinding.VideoItemViewBinding
 import com.example.blue_book.core.player.PlayerEngine
@@ -24,6 +26,9 @@ class VideoAdapter(
     context: Context,
     private val onClickLike: (VideoCardInfo) -> Unit,
     private val onClickCollect: (VideoCardInfo) -> Unit,
+    private val onClickComment: (VideoCardInfo) -> Unit,
+    private val onClickShare: (VideoCardInfo) -> Unit,
+    private val onClickAvatar: (VideoCardInfo) -> Unit,
     private val onPlayerError: (String) -> Unit,
     private val onRequestPlayUrl: (VideoCardInfo) -> Unit
 ) : ListAdapter<VideoCardInfo, VideoAdapter.ViewHolder>(VideoDiffCallback()) {
@@ -47,8 +52,9 @@ class VideoAdapter(
         private var glView: GlVideoSurfaceView? = null
         private var glProvider: GlSurfaceProvider? = null
         private var filterType: FilterType = FilterType.GRAY
-        private var filterIntensity: Int = 100 // 0..100
+        private var filterIntensity: Int = 100
         private var eventBridge: PlayerEvents? = null
+        private var currentVideo: VideoCardInfo? = null
 
         private fun releaseEngineToPool() {
             val url = currentUrl
@@ -68,6 +74,7 @@ class VideoAdapter(
         }
 
         fun bind(videoInfo: VideoCardInfo) {
+            currentVideo = videoInfo
             val url = videoInfo.playUrl
             val previousUrl = currentUrl
             if (!previousUrl.isNullOrBlank() && previousUrl != url) {
@@ -75,22 +82,57 @@ class VideoAdapter(
             }
             currentUrl = url
 
+            // Bind basic info
             binding.videoItemNickname.text = videoInfo.nickname
             binding.videoItemDescription.text = videoInfo.description
-            binding.videoItemLoveNumber.text = formatCount(videoInfo.like)
-            binding.videoItemCollectionNumber.text = formatCount(videoInfo.collection)
+            binding.videoItemLikeCount.text = formatCount(videoInfo.like)
+            binding.videoItemCollectCount.text = formatCount(videoInfo.collection)
+            binding.videoItemCommentCount.text = formatCount(videoInfo.commentCount)
 
-            binding.videoItemLoveNumber.setOnClickListener { onClickLike(videoInfo) }
-            binding.videoItemCollectionNumber.setOnClickListener { onClickCollect(videoInfo) }
+            // Bind avatar
+            Glide.with(binding.root.context)
+                .load(videoInfo.avatar)
+                .placeholder(R.drawable.ic_launcher_background)
+                .circleCrop()
+                .into(binding.videoItemAvatar)
 
-            // 若开启 GL 渲染，创建专用 GL Surface 并通过 provider 注入给引擎
+            // Bind like state
+            binding.videoItemLikeBtn.setImageResource(
+                if (videoInfo.isLike) R.drawable.like_icon3 else R.drawable.like_icon2
+            )
+
+            // Bind collect state (if available in VideoCardInfo)
+            // binding.videoItemCollectBtn.setImageResource(...)
+
+            // Set click listeners for right side action buttons
+            binding.videoItemLikeBtn.setOnClickListener {
+                currentVideo?.let(onClickLike)
+            }
+
+            binding.videoItemCollectBtn.setOnClickListener {
+                currentVideo?.let(onClickCollect)
+            }
+
+            binding.videoItemCommentBtn.setOnClickListener {
+                currentVideo?.let(onClickComment)
+            }
+
+            binding.videoItemShareBtn.setOnClickListener {
+                currentVideo?.let(onClickShare)
+            }
+
+            binding.videoItemAvatar.setOnClickListener {
+                currentVideo?.let(onClickAvatar)
+            }
+
+            // Filter controls
             if (url.isBlank()) {
                 onRequestPlayUrl(videoInfo)
                 return
             } else if (useGl) {
                 if (glView == null) {
                     glView = GlVideoSurfaceView(binding.root.context)
-                    glView!!.setFilter(filterType)
+                    glView?.setFilter(filterType)
                     glProvider = GlSurfaceProvider(glView!!)
                     binding.videoItemGlContainer.addView(glView, ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -161,12 +203,19 @@ class VideoAdapter(
             }
         }
 
-        fun updateLike(like: Int, @Suppress("UNUSED_PARAMETER") isLike: Boolean) {
-            binding.videoItemLoveNumber.text = formatCount(like)
+        fun updateLike(like: Int, isLike: Boolean) {
+            binding.videoItemLikeCount.text = formatCount(like)
+            binding.videoItemLikeBtn.setImageResource(
+                if (isLike) R.drawable.like_icon3 else R.drawable.like_icon2
+            )
         }
 
         fun updateCollect(collect: Int) {
-            binding.videoItemCollectionNumber.text = formatCount(collect)
+            binding.videoItemCollectCount.text = formatCount(collect)
+        }
+
+        fun updateCommentCount(commentCount: Int) {
+            binding.videoItemCommentCount.text = formatCount(commentCount)
         }
 
         private fun attachEvents(playerEngine: PlayerEngine, url: String) {
@@ -196,7 +245,6 @@ class VideoAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         viewHolderMap[position] = holder
         holder.bind(getItem(position))
-        // 非 GL 路径：预加载下一条
         if (!useGl) {
             val next = position + 1
             if (next < itemCount) {
@@ -245,7 +293,11 @@ class VideoAdapter(
     fun resumeCurrent(position: Int) { viewHolderMap[position]?.play() }
     fun release() { enginePool.releaseAll() }
 
-    private fun formatCount(v: Int): String = if (v > 10000) "%.1fw".format(v / 10000.0) else v.toString()
+    private fun formatCount(v: Int): String = when {
+        v >= 10000 -> "%.1fw".format(v / 10000.0)
+        v >= 1000 -> "%.1fk".format(v / 1000.0)
+        else -> v.toString()
+    }
 
     fun preloadByPosition(pos: Int) {
         if (pos in 0 until itemCount) {
@@ -268,6 +320,7 @@ class VideoAdapter(
     private sealed interface VideoPayload {
         data class LikeChanged(val like: Int, val isLike: Boolean) : VideoPayload
         data class CollectChanged(val collect: Int) : VideoPayload
+        data class CommentCountChanged(val commentCount: Int) : VideoPayload
     }
 
     private class VideoDiffCallback : DiffUtil.ItemCallback<VideoCardInfo>() {
@@ -286,6 +339,9 @@ class VideoAdapter(
             }
             if (oldItem.collection != newItem.collection) {
                 payloads.add(VideoPayload.CollectChanged(newItem.collection))
+            }
+            if (oldItem.commentCount != newItem.commentCount) {
+                payloads.add(VideoPayload.CommentCountChanged(newItem.commentCount))
             }
             return payloads.ifEmpty { null }
         }

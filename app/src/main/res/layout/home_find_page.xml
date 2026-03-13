@@ -8,6 +8,8 @@
         android:id="@+id/main_find_recycleView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/md_theme_surfaceContainer"/>
+        android:background="@color/md_theme_surfaceContainer"
+        android:clipToPadding="false"
+        android:padding="4dp" />
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

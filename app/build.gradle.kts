@@ -85,6 +85,7 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     // Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")

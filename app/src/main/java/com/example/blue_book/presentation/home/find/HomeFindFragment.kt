@@ -13,6 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.R
 import com.example.blue_book.databinding.HomeFindPageBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -60,8 +61,10 @@ class HomeFindFragment : Fragment() {
 			}
 		)
 		binding.mainFindRecycleView.run {
-			layoutManager = GridLayoutManager(requireContext(), 2)
-			addItemDecoration(SpaceItem(16))
+			layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL).apply {
+				gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
+			}
+			addItemDecoration(SpaceItem(8))
 			adapter = this@HomeFindFragment.adapter
 			addOnScrollListener(object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

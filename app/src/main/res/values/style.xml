@@ -1,4 +1,9 @@
 <resources>
+    <style name="CircleImageStyle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <style name="RadioGroupButtonStyle">
         <item name="android:button">@null</item>
         <item name="android:gravity">center</item>

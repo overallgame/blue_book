@@ -42,6 +42,15 @@ class VideoFragment : Fragment() {
 			requireContext(),
 			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
 			onClickCollect = { video -> viewModel.dispatch(VideoIntent.ToggleCollect(video)) },
+			onClickComment = { video ->
+				// TODO: Open comment bottom sheet
+			},
+			onClickShare = { video ->
+				// TODO: Handle share
+			},
+			onClickAvatar = { video ->
+				// TODO: Navigate to user profile
+			},
 			onPlayerError = { msg ->
 				Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
 			},

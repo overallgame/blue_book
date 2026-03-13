@@ -12,6 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.R
 import com.example.blue_book.common.bean.VideoCardInfo
 import com.example.blue_book.databinding.SearchResultPageBinding
@@ -68,9 +69,11 @@ class AfterSearchFragment : Fragment() {
 				findNavController().navigate(R.id.videoFragment, args)
 			}
 		)
-		binding.afterSearchRecycleView.run {
-			layoutManager = GridLayoutManager(requireContext(), 2)
-			addItemDecoration(SpaceItem(2))
+	binding.afterSearchRecycleView.run {
+			layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL).apply {
+				gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
+			}
+			addItemDecoration(SpaceItem(8))
 			adapter = this@AfterSearchFragment.adapter
 			addOnScrollListener(object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

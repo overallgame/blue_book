@@ -33,7 +33,7 @@ class ExoPlayerEngine(
             )
         }
 
-    // READY 超时与退避重试
+    // READY 超时与退避重试（仅起播阶段）
     private val mainHandler = Handler(Looper.getMainLooper())
     private var readyTimeoutMs: Long = 5000
     private var backoffBaseMs: Long = 1500
@@ -41,6 +41,7 @@ class ExoPlayerEngine(
     private var timeoutRetryCount: Int = 0
     private var currentUrl: String? = null
     private var timeoutRunnable: Runnable? = null
+    private var isInitialBuffering = false
 
     override fun bindTo(playerView: PlayerView) {
         if (surfaceProvider == null) {
@@ -56,6 +57,7 @@ class ExoPlayerEngine(
     override fun prepare(url: String) {
         currentUrl = url
         timeoutRetryCount = 0
+        isInitialBuffering = true
         cancelReadyTimeout()
         player.setMediaItem(MediaItem.fromUri(url))
         player.prepare()
@@ -97,6 +99,7 @@ class ExoPlayerEngine(
                     scheduleReadyTimeout()
                 }
                 Player.STATE_READY -> {
+                    isInitialBuffering = false
                     cancelReadyTimeout()
                     eventBridges.forEach { it.onReady() }
                 }
@@ -114,6 +117,7 @@ class ExoPlayerEngine(
     override fun removeListener(listener: PlayerEvents) { eventBridges.remove(listener) }
 
     private fun scheduleReadyTimeout() {
+        if (!isInitialBuffering) return  // 播放中卡顿交给 LoadControl 处理，不触发起播重试
         val url = currentUrl ?: return
         cancelReadyTimeout()
         val delay = readyTimeoutMs + backoffBaseMs * timeoutRetryCount

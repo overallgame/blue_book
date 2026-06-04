@@ -23,4 +23,5 @@ dependencyResolutionManagement {
 rootProject.name = "blue_book"
 include(":app")
 include(":lib-base")
+include(":domain")
  

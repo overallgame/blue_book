@@ -59,6 +59,7 @@ dependencies {
 
     implementation(project(":lib-base"))
     implementation(project(":domain"))
+    implementation(project(":core-datastore"))
 
     implementation ("com.google.dagger:hilt-android:2.48.1")
     kapt ("com.google.dagger:hilt-android-compiler:2.48.1")

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 播放器模块：视频流媒体下载依赖 INTERNET，权限已在 :core-network 声明 -->
+
+</manifest>

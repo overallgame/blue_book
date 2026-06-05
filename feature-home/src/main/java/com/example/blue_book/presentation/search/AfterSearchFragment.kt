@@ -13,9 +13,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.blue_book.R
+import com.example.blue_book.feature_home.R
 import com.example.blue_book.common.bean.VideoCardInfo
-import com.example.blue_book.databinding.SearchResultPageBinding
+import com.example.blue_book.feature_home.databinding.SearchResultPageBinding
 import com.example.blue_book.presentation.home.find.PreVideoAdapter
 import com.example.blue_book.presentation.home.find.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint

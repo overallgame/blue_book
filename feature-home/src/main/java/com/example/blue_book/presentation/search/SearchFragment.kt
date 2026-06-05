@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.example.blue_book.R
-import com.example.blue_book.databinding.SearchPageBinding
+import com.example.blue_book.feature_home.R
+import com.example.blue_book.feature_home.databinding.SearchPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

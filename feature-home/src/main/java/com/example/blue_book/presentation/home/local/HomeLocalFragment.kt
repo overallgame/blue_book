@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.blue_book.databinding.HomeLocalPageBinding
+import com.example.blue_book.feature_home.databinding.HomeLocalPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

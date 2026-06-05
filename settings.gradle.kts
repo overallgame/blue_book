@@ -33,4 +33,5 @@ include(":core-player")
 include(":feature-image")
 include(":feature-message")
 include(":feature-auth")
+include(":feature-home")
  

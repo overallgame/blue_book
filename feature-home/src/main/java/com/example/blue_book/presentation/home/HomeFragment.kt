@@ -9,8 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.example.blue_book.R
-import com.example.blue_book.databinding.HomePageBinding
+import com.example.blue_book.feature_home.R
+import com.example.blue_book.feature_home.databinding.HomePageBinding
 import com.example.blue_book.presentation.home.find.HomeFindFragment
 import com.example.blue_book.presentation.home.focus.HomeFocusFragment
 import com.example.blue_book.presentation.home.local.HomeLocalFragment

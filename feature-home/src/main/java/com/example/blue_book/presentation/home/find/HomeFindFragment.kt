@@ -14,8 +14,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.blue_book.R
-import com.example.blue_book.databinding.HomeFindPageBinding
+import com.example.blue_book.feature_home.R
+import com.example.blue_book.feature_home.databinding.HomeFindPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 

@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.blue_book.R
+import com.example.blue_book.feature_home.R
 import com.example.blue_book.common.bean.VideoCardInfo
 
 class PreVideoAdapter(

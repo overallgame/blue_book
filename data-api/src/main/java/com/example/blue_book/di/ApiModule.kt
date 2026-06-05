@@ -7,11 +7,11 @@ import com.example.blue_book.data.remote.comment.CommentApi
 import com.example.blue_book.data.remote.file.FileApi
 import com.example.blue_book.data.remote.user.UserApi
 import com.example.blue_book.data.remote.video.VideoApi
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import com.google.gson.Gson
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -20,7 +20,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
+object ApiModule {
 
     @Provides
     @Singleton

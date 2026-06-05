@@ -4,7 +4,7 @@ import com.example.blue_book.common.bean.ApiResponse
 import com.example.blue_book.data.local.preference.AuthPreferences
 import com.example.blue_book.data.remote.auth.dto2.AuthV2RefreshRequestDto
 import com.example.blue_book.data.remote.auth.dto2.AuthV2TokenResponseDto
-import com.example.blue_book.di.NetworkModule
+import com.example.blue_book.core.network.CoreNetworkModule
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.Authenticator
@@ -71,7 +71,7 @@ class TokenAuthenticator @Inject constructor(
 
 	private fun refresh(refreshToken: String): AuthV2TokenResponseDto? {
 		return try {
-			val base = NetworkModule.BASE_URL.trimEnd('/')
+			val base = CoreNetworkModule.BASE_URL.trimEnd('/')
 			val url = "$base/api/v2/auth/refresh"
 			val json = gson.toJson(AuthV2RefreshRequestDto(refreshToken))
 			val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())

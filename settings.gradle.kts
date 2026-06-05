@@ -25,4 +25,5 @@ include(":app")
 include(":lib-base")
 include(":domain")
 include(":core-datastore")
+include(":core-network")
  

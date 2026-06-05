@@ -9,7 +9,7 @@ import com.example.blue_book.data.remote.account.dto.LoginRequestDto
 import com.example.blue_book.data.remote.auth.AuthRemoteDataSource
 import com.example.blue_book.data.remote.file.FileRemoteDataSource
 import com.example.blue_book.data.remote.user.UserRemoteDataSource
-import com.example.blue_book.di.NetworkModule
+import com.example.blue_book.core.network.CoreNetworkModule
 import com.example.blue_book.data.local.preference.AuthPreferences
 import com.example.blue_book.data.remote.user.dto2.UserV2UpdateRequestDto
 import com.example.blue_book.common.util.UriFileResolver
@@ -154,7 +154,7 @@ class UserRepositoryImpl @Inject constructor(
         fun toRelativeIfBackendUrl(url: String?): String? {
             val v = url?.trim().orEmpty()
             if (v.isBlank()) return null
-            val base = NetworkModule.BASE_URL.trimEnd('/')
+            val base = CoreNetworkModule.BASE_URL.trimEnd('/')
             return if (v.startsWith(base)) v.removePrefix(base) else v
         }
 

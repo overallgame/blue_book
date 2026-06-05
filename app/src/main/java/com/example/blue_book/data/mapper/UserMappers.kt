@@ -1,7 +1,7 @@
 package com.example.blue_book.data.mapper
 
 import com.example.blue_book.data.local.db.entity.UserEntity
-import com.example.blue_book.di.NetworkModule
+import com.example.blue_book.core.network.CoreNetworkModule
 import com.example.blue_book.domain.model.UserAccount
 import com.example.blue_book.data.remote.account.dto.UserProfileDto
 import com.example.blue_book.data.remote.user.dto2.UserV2MeDto
@@ -24,7 +24,7 @@ fun UserEntity.toDomain(): UserAccount {
 }
 
 fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
-    val base = NetworkModule.BASE_URL.trimEnd('/')
+    val base = CoreNetworkModule.BASE_URL.trimEnd('/')
     fun n(s: String?): String? {
         val v = s?.trim().orEmpty()
         return v.ifBlank { null }
@@ -85,7 +85,7 @@ fun UserProfileDto.toDomain(): UserAccount {
 }
 
 fun UserV2MeDto.toDomain(): UserAccount {
-    val base = NetworkModule.BASE_URL.trimEnd('/')
+    val base = CoreNetworkModule.BASE_URL.trimEnd('/')
     fun n(s: String?): String? {
         val v = s?.trim().orEmpty()
         return v.ifBlank { null }

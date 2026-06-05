@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
-import com.example.blue_book.R
+import com.example.blue_book.feature_image.R
 
 class ImagePickerActivity : AppCompatActivity() {
 

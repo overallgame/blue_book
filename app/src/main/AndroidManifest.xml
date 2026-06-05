@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- INTERNET 权限已迁至 :core-network 模块声明 -->
-    <!-- READ_MEDIA_IMAGES、READ_EXTERNAL_STORAGE 将在阶段4随 :feature-image 迁移 -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!--
+        权限归属说明：
+        - INTERNET        → :core-network
+        - READ_MEDIA_IMAGES → :feature-image
+        - READ_EXTERNAL_STORAGE → :feature-image
+    -->
 
     <application
         android:name=".BlueBookApplication"
@@ -27,10 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".presentation.image.ImagePickerActivity"
-            android:exported="false" />
     </application>
 
 </manifest>

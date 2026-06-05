@@ -30,4 +30,5 @@ include(":data-api")
 include(":data-local")
 include(":data-repository")
 include(":core-player")
+include(":feature-image")
  

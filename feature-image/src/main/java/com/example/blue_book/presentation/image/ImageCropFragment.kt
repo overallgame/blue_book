@@ -16,7 +16,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.blue_book.R
+import com.example.blue_book.feature_image.R
 import java.io.File
 import java.io.FileOutputStream
 

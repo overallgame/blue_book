@@ -8,6 +8,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.R
 import com.example.blue_book.databinding.ActivityMainBinding
 import com.example.blue_book.presentation.home.HomeFragment
+import com.example.blue_book.presentation.message.MessageFragment
 import com.example.blue_book.presentation.mine.MineFragment
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -41,7 +42,7 @@ class MainTabsFragment : Fragment(R.layout.activity_main) {
         fragments = listOf(
             HomeFragment(),
             PicturePlaceholderFragment(),
-            MessagePlaceholderFragment(),
+            MessageFragment(),
             MineFragment()
         )
 

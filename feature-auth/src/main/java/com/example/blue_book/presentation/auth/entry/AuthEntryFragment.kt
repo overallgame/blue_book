@@ -7,7 +7,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.blue_book.databinding.OpPageBinding
+import com.example.blue_book.feature_auth.R
+import com.example.blue_book.feature_auth.databinding.OpPageBinding
 import com.example.blue_book.domain.usecase.IsLoggedInUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -37,7 +38,7 @@ class AuthEntryFragment : Fragment() {
 		viewLifecycleOwner.lifecycleScope.launch {
 			try {
 				if (isLoggedInUseCase()) {
-					findNavController().navigate(com.example.blue_book.R.id.mainTabsFragment)
+					findNavController().navigate(R.id.mainTabsFragment)
 				}
 			} catch (e: Throwable) {
 				android.util.Log.e("AuthEntryFragment", "检查登录状态失败: ${e.message}", e)
@@ -47,10 +48,10 @@ class AuthEntryFragment : Fragment() {
 
 	private fun setupListeners() {
 		binding.opLogin.setOnClickListener {
-			findNavController().navigate(com.example.blue_book.R.id.action_authEntry_to_login)
+			findNavController().navigate(R.id.action_authEntry_to_login)
 		}
 		binding.opRegister.setOnClickListener {
-			findNavController().navigate(com.example.blue_book.R.id.action_authEntry_to_register)
+			findNavController().navigate(R.id.action_authEntry_to_register)
 		}
 	}
 

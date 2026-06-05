@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 导航 action ID（原 nav_graph.xml 中定义，ARouter 迁移后将删除） -->
+    <item name="mainTabsFragment" type="id" />
+    <item name="action_authEntry_to_login" type="id" />
+    <item name="action_authEntry_to_register" type="id" />
+    <item name="action_login_to_home" type="id" />
+    <item name="action_register_to_home" type="id" />
+</resources>

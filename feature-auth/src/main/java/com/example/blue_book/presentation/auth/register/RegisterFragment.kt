@@ -13,8 +13,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.example.blue_book.R
-import com.example.blue_book.databinding.RegisterPageBinding
+import com.example.blue_book.feature_auth.R
+import com.example.blue_book.feature_auth.databinding.RegisterPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 

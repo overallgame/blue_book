@@ -1,13 +1,13 @@
-package com.example.blue_book.presentation.main
+package com.example.blue_book.presentation.message
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.blue_book.R
+import com.example.blue_book.feature_message.R
 
-class MessagePlaceholderFragment : Fragment() {
+class MessageFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,

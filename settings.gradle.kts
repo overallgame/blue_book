@@ -28,4 +28,5 @@ include(":core-datastore")
 include(":core-network")
 include(":data-api")
 include(":data-local")
+include(":data-repository")
  

@@ -68,7 +68,6 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core-datastore"))
     implementation(project(":core-network"))
-    implementation(project(":data-api"))
     implementation(project(":data-local"))
     implementation(project(":data-repository"))
     implementation(project(":core-player"))

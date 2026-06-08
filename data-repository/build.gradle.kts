@@ -26,7 +26,6 @@ android {
 dependencies {
     implementation(project(":lib-base"))
     implementation(project(":domain"))
-    implementation(project(":data-api"))
     implementation(project(":data-local"))
     implementation(project(":core-network"))
     implementation("com.squareup.okhttp3:okhttp:4.11.0")

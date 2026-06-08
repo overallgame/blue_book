@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_video.R
+import com.example.blue_book.lib_base.R as BaseR
 import com.example.blue_book.common.bean.VideoCardInfo
 import com.example.blue_book.feature_video.databinding.VideoItemViewBinding
 import com.example.blue_book.core.player.PlayerEngine
@@ -92,13 +93,13 @@ class VideoAdapter(
             // Bind avatar
             Glide.with(binding.root.context)
                 .load(videoInfo.avatar)
-                .placeholder(R.drawable.ic_launcher_background)
+                .placeholder(BaseR.drawable.ic_launcher_background)
                 .circleCrop()
                 .into(binding.videoItemAvatar)
 
             // Bind like state
             binding.videoItemLikeBtn.setImageResource(
-                if (videoInfo.isLike) R.drawable.like_icon3 else R.drawable.like_icon2
+                if (videoInfo.isLike) BaseR.drawable.like_icon3 else BaseR.drawable.like_icon2
             )
 
             // Bind collect state (if available in VideoCardInfo)
@@ -206,7 +207,7 @@ class VideoAdapter(
         fun updateLike(like: Int, isLike: Boolean) {
             binding.videoItemLikeCount.text = formatCount(like)
             binding.videoItemLikeBtn.setImageResource(
-                if (isLike) R.drawable.like_icon3 else R.drawable.like_icon2
+                if (isLike) BaseR.drawable.like_icon3 else BaseR.drawable.like_icon2
             )
         }
 

@@ -18,6 +18,13 @@
             <option value="$PROJECT_DIR$/data-local" />
             <option value="$PROJECT_DIR$/data-repository" />
             <option value="$PROJECT_DIR$/domain" />
+            <option value="$PROJECT_DIR$/feature-auth" />
+            <option value="$PROJECT_DIR$/feature-home" />
+            <option value="$PROJECT_DIR$/feature-image" />
+            <option value="$PROJECT_DIR$/feature-main" />
+            <option value="$PROJECT_DIR$/feature-message" />
+            <option value="$PROJECT_DIR$/feature-mine" />
+            <option value="$PROJECT_DIR$/feature-video" />
             <option value="$PROJECT_DIR$/lib-base" />
           </set>
         </option>

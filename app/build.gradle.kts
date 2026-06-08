@@ -90,7 +90,8 @@ dependencies {
 
     kapt("com.github.bumptech.glide:compiler:4.12.0")
     implementation("com.github.bumptech.glide:glide:4.13.2")
-    implementation("com.github.yalantis:ucrop:2.2.6")
+    // uCrop 与 AGP 8.x 不兼容，暂时注释
+    // implementation("com.github.yalantis:ucrop:2.2.8")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")

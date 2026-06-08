@@ -69,6 +69,7 @@ dependencies {
     implementation(project(":feature-message"))
     implementation(project(":feature-auth"))
     implementation(project(":feature-home"))
+    implementation(project(":feature-video"))
 
     implementation ("com.google.dagger:hilt-android:2.48.1")
     kapt ("com.google.dagger:hilt-android-compiler:2.48.1")

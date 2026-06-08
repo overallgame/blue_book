@@ -5,9 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.blue_book.R
+import com.example.blue_book.feature_video.R
 
-class PicturePlaceholderFragment : Fragment() {
+class VideoTabFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,

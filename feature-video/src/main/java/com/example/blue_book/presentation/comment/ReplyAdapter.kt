@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.blue_book.R
+import com.example.blue_book.feature_video.R
 import com.example.blue_book.domain.model.Comment
 
 class ReplyAdapter(

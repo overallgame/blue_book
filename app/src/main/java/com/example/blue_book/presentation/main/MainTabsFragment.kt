@@ -41,7 +41,7 @@ class MainTabsFragment : Fragment(R.layout.activity_main) {
 
         fragments = listOf(
             HomeFragment(),
-            PicturePlaceholderFragment(),
+            VideoTabFragment(),
             MessageFragment(),
             MineFragment()
         )

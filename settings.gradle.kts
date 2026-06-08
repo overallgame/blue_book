@@ -34,4 +34,5 @@ include(":feature-image")
 include(":feature-message")
 include(":feature-auth")
 include(":feature-home")
+include(":feature-video")
  

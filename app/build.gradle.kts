@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     viewBinding {
         enable = true
@@ -55,6 +56,11 @@ android {
     }
 }
 
+configurations.all {
+    exclude(group = "com.android.support", module = "support-compat")
+    exclude(group = "com.android.support", module = "support-media-compat")
+    exclude(group = "com.android.support", module = "support-annotations")
+}
 
 dependencies {
 

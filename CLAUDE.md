@@ -185,25 +185,30 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 ## 导航
 
-单 Activity（`MainActivity`）+ Jetpack Navigation（`nav_graph.xml`，保留在 `:app`）：
+多 Activity 架构，**已移除 Jetpack Navigation**，改用 Intent 字符串跳转。
 
 ```
-authEntryFragment  ──→ loginFragment ──→ mainTabsFragment
-                   ──→ registerFragment ──→ mainTabsFragment（popUpTo 到 auth，inclusive）
+MainActivity（底部 4 个 Tab，RadioGroup）
+  ├─ tab_home    → Intent → HomeActivity  (首页：瀑布流 + 搜索)
+  ├─ tab_video   → Intent → VideoActivity (视频 Tab + 全屏播放器)
+  ├─ tab_message → Intent → MessageActivity (消息占位)
+  └─ tab_mine    → Intent → MineActivity  (个人中心 + 资料编辑)
 
-mainTabsFragment：ViewPager2 + 底部4个Tab（首页 / 视频 / 消息 / 我的）
+AuthActivity（登录/注册入口）
+  ├─ AuthEntryFragment → 登录/注册 → Intent → MainActivity
+  ├─ LoginFragment → HomeActivity.navigateToHome()
+  └─ RegisterFragment → MineActivity.navigateToHome()
 
-首页 Tab： homeFragment → 嵌套 ViewPager2（关注 / 发现 / 同城）
-                        → searchFragment → afterSearchFragment(keyword)
+HomeActivity 内部 Fragment 跳转（FragmentManager）：
+  HomeFragment → SearchFragment → AfterSearchFragment → VideoActivity（全屏播放）
 
-视频 Tab： videoFragment（全屏纵向 ViewPager2，配合 PlayerEnginePool 预加载）
-
-我的 Tab： mineFragment → userProfileEditFragment
+MineActivity 内部 Fragment 跳转：
+  MineFragment → UserProfileEditFragment
 ```
 
-登录/注册跳转到 `mainTabsFragment` 时使用 `popUpTo(authEntryFragment, inclusive=true)`，确保用户无法返回到登录页。
-
-> **注意**：当前仍使用 Jetpack Navigation，各 feature 模块的 `res/values/ids.xml` 中定义了导航 ID 占位以通过编译。后续计划引入 ARouter 替代，详见 `docs/多模块改造方案.md`。
+**跨模块跳转**：使用 `Intent.setClassName(packageName, "完整类名")`，模块间零编译依赖。  
+**模块内跳转**：Fragment 通过 `(requireActivity() as XxxActivity).navigateToXxx()` 调用宿主 Activity 的公共方法。  
+**底部 Tab**：`singleTask` 启动模式 + `FLAG_ACTIVITY_REORDER_TO_FRONT`，每个 Tab 只有一个 Activity 实例。
 
 ## 数据库（`:data-local`）
 

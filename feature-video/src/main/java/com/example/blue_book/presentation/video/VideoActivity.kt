@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import com.example.blue_book.feature_video.R
 import com.example.blue_book.presentation.main.VideoTabFragment
-import com.example.blue_book.router.RouterPath
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

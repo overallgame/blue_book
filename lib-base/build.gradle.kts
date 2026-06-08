@@ -26,6 +26,4 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    // ARouter（api 传递：下游 feature 模块需要 @Route 注解）
-    api("com.alibaba:arouter-api:1.5.2")
 }

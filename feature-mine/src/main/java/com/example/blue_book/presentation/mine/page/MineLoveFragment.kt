@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.blue_book.databinding.MineLovePageBinding
+import com.example.blue_book.feature_mine.databinding.MineLovePageBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

@@ -5,17 +5,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.blue_book.databinding.MineWorkPageBinding
+import com.example.blue_book.feature_mine.databinding.MineCollectionPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MineWorkFragment : Fragment() {
+class MineCollectionFragment : Fragment() {
 
-	private var _binding: MineWorkPageBinding? = null
+	private var _binding: MineCollectionPageBinding? = null
 	private val binding get() = _binding!!
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		_binding = MineWorkPageBinding.inflate(inflater, container, false)
+		_binding = MineCollectionPageBinding.inflate(inflater, container, false)
 		return binding.root
 	}
 

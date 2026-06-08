@@ -14,7 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
-import com.example.blue_book.databinding.UserProfilePageBinding
+import com.example.blue_book.feature_mine.databinding.UserProfilePageBinding
 import com.example.blue_book.presentation.image.ImagePickerActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch

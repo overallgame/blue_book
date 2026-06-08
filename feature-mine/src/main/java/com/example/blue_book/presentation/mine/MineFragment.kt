@@ -20,8 +20,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
-import com.example.blue_book.R
-import com.example.blue_book.databinding.MinePageBinding
+import com.example.blue_book.feature_mine.R
+import com.example.blue_book.feature_mine.databinding.MinePageBinding
 import com.example.blue_book.presentation.image.ImagePickerActivity
 import com.example.blue_book.presentation.mine.page.MineCollectionFragment
 import com.example.blue_book.presentation.mine.page.MineLoveFragment

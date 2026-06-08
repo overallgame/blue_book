@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 导航 action ID（原 nav_graph.xml，ARouter 迁移后将删除） -->
     <item name="menu_backLogin" type="id" />
-    <item name="authEntryFragment" type="id" />
-    <item name="searchFragment" type="id" />
-    <item name="afterSearchFragment" type="id" />
-    <item name="videoFragment" type="id" />
 </resources>

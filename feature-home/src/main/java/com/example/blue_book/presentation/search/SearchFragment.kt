@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
+import com.example.blue_book.presentation.home.HomeActivity
 import com.example.blue_book.feature_home.R
 import com.example.blue_book.feature_home.databinding.SearchPageBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,11 +23,11 @@ class SearchFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		binding.searchBack.setOnClickListener { findNavController().popBackStack() }
+		binding.searchBack.setOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
 		binding.searchSearch.setOnClickListener {
 			val keyword = binding.searchComment.text?.toString().orEmpty()
 			val args = Bundle().apply { putString("keyword", keyword) }
-			findNavController().navigate(R.id.afterSearchFragment, args)
+			(requireActivity() as HomeActivity).navigateToSearchResult(keyword)
 		}
 	}
 

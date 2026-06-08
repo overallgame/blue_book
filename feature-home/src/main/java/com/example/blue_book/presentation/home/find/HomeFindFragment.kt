@@ -10,7 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
+import com.example.blue_book.presentation.home.HomeActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -57,7 +57,7 @@ class HomeFindFragment : Fragment() {
 			onClickLike = { v -> viewModel.dispatch(HomeFindIntent.ToggleLike(v)) },
 			onClickItem = { v ->
 				val args = Bundle().apply { putParcelable("EXTRA_VIDEO", v) }
-				findNavController().navigate(R.id.videoFragment, args)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
 			}
 		)
 		binding.mainFindRecycleView.run {

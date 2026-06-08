@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
         权限归属说明：
@@ -10,6 +11,8 @@
 
     <application
         android:name=".BlueBookApplication"
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        tools:replace="android:appComponentFactory"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -22,6 +25,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".view.MainActivity"
+            android:launchMode="singleTask"
             android:exported="true"
             android:theme="@style/AppTheme">
             <intent-filter>

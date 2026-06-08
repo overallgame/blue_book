@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
+import com.example.blue_book.presentation.home.HomeActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.feature_home.R
@@ -45,7 +45,7 @@ class HomeFragment : Fragment() {
 			when (menuItem.itemId) {
 				R.id.menu_backLogin -> {
 					// 简化为直接回到登录入口
-					findNavController().navigate(R.id.authEntryFragment)
+					(requireActivity() as HomeActivity).navigateToAuthEntry()
 					true
 				}
 				else -> {
@@ -90,7 +90,7 @@ class HomeFragment : Fragment() {
 			binding.layoutMain.openDrawer(GravityCompat.START)
 		}
 		binding.mainPagerSearch.setOnClickListener {
-			findNavController().navigate(R.id.searchFragment)
+			(requireActivity() as HomeActivity).navigateToSearch()
 		}
 	}
 

@@ -12,7 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
+import com.example.blue_book.presentation.auth.AuthActivity
 import com.example.blue_book.feature_auth.R
 import com.example.blue_book.feature_auth.databinding.RegisterPageBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,7 +38,7 @@ class RegisterFragment : Fragment() {
 	}
 
 	private fun setupListeners() {
-		binding.resToolbar.setNavigationOnClickListener { findNavController().popBackStack() }
+		binding.resToolbar.setNavigationOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
 		binding.resNickname.doAfterTextChanged { viewModel.dispatch(RegisterIntent.NicknameChanged(it?.toString().orEmpty())) }
 		binding.resPhone.doAfterTextChanged { viewModel.dispatch(RegisterIntent.PhoneChanged(it?.toString().orEmpty())) }
 		binding.resPassword.doAfterTextChanged { viewModel.dispatch(RegisterIntent.PasswordChanged(it?.toString().orEmpty())) }
@@ -75,7 +75,7 @@ class RegisterFragment : Fragment() {
 
 	private fun handleEffect(effect: RegisterUiEffect) {
 		when (effect) {
-			RegisterUiEffect.NavigateHome -> findNavController().navigate(R.id.action_register_to_home)
+			RegisterUiEffect.NavigateHome -> (requireActivity() as AuthActivity).navigateToHome()
 			is RegisterUiEffect.ShowToast -> {
 				if (effect.message.isNotBlank()) {
 					Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()

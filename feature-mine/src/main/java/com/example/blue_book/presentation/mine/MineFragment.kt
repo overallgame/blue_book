@@ -16,7 +16,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
+import com.example.blue_book.presentation.mine.MineActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
@@ -118,7 +118,7 @@ class MineFragment : Fragment() {
             }
         }
         binding.mineEditUserProfile.setOnClickListener {
-            findNavController().navigate(R.id.userProfileEditFragment)
+            (requireActivity() as MineActivity).navigateToProfileEdit()
         }
     }
 
@@ -187,7 +187,7 @@ class MineFragment : Fragment() {
                                 Toast.LENGTH_SHORT
                             ).show()
                             is MineEffect.NavigateToLogin -> {
-                                findNavController().navigate(R.id.authEntryFragment)
+                                (requireActivity() as MineActivity).navigateToAuthEntry()
                             }
                         }
                     }

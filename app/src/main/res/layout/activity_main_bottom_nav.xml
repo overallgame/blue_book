@@ -2,11 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/md_theme_surfaceContainer">
+    android:orientation="vertical">
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/main_viewPager"
+    <FrameLayout
+        android:id="@+id/main_content"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -15,35 +14,32 @@
         android:id="@+id/main_navRadioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/md_theme_surface"
-        android:elevation="2dp"
         android:gravity="center"
         android:orientation="horizontal">
 
         <RadioButton
-            android:id="@+id/main"
+            android:id="@+id/tab_home"
             style="@style/RadioGroupButtonStyle"
             android:text="首页"
             android:textColor="@color/navigation_item_selector" />
 
         <RadioButton
-            android:id="@+id/picture"
+            android:id="@+id/tab_video"
             style="@style/RadioGroupButtonStyle"
-            android:text="图片"
+            android:text="视频"
             android:textColor="@color/navigation_item_selector" />
 
         <RadioButton
-            android:id="@+id/message"
+            android:id="@+id/tab_message"
             style="@style/RadioGroupButtonStyle"
             android:text="消息"
             android:textColor="@color/navigation_item_selector" />
 
         <RadioButton
-            android:id="@+id/mine"
+            android:id="@+id/tab_mine"
             style="@style/RadioGroupButtonStyle"
             android:text="我"
             android:textColor="@color/navigation_item_selector" />
-
     </RadioGroup>
 
 </LinearLayout>

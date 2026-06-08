@@ -9,7 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
+import com.example.blue_book.presentation.home.HomeActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -66,7 +66,7 @@ class AfterSearchFragment : Fragment() {
 					putString("TAG_SHOW", "search")
 					putString("keyword", keyword)
 				}
-				findNavController().navigate(R.id.videoFragment, args)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
 			}
 		)
 	binding.afterSearchRecycleView.run {
@@ -122,7 +122,7 @@ class AfterSearchFragment : Fragment() {
 					putString("TAG_SHOW", "search")
 					putString("keyword", keyword)
 				}
-				findNavController().navigate(R.id.videoFragment, args)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
 			}
 		)
 		binding.afterSearchRecycleView.adapter = adapter

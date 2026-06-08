@@ -36,4 +36,5 @@ include(":feature-auth")
 include(":feature-home")
 include(":feature-video")
 include(":feature-mine")
+include(":feature-main")
  

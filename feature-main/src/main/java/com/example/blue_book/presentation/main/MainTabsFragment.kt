@@ -5,8 +5,8 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.example.blue_book.R
-import com.example.blue_book.databinding.ActivityMainBinding
+import com.example.blue_book.feature_main.R
+import com.example.blue_book.feature_main.databinding.ActivityMainBinding
 import com.example.blue_book.presentation.home.HomeFragment
 import com.example.blue_book.presentation.message.MessageFragment
 import com.example.blue_book.presentation.mine.MineFragment

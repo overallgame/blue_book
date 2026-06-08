@@ -25,7 +25,6 @@ android {
 
 dependencies {
     implementation(project(":lib-base"))
-    implementation(project(":domain"))
     implementation(project(":core-datastore"))
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")

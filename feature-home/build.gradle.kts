@@ -19,7 +19,9 @@ android {
 
 dependencies {
     implementation(project(":lib-base"))
-    implementation(project(":domain"))
+    implementation(project(":feature-video"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("javax.inject:javax.inject:1")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.fragment:fragment-ktx:1.5.0")

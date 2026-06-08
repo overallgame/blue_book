@@ -23,11 +23,9 @@ dependencyResolutionManagement {
 rootProject.name = "blue_book"
 include(":app")
 include(":lib-base")
-include(":domain")
 include(":core-datastore")
 include(":core-network")
 include(":data-local")
-include(":data-repository")
 include(":core-player")
 include(":feature-image")
 include(":feature-message")

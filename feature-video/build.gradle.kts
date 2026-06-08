@@ -19,8 +19,12 @@ android {
 
 dependencies {
     implementation(project(":lib-base"))
-    implementation(project(":domain"))
+    implementation(project(":core-network"))
     implementation(project(":core-player"))
+    implementation(project(":data-local"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("javax.inject:javax.inject:1")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("androidx.media3:media3-common:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
     implementation("androidx.recyclerview:recyclerview:1.3.2")

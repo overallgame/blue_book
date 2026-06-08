@@ -65,11 +65,9 @@ configurations.all {
 dependencies {
 
     implementation(project(":lib-base"))
-    implementation(project(":domain"))
     implementation(project(":core-datastore"))
     implementation(project(":core-network"))
     implementation(project(":data-local"))
-    implementation(project(":data-repository"))
     implementation(project(":core-player"))
     implementation(project(":feature-image"))
     implementation(project(":feature-message"))

@@ -2,12 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!--
-        权限归属说明：
-        - INTERNET        → :core-network
-        - READ_MEDIA_IMAGES → :feature-image
-        - READ_EXTERNAL_STORAGE → :feature-image
-    -->
+    <!-- 所有权限统一在此声明 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name=".BlueBookApplication"

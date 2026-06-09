@@ -1,0 +1,5 @@
+<resources>
+    <style name="NoMaterialButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@null</item>
+    </style>
+</resources>

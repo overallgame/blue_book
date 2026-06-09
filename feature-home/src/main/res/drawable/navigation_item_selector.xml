@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 选中状态的颜色，使用主色调 -->
+    <item android:color="@color/md_theme_primary" android:state_checked="true" />
+    <!-- 未选中状态的颜色，使用表面上的文字颜色 -->
+    <item android:color="@color/md_theme_onPrimaryContainer" android:state_checked="false" />
+</selector>

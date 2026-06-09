@@ -1,6 +1,6 @@
 package com.example.blue_book.domain.usecase
 
-import com.example.blue_book.domain.model.UserAccount
+import com.example.blue_book.common.bean.UserAccount
 import com.example.blue_book.domain.repository.UserRepository
 import javax.inject.Inject
 

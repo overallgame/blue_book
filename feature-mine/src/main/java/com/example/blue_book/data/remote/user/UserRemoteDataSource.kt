@@ -1,7 +1,7 @@
 package com.example.blue_book.data.remote.user
 
-import com.example.blue_book.data.remote.apiCall
-import com.example.blue_book.data.remote.apiUnitCall
+import com.example.blue_book.network.apiCall
+import com.example.blue_book.network.apiUnitCall
 import com.example.blue_book.data.remote.user.dto2.UserV2AvatarUploadResponseDto
 import com.example.blue_book.data.remote.user.dto2.UserV2FollowListResponseDto
 import com.example.blue_book.data.remote.user.dto2.UserV2MeDto

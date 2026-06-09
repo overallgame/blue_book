@@ -1,7 +1,7 @@
 package com.example.blue_book.data.remote.comment
 
-import com.example.blue_book.data.remote.apiCall
-import com.example.blue_book.data.remote.apiUnitCall
+import com.example.blue_book.network.apiCall
+import com.example.blue_book.network.apiUnitCall
 import com.example.blue_book.data.remote.comment.dto.CommentDto
 import com.example.blue_book.data.remote.comment.dto.CommentListDto
 import com.example.blue_book.data.remote.comment.dto.PostCommentRequestDto

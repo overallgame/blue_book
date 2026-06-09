@@ -1,0 +1,61 @@
+package com.example.blue_book.auth.ui.entry
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.example.blue_book.auth.domain.usecase.IsLoggedInUseCase
+import com.example.blue_book.auth.ui.AuthActivity
+import com.example.blue_book.feature_auth.databinding.OpPageBinding
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.launch
+
+@AndroidEntryPoint
+class AuthEntryFragment : Fragment() {
+
+    private var _binding: OpPageBinding? = null
+    private val binding get() = _binding!!
+
+    @Inject
+    lateinit var isLoggedInUseCase: IsLoggedInUseCase
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = OpPageBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        checkLoginStatus()
+        setupListeners()
+    }
+
+    private fun checkLoginStatus() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                if (isLoggedInUseCase()) {
+                    (requireActivity() as AuthActivity).navigateToHome()
+                }
+            } catch (e: Throwable) {
+                android.util.Log.e("AuthEntry", "检查登录状态失败: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun setupListeners() {
+        binding.opLogin.setOnClickListener {
+            (requireActivity() as AuthActivity).navigateToLogin()
+        }
+        binding.opRegister.setOnClickListener {
+            (requireActivity() as AuthActivity).navigateToRegister()
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

@@ -1,0 +1,31 @@
+package com.example.blue_book.network
+
+import com.example.blue_book.preference.AuthPreferences
+import okhttp3.Interceptor
+import okhttp3.Response
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class TokenInterceptor @Inject constructor(
+    private val preferences: AuthPreferences
+) : Interceptor {
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val original = chain.request()
+        val path = original.url.encodedPath
+        if (path.startsWith("/api/v2/auth/refresh")) {
+            return chain.proceed(original)
+        }
+
+        val token = preferences.getAuthToken()?.trim().orEmpty()
+        if (token.isBlank()) {
+            return chain.proceed(original)
+        }
+
+        val newReq = original.newBuilder()
+            .header("Authorization", "Bearer $token")
+            .build()
+        return chain.proceed(newReq)
+    }
+}

@@ -1,11 +1,11 @@
 package com.example.blue_book.data.mapper
 
-import com.example.blue_book.core.network.CoreNetworkModule
+import com.example.blue_book.network.NetworkModule
 import com.example.blue_book.domain.model.Video
 import com.example.blue_book.data.remote.video.dto2.Video2Dto
 
 fun List<Video2Dto>.toDomainVideos(): List<Video> {
-    val base = CoreNetworkModule.BASE_URL.trimEnd('/')
+    val base = NetworkModule.BASE_URL.trimEnd('/')
     fun abs(url: String?): String {
         val u = url?.trim().orEmpty()
         if (u.isBlank()) return ""

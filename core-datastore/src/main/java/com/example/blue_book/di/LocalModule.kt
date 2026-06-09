@@ -1,9 +1,9 @@
 package com.example.blue_book.di
 
-import com.example.blue_book.data.local.db.resource.user.UserLocalDataResource
-import com.example.blue_book.data.local.db.resource.user.UserLocalDataResourceImpl
-import com.example.blue_book.data.local.preference.AuthDataStoreImpl
-import com.example.blue_book.data.local.preference.AuthPreferences
+import com.example.blue_book.room.user.UserLocalDataResource
+import com.example.blue_book.room.user.UserLocalDataResourceImpl
+import com.example.blue_book.datastore.AuthDataStoreImpl
+import com.example.blue_book.preference.AuthPreferences
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

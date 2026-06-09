@@ -1,7 +1,7 @@
 package com.example.blue_book.data.remote.video
 
-import com.example.blue_book.data.remote.apiCall
-import com.example.blue_book.data.remote.apiUnitCall
+import com.example.blue_book.network.apiCall
+import com.example.blue_book.network.apiUnitCall
 import com.example.blue_book.data.remote.video.dto2.FeedResponseDto
 import com.example.blue_book.data.remote.video.dto2.Video2Dto
 import javax.inject.Inject

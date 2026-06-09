@@ -1,6 +1,6 @@
 package com.example.blue_book.data.remote.file
 
-import com.example.blue_book.data.remote.dto.CommonResultDto
+import com.example.blue_book.network.dto.CommonResult
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Multipart
@@ -13,5 +13,5 @@ interface FileApi {
 	@POST("/api/file/upload")
 	suspend fun uploadImage(
 		@Part file: MultipartBody.Part
-	): Response<CommonResultDto<String>>
+	): Response<CommonResult<String>>
 }

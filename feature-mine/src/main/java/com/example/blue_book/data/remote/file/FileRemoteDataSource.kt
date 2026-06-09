@@ -1,6 +1,6 @@
 package com.example.blue_book.data.remote.file
 
-import com.example.blue_book.data.remote.commonCall
+import com.example.blue_book.network.commonCall
 import okhttp3.MultipartBody
 import javax.inject.Inject
 

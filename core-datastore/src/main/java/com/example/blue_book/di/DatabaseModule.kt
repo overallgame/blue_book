@@ -1,8 +1,8 @@
 package com.example.blue_book.di
 
 import android.content.Context
-import com.example.blue_book.data.local.db.AppDatabase
-import com.example.blue_book.data.local.db.dao.UserDao
+import com.example.blue_book.room.AppDatabase
+import com.example.blue_book.room.dao.UserDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

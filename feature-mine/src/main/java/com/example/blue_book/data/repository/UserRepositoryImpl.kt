@@ -1,21 +1,15 @@
 package com.example.blue_book.data.repository
 
 import android.net.Uri
-import com.example.blue_book.data.local.db.resource.user.UserLocalDataResource
+import com.example.blue_book.room.user.UserLocalDataResource
 import com.example.blue_book.data.mapper.toDomain
 import com.example.blue_book.data.mapper.toEntity
-import com.example.blue_book.data.remote.account.AccountRemoteDataSource
-import com.example.blue_book.data.remote.account.dto.LoginRequestDto
-import com.example.blue_book.data.remote.auth.AuthRemoteDataSource
 import com.example.blue_book.data.remote.file.FileRemoteDataSource
 import com.example.blue_book.data.remote.user.UserRemoteDataSource
-import com.example.blue_book.core.network.CoreNetworkModule
-import com.example.blue_book.data.local.preference.AuthPreferences
+import com.example.blue_book.network.NetworkModule
 import com.example.blue_book.data.remote.user.dto2.UserV2UpdateRequestDto
-import com.example.blue_book.common.util.UriFileResolver
-import com.example.blue_book.domain.model.LoginCredentials
-import com.example.blue_book.domain.model.RegisterInfo
-import com.example.blue_book.domain.model.UserAccount
+import com.example.blue_book.util.UriFileResolver
+import com.example.blue_book.common.bean.UserAccount
 import com.example.blue_book.domain.repository.UserRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -25,96 +19,11 @@ import javax.inject.Singleton
 
 @Singleton
 class UserRepositoryImpl @Inject constructor(
-    private val remoteDataSource: AccountRemoteDataSource,
     private val userRemote: UserRemoteDataSource,
     private val fileRemote: FileRemoteDataSource,
-    private val authRemote: AuthRemoteDataSource,
     private val localDataResource: UserLocalDataResource,
-    private val preferences: AuthPreferences,
     private val uriFileResolver: UriFileResolver
 ) : UserRepository {
-
-    override suspend fun isLoggedIn(): Boolean {
-        val phone = localDataResource.getCurrentUserPhone()
-        val token = preferences.getAuthToken()
-        return phone != null && !token.isNullOrBlank()
-    }
-
-    override suspend fun login(credentials: LoginCredentials): Result<UserAccount> {
-        val remoteResult = remoteDataSource.login(LoginRequestDto(credentials.phone, credentials.password))
-        return remoteResult.fold(
-            onSuccess = { dto ->
-                // 保存 token
-                preferences.setAuthToken(dto.token)
-                preferences.setRefreshToken(dto.refreshToken)
-                // 资料落库（若后端返回）
-                val account = dto.profile?.toDomain() ?: UserAccount(
-                    phone = credentials.phone,
-                    avatar = null,
-                    nickname = null,
-                    password = null,
-                    introduction = null,
-                    sex = null,
-                    birthday = null,
-                    career = null,
-                    region = null,
-                    school = null,
-                    background = null
-                )
-                localDataResource.saveUser(account.toEntity(""))
-                Result.success(account)
-            },
-            onFailure = { Result.failure(it) }
-        )
-    }
-
-    override suspend fun logout(): Result<Unit> {
-        try {
-            authRemote.logout()
-        } catch (_: Throwable) {
-        }
-        return try {
-            localDataResource.clearUser()
-            Result.success(Unit)
-        } catch (throwable: Throwable) {
-            Result.failure(throwable)
-        }
-    }
-
-    override suspend fun register(info: RegisterInfo): Result<UserAccount> {
-        val remoteResult = remoteDataSource.register(
-            info.nickname,
-            info.phone,
-            info.password,
-            info.verificationCode
-        )
-        return remoteResult.fold(
-            onSuccess = { dto ->
-                preferences.setAuthToken(dto.token)
-                preferences.setRefreshToken(dto.refreshToken)
-                val account = dto.profile?.toDomain() ?: UserAccount(
-                    phone = info.phone,
-                    avatar = null,
-                    nickname = info.nickname,
-                    password = null,
-                    introduction = null,
-                    sex = null,
-                    birthday = null,
-                    career = null,
-                    region = null,
-                    school = null,
-                    background = null
-                )
-                localDataResource.saveUser(account.toEntity(""))
-                Result.success(account)
-            },
-            onFailure = { Result.failure(it) }
-        )
-    }
-
-    override suspend fun sendVerificationCode(phone: String, nickname: String): Result<String> {
-        return remoteDataSource.sendVerificationCode(phone, nickname)
-    }
 
     override suspend fun getUserProfile(phone: String): Result<UserAccount> {
         val remote = userRemote.me()
@@ -154,7 +63,7 @@ class UserRepositoryImpl @Inject constructor(
         fun toRelativeIfBackendUrl(url: String?): String? {
             val v = url?.trim().orEmpty()
             if (v.isBlank()) return null
-            val base = CoreNetworkModule.BASE_URL.trimEnd('/')
+            val base = NetworkModule.BASE_URL.trimEnd('/')
             return if (v.startsWith(base)) v.removePrefix(base) else v
         }
 
@@ -229,4 +138,3 @@ class UserRepositoryImpl @Inject constructor(
         return localDataResource.getCurrentUserPhone()
     }
 }
-

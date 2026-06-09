@@ -1,6 +1,5 @@
 package com.example.blue_book.di
 
-import com.example.blue_book.data.remote.account.AccountApi
 import com.example.blue_book.data.remote.file.FileApi
 import com.example.blue_book.data.remote.user.UserApi
 import dagger.Module
@@ -14,10 +13,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object MineNetworkModule {
-
-    @Provides @Singleton
-    fun provideAccountApi(@Named("backend") retrofit: Retrofit): AccountApi =
-        retrofit.create(AccountApi::class.java)
 
     @Provides @Singleton
     fun provideUserApi(@Named("backend") retrofit: Retrofit): UserApi =

@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_home.R
-import com.example.blue_book.lib_base.R as BaseR
 import com.example.blue_book.common.bean.VideoCardInfo
 
 class PreVideoAdapter(
@@ -77,8 +76,8 @@ class PreVideoAdapter(
 			desc.text = item.description
 			nickname.text = item.nickname
 			bindLike(item.isLike, item.like)
-			Glide.with(itemView).load(item.image).placeholder(BaseR.drawable.default_avatar).into(cover)
-			Glide.with(itemView).load(item.avatar).placeholder(BaseR.drawable.ic_launcher_background).into(avatar)
+			Glide.with(itemView).load(item.image).placeholder(R.drawable.default_avatar).into(cover)
+			Glide.with(itemView).load(item.avatar).placeholder(R.drawable.ic_launcher_background).into(avatar)
 			likeIcon.setOnClickListener { currentItem?.let(onClickLike) }
 			itemView.setOnClickListener { currentItem?.let(onClickItem) }
 		}
@@ -89,7 +88,7 @@ class PreVideoAdapter(
 
 		fun bindLike(isLike: Boolean, like: Int) {
 			likeNum.text = like.toString()
-			likeIcon.setImageResource(if (isLike) BaseR.drawable.like_icon3 else BaseR.drawable.like_icon2)
+			likeIcon.setImageResource(if (isLike) R.drawable.like_icon3 else R.drawable.like_icon2)
 		}
 	}
 

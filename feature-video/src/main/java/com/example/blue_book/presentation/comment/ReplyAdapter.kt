@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_video.R
-import com.example.blue_book.lib_base.R as BaseR
 import com.example.blue_book.domain.model.Comment
 
 class ReplyAdapter(
@@ -43,12 +42,12 @@ class ReplyAdapter(
                 comment.nickname
             }
 
-            Glide.with(itemView.context).load(comment.avatar).placeholder(BaseR.drawable.ic_launcher_background).into(avatar)
+            Glide.with(itemView.context).load(comment.avatar).placeholder(R.drawable.ic_launcher_background).into(avatar)
             nickname.text = displayName
             time.text = formatTime(comment.createTime)
             content.text = comment.content
             likeCount.text = formatCount(comment.likeCount)
-            likeBtn.setImageResource(if (comment.isLiked) BaseR.drawable.like_icon3 else BaseR.drawable.like_icon2)
+            likeBtn.setImageResource(if (comment.isLiked) R.drawable.like_icon3 else R.drawable.like_icon2)
 
             likeBtn.setOnClickListener { onLikeClick(comment) }
             replyBtn.setOnClickListener { onReplyClick(comment) }

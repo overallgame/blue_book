@@ -1,7 +1,7 @@
 package com.example.blue_book.data.remote
 
 import com.example.blue_book.common.bean.ApiResponse
-import com.example.blue_book.data.remote.account.dto.CommonResultDto
+import com.example.blue_book.data.remote.dto.CommonResultDto
 import retrofit2.HttpException
 import retrofit2.Response
 

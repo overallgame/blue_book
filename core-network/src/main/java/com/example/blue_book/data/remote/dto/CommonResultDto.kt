@@ -1,4 +1,4 @@
-package com.example.blue_book.data.remote.account.dto
+package com.example.blue_book.data.remote.dto
 
 data class CommonResultDto<T>(
     val msg: String?,

@@ -1,11 +1,6 @@
 package com.example.blue_book.core.network
 
-import com.example.blue_book.data.remote.account.AccountApi
 import com.example.blue_book.data.remote.auth.AuthApi
-import com.example.blue_book.data.remote.comment.CommentApi
-import com.example.blue_book.data.remote.file.FileApi
-import com.example.blue_book.data.remote.user.UserApi
-import com.example.blue_book.data.remote.video.VideoApi
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -85,29 +80,11 @@ object CoreNetworkModule {
             .build()
     }
 
-    // ── API 接口 ────────────────────────────────────────────
-
-    @Provides @Singleton
-    fun provideAccountApi(@Named("backend") retrofit: Retrofit): AccountApi =
-        retrofit.create(AccountApi::class.java)
-
-    @Provides @Singleton
-    fun provideUserApi(@Named("backend") retrofit: Retrofit): UserApi =
-        retrofit.create(UserApi::class.java)
-
-    @Provides @Singleton
-    fun provideFileApi(@Named("backend") retrofit: Retrofit): FileApi =
-        retrofit.create(FileApi::class.java)
+    // ── 基础设施 API（TokenAuthenticator 需要） ──
 
     @Provides @Singleton
     fun provideAuthApi(@Named("backend") retrofit: Retrofit): AuthApi =
         retrofit.create(AuthApi::class.java)
 
-    @Provides @Singleton
-    fun provideVideoApi(@Named("backend") retrofit: Retrofit): VideoApi =
-        retrofit.create(VideoApi::class.java)
-
-    @Provides @Singleton
-    fun provideCommentApi(@Named("backend") retrofit: Retrofit): CommentApi =
-        retrofit.create(CommentApi::class.java)
+    // 业务 API 已分散到各 feature 模块独立管理
 }

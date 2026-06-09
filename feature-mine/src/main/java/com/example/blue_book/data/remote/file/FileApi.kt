@@ -1,6 +1,6 @@
 package com.example.blue_book.data.remote.file
 
-import com.example.blue_book.data.remote.account.dto.CommonResultDto
+import com.example.blue_book.data.remote.dto.CommonResultDto
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Multipart

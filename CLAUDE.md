@@ -39,13 +39,12 @@
 
 ## 架构概览
 
-Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP 8.5.2**、**Java 17**。采用 **Clean Architecture** + MVVM + 自定义 **UDF（单向数据流）**，已拆分为 **16 个模块**。所有 UI 文案、注释、API 返回信息均为中文。Git 用户：`overfloatGame`。
+Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP 8.5.2**、**Java 17**。采用 **Clean Architecture** + MVVM + 自定义 **UDF（单向数据流）**，已拆分为 **11 个模块**。所有 UI 文案、注释、API 返回信息均为中文。Git 用户：`overfloatGame`。
 
 ### 模块总览
 
 ```
-:app                 ← 壳工程：Application + MainActivity + 主题 + nav_graph
-:feature-main        ← 主容器：MainTabsFragment + 底部4Tab（ViewPager2）
+:app                 ← 壳工程：Application + MainActivity + 主题 + 权限声明
 
 ── 业务功能层（底部4个Tab） ──
 :feature-home        ← 首页：瀑布流发现页 + 搜索 + 热搜榜
@@ -57,60 +56,57 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 :feature-auth        ← 登录注册：AuthEntry + Login + Register
 :feature-image       ← 图片选择：Gallery + Crop + ImagePickerActivity
 
-── 数据层 ──
-:data-api            ← Retrofit API 接口 + DTO + RemoteDataSource + RemoteCall
-:data-local          ← Room 数据库 + UserDao + UserLocalDataResource
-:data-repository     ← Repository 实现 + Mapper + UriFileResolver
-
 ── 核心能力层 ──
-:core-network        ← OkHttp + AuthInterceptor + TokenAuthenticator + INTERNET 权限
+:core-network        ← OkHttp + AuthInterceptor + TokenAuthenticator + Retrofit API
 :core-player         ← ExoPlayerEngine + MediaCache(200MB LRU) + PlayerEnginePool + GL 滤镜
-:core-datastore      ← SessionDataStore（DataStore 封装）
+:core-datastore      ← DataStore + TokenCache + Room 数据库 + AuthPreferences
 
 ── 基础层 ──
-:domain              ← 纯 Kotlin：领域模型 + 仓库接口 + 18 个 UseCase
-:lib-base            ← UDF 基类 + 公共 bean + RouterPath + EventBus 事件 + AuthPreferences 接口
+:lib-base            ← UDF 基类 + 公共 bean + 领域模型 + 仓库接口 + UseCase
 ```
 
 ### 模块依赖层次
 
 ```
-:lib-base  :domain
-    │         │
-    ├─────────┼──────────────┬──────────────┐
-    │         │              │              │
-:data-api  :data-local  :core-network  :core-player  :core-datastore
-    │         │              │
-    └────┬────┘              │
-         │                   │
-    :data-repository         │
-         │                   │
-         └─────────┬─────────┘
-                   │
+:lib-base
+    │
+    ├──────────────┬──────────────┬──────────────┐
+    │              │              │              │
+:core-network  :core-player  :core-datastore     │
+    │              │              │              │
+    └──────┬───────┘              │              │
+           │                      │              │
+    ┌──────┴──────────────────────┴──────────────┘
+    │      │         │         │         │
+:feature-auth :feature-home :feature-video :feature-mine :feature-message :feature-image
+    │      │         │         │         │              │
+    └──────┴─────────┴─────────┴─────────┴──────────────┘
+                           │
+                          :app
+```
     ┌──────────────┼──────────────┐
     │              │              │
 :feature-auth  :feature-image  :feature-home  :feature-video  :feature-message  :feature-mine
     │              │              │              │                │                │
-    └──────────────┴──────────────┴──────────────┴────────────────┴────────────────┘
-                                          │
-                                    :feature-main
-                                          │
-                                         :app
+    └──────┴─────────┴─────────┴─────────┴──────────────┘
+                           │
+                          :app
 ```
 
 ### 权限归属
 
 | 权限 | 所属模块 | 说明 |
 |------|---------|------|
-| `INTERNET` | `:core-network` | 网络基础层持有 |
-| `READ_MEDIA_IMAGES` | `:feature-image` | 图片选择需要 |
-| `READ_EXTERNAL_STORAGE` | `:feature-image` | 兼容旧版本存储读取 |
+| `INTERNET` | `:app` | 壳工程统一声明 |
+| `READ_MEDIA_IMAGES` | `:app` | 壳工程统一声明 |
+| `READ_EXTERNAL_STORAGE` | `:app` | 兼容旧版本存储读取 |
 
 ### 资源文件归属
 
-- **跨模块共享的 drawable**（`like_icon2/3`、`default_avatar`、`ic_launcher_background` 等）在各使用模块中复制了一份，尚未提取到 `:lib-base` 统一管理
-- **`values/ids.xml`**：各 feature 模块均需定义本地 ID 占位，用于编译期通过 Navigation 组件引用。后续迁移到 ARouter 后可删除
-- **主题/颜色/图标**：保留在 `:app`，各 feature 模块的 `AndroidManifest.xml` 仅声明权限和 Activity
+- **drawable**：各模块独立持有 layout 引用的 drawable，无跨模块引用
+- **styles**：各模块独立管理所需样式
+- **colors**：各 feature 模块持有实际使用的颜色值，`:app` 持有完整 Material 色板和主题
+- **主题**：`AppTheme` 保留在 `:app`，各 feature 模块的 `AndroidManifest.xml` 仅声明 Activity
 
 ## UDF 模式（`:lib-base/core/udf/`）
 
@@ -138,20 +134,20 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 所有列表接口使用**基于游标的分页**，参数为 `cursorId` + `size`。ViewModel 在 state 中维护 `cursorId` 和 `hasMore`。`LoadMore` intent 的处理由 `isLoading` 标志位防重。
 
-## 网络层（`:core-network` + `:data-api`）
+## 网络层（`:core-network`）
 
 - **Base URL**：`http://10.0.2.2:8085/`（Android 模拟器本地地址），定义在 `CoreNetworkModule`
 - **响应信封**：
   - `ApiResponse<T>(code: Int, message: String, data: T?)` —— `code == 0` 表示成功
   - `CommonResultDto<T>(code: Int, msg: String, data: T?)` —— `code == 200` 表示成功（部分接口使用）
-- **API 调用包装器**（`:data-api/data/remote/RemoteCall.kt`）：三个 `suspend inline` 函数封装 Retrofit 调用：
+- **API 调用包装器**（`:core-network/.../RemoteCall.kt`）：三个 `suspend inline` 函数封装 Retrofit 调用：
   - `apiCall<T>()` → 检查 HTTP 成功 → 检查 `ApiResponse.code == 0` → 返回 `Result<T>`
   - `apiUnitCall()` → 同上，返回 `Result<Unit>`（不关心 data 体）
   - `commonCall<T>()` → 检查 HTTP 成功 → 检查 `CommonResultDto.code == 200` → 返回 `Result<T>`
 - **两个 OkHttpClient 实例**（`:core-network/CoreNetworkModule`）：
   - 默认：包含 `AuthInterceptor` + `TokenAuthenticator`，超时 10s，开启 `retryOnConnectionFailure(true)`，日志级别 `BODY`
   - `@Named("refresh")`：供 `TokenAuthenticator` 刷新 token 专用 —— **不带** auth 拦截器，防无限循环
-- **Retrofit 与 API 接口**（`:data-api/di/ApiModule`）：Gson + Retrofit + 6 个 `*Api` 接口
+- **Retrofit 与 API 接口**：Gson + Retrofit + 6 个 `*Api` 接口，均在 `CoreNetworkModule` 中提供
 
 ### 鉴权流程
 
@@ -159,7 +155,7 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 - 为每个请求添加 `Authorization: Bearer <token>` 头
 - 跳过 `/api/v2/auth/refresh`（否则 refresh 接口自身 401 会造成死循环）
 - token 为空时跳过
-- token 仍从 `AuthPreferences`（SharedPreferences）同步读取，因为 OkHttp Interceptor 运行在 I/O 线程池，不能调 DataStore 的 suspend 函数
+- token 仍从 `TokenCache`（`@Volatile` 缓存）同步读取，因为 OkHttp Interceptor 运行在 I/O 线程池，不能调 DataStore 的 suspend 函数
 
 **TokenAuthenticator**（`:core-network/core/network/TokenAuthenticator.kt`）：
 - OkHttp `Authenticator` —— 收到 `401` 时触发
@@ -174,12 +170,10 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 | 模块 | Hilt Module | 提供内容 |
 |------|-----------|---------|
-| `:core-network` | `CoreNetworkModule` | OkHttpClient（2 个）、HttpLoggingInterceptor、BASE_URL |
-| `:data-api` | `ApiModule` | Gson、Retrofit（`@Named("backend")`）、6 个 API 接口 |
-| `:data-local` | `DatabaseModule`、`LocalModule` | Room `AppDatabase`、`UserDao`、`UserLocalDataResource` 绑定 |
-| `:data-repository` | `RepositoryModule` | `@Binds` 3 个 Repository 实现 → domain 接口 |
-| `:core-datastore` | `DataStoreModule` | `SessionDataStore` |
-| `:app` | `PreferenceModule` | `@Binds AuthPreferencesImpl → AuthPreferences`（SharedPreferences，暂未迁移） |
+| `:core-network` | `CoreNetworkModule` | OkHttpClient（2 个）、HttpLoggingInterceptor、BASE_URL、Gson、Retrofit、6 个 API 接口 |
+| `:core-datastore` | `DataStoreModule`、`DatabaseModule`、`LocalModule` | `SessionDataStore`、Room `AppDatabase`、`UserDao`、`AuthPreferences` 绑定 |
+| `:feature-mine` | `UserRepositoryModule` | `@Binds UserRepositoryImpl → UserRepository` |
+| `:feature-video` | `VideoRepositoryModule` | `@Binds VideoRepositoryImpl → VideoRepository`、`CommentRepositoryImpl → CommentRepository` |
 
 各 feature 模块的 ViewModel 通过 `@HiltViewModel` + `@Inject constructor` 自动注册，无需额外 Module。
 
@@ -210,7 +204,7 @@ MineActivity 内部 Fragment 跳转：
 **模块内跳转**：Fragment 通过 `(requireActivity() as XxxActivity).navigateToXxx()` 调用宿主 Activity 的公共方法。  
 **底部 Tab**：`singleTask` 启动模式 + `FLAG_ACTIVITY_REORDER_TO_FRONT`，每个 Tab 只有一个 Activity 实例。
 
-## 数据库（`:data-local`）
+## 数据库（`:core-datastore`）
 
 Room（`AppDatabase`，版本 1），目前只有一张表 `UserEntity`（表名 `user`，主键 phone）。单例通过伴生对象中的双重检查锁定实现。`UserDao` 提供 CRUD + 头像/背景图更新方法。
 

@@ -20,7 +20,7 @@ android {
 dependencies {
     implementation(project(":lib-base"))
     implementation(project(":core-network"))
-    implementation(project(":data-local"))
+    implementation(project(":core-datastore"))
     implementation(project(":feature-mine"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("javax.inject:javax.inject:1")

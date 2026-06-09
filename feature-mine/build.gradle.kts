@@ -21,7 +21,7 @@ dependencies {
     implementation(project(":lib-base"))
     implementation(project(":feature-image"))
     implementation(project(":core-network"))
-    implementation(project(":data-local"))
+    implementation(project(":core-datastore"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("javax.inject:javax.inject:1")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")

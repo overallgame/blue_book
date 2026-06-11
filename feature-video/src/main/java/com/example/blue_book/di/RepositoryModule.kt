@@ -4,8 +4,6 @@ import com.example.blue_book.data.repository.CommentRepositoryImpl
 import com.example.blue_book.data.repository.VideoRepositoryImpl
 import com.example.blue_book.domain.repository.CommentRepository
 import com.example.blue_book.domain.repository.VideoRepository
-import com.example.blue_book.provider.IVideoProvider
-import com.example.blue_book.provider.VideoProviderImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -23,8 +21,4 @@ abstract class VideoRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCommentRepository(impl: CommentRepositoryImpl): CommentRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindVideoProvider(impl: VideoProviderImpl): IVideoProvider
 }

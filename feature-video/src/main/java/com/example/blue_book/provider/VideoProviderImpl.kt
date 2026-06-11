@@ -3,15 +3,8 @@ package com.example.blue_book.provider
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.domain.model.Video
 import com.example.blue_book.domain.repository.VideoRepository
-import javax.inject.Inject
-import javax.inject.Singleton
 
-/**
- * IVideoProvider 的 Hilt 管理实现。
- * 通过静态持有者向 TheRouter 暴露实例。
- */
-@Singleton
-class VideoProviderImpl @Inject constructor(
+class VideoProviderImpl(
     private val repository: VideoRepository
 ) : IVideoProvider {
 
@@ -40,13 +33,4 @@ class VideoProviderImpl @Inject constructor(
         isLike = false,
         isCollect = false
     )
-
-    companion object {
-        @Volatile
-        var instance: IVideoProvider? = null
-    }
-
-    init {
-        instance = this
-    }
 }

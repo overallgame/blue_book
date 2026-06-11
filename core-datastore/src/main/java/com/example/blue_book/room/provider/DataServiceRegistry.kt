@@ -1,17 +1,23 @@
 package com.example.blue_book.room.provider
 
+import com.example.blue_book.AppContext
 import com.example.blue_book.provider.IUserDataProvider
+import com.example.blue_book.room.user.UserLocalDataResource
 import com.therouter.inject.ServiceProvider
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
-/**
- * TheRouter 服务注册：将 Hilt 管理的 IUserDataProvider 实例暴露给其他模块。
- */
-object DataServiceRegistry {
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface DataServiceEntryPoint {
+    fun userLocalDataResource(): UserLocalDataResource
+}
 
-    @JvmStatic
-    @ServiceProvider(returnType = IUserDataProvider::class)
-    fun provideUserDataProvider(): IUserDataProvider {
-        return UserDataProviderImpl.instance
-            ?: throw IllegalStateException("UserDataProviderImpl has not been initialized by Hilt yet")
-    }
+@ServiceProvider(returnType = IUserDataProvider::class)
+fun provideUserDataProvider(): IUserDataProvider {
+    val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
+        AppContext.application, DataServiceEntryPoint::class.java
+    )
+    return UserDataProviderImpl(entryPoint.userLocalDataResource())
 }

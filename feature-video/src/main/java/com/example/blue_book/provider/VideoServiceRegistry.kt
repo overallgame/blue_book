@@ -1,16 +1,22 @@
 package com.example.blue_book.provider
 
+import com.example.blue_book.AppContext
+import com.example.blue_book.domain.repository.VideoRepository
 import com.therouter.inject.ServiceProvider
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
-/**
- * TheRouter 服务注册：将 Hilt 管理的 IVideoProvider 实例暴露给其他模块。
- */
-object VideoServiceRegistry {
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface VideoServiceEntryPoint {
+    fun videoRepository(): VideoRepository
+}
 
-    @JvmStatic
-    @ServiceProvider(returnType = IVideoProvider::class)
-    fun provideVideoProvider(): IVideoProvider {
-        return VideoProviderImpl.instance
-            ?: throw IllegalStateException("VideoProviderImpl has not been initialized by Hilt yet")
-    }
+@ServiceProvider(returnType = IVideoProvider::class)
+fun provideVideoProvider(): IVideoProvider {
+    val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
+        AppContext.application, VideoServiceEntryPoint::class.java
+    )
+    return VideoProviderImpl(entryPoint.videoRepository())
 }

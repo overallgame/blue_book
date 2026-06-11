@@ -1,17 +1,27 @@
 package com.example.blue_book.auth.provider
 
+import com.example.blue_book.AppContext
+import com.example.blue_book.auth.domain.repository.AuthRepository
 import com.example.blue_book.provider.IAuthProvider
 import com.therouter.inject.ServiceProvider
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
 /**
- * TheRouter 服务注册：将 Hilt 管理的 IAuthProvider 实例暴露给其他模块。
+ * TheRouter IProvider 注册 —— 方案B：纯服务发现模式。
+ * 通过 Hilt EntryPoint 获取 AuthRepository，消除静态持有者。
  */
-object AuthServiceRegistry {
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface AuthServiceEntryPoint {
+    fun authRepository(): AuthRepository
+}
 
-    @JvmStatic
-    @ServiceProvider(returnType = IAuthProvider::class)
-    fun provideAuthProvider(): IAuthProvider {
-        return AuthProviderImpl.instance
-            ?: throw IllegalStateException("AuthProviderImpl has not been initialized by Hilt yet")
-    }
+@ServiceProvider(returnType = IAuthProvider::class)
+fun provideAuthProvider(): IAuthProvider {
+    val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
+        AppContext.application, AuthServiceEntryPoint::class.java
+    )
+    return AuthProviderImpl(entryPoint.authRepository())
 }

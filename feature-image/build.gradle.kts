@@ -27,6 +27,7 @@ android {
 }
 
 dependencies {
+    kapt("cn.therouter:apt:1.3.0")
     implementation(project(":lib-base"))
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.fragment:fragment-ktx:1.5.0")

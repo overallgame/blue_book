@@ -1,6 +1,6 @@
 package com.example.blue_book.network.api
 
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.network.dto.RefreshTokenRequest
 import com.example.blue_book.network.dto.TokenResponse
 import retrofit2.Response

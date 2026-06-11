@@ -1,16 +1,16 @@
 package com.example.blue_book.data.repository
 
 import android.net.Uri
-import com.example.blue_book.room.user.UserLocalDataResource
 import com.example.blue_book.data.mapper.toDomain
-import com.example.blue_book.data.mapper.toEntity
 import com.example.blue_book.data.remote.file.FileRemoteDataSource
 import com.example.blue_book.data.remote.user.UserRemoteDataSource
-import com.example.blue_book.network.NetworkModule
+import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.data.remote.user.dto2.UserV2UpdateRequestDto
 import com.example.blue_book.util.UriFileResolver
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 import com.example.blue_book.domain.repository.UserRepository
+import com.example.blue_book.provider.IUserDataProvider
+import com.therouter.TheRouter
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -21,31 +21,33 @@ import javax.inject.Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userRemote: UserRemoteDataSource,
     private val fileRemote: FileRemoteDataSource,
-    private val localDataResource: UserLocalDataResource,
     private val uriFileResolver: UriFileResolver
 ) : UserRepository {
+
+    private val userData: IUserDataProvider get() = TheRouter.get(IUserDataProvider::class.java)!!
 
     override suspend fun getUserProfile(phone: String): Result<UserAccount> {
         val remote = userRemote.me()
         return remote.fold(
             onSuccess = { dto ->
                 val domain = dto.toDomain()
-                val fallbackPassword = localDataResource.getCurrentUser(domain.phone)?.password
-                    ?: localDataResource.getCurrentUser(phone)?.password
+                val fallbackPassword = userData.getUserByPhone(domain.phone)?.password
+                    ?: userData.getUserByPhone(phone)?.password
                     ?: ""
-                val existing = localDataResource.getCurrentUser(domain.phone)
+                val domainWithPwd = domain.copy(password = fallbackPassword)
+                val existing = userData.getUserByPhone(domain.phone)
                 if (existing == null) {
-                    localDataResource.saveUser(domain.toEntity(fallbackPassword))
+                    userData.saveUser(domainWithPwd)
                 } else {
-                    localDataResource.updateUser(domain.toEntity(fallbackPassword))
+                    userData.updateUser(domainWithPwd)
                 }
                 Result.success(domain)
             },
             onFailure = {
                 try {
-                    val local = localDataResource.getCurrentUser(phone)
+                    val local = userData.getUserByPhone(phone)
                         ?: throw IllegalStateException("本地不存在该用户信息")
-                    Result.success(local.toDomain())
+                    Result.success(local)
                 } catch (t: Throwable) {
                     Result.failure(t)
                 }
@@ -63,7 +65,7 @@ class UserRepositoryImpl @Inject constructor(
         fun toRelativeIfBackendUrl(url: String?): String? {
             val v = url?.trim().orEmpty()
             if (v.isBlank()) return null
-            val base = NetworkModule.BASE_URL.trimEnd('/')
+            val base = ApiGateway.BASE_URL.trimEnd('/')
             return if (v.startsWith(base)) v.removePrefix(base) else v
         }
 
@@ -116,14 +118,15 @@ class UserRepositoryImpl @Inject constructor(
                 try {
                     val updated = dto.toDomain()
                     val fallbackPassword = account.password
-                        ?: localDataResource.getCurrentUser(updated.phone)?.password
-                        ?: localDataResource.getCurrentUser(account.phone)?.password
+                        ?: userData.getUserByPhone(updated.phone)?.password
+                        ?: userData.getUserByPhone(account.phone)?.password
                         ?: ""
-                    val existing = localDataResource.getCurrentUser(updated.phone)
+                    val updatedWithPwd = updated.copy(password = fallbackPassword)
+                    val existing = userData.getUserByPhone(updated.phone)
                     if (existing == null) {
-                        localDataResource.saveUser(updated.toEntity(fallbackPassword))
+                        userData.saveUser(updatedWithPwd)
                     } else {
-                        localDataResource.updateUser(updated.toEntity(fallbackPassword))
+                        userData.updateUser(updatedWithPwd)
                     }
                     Result.success(Unit)
                 } catch (t: Throwable) {
@@ -135,6 +138,6 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun currentUserPhone(): String? {
-        return localDataResource.getCurrentUserPhone()
+        return userData.getCurrentUserPhone()
     }
 }

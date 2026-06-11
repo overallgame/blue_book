@@ -1,7 +1,7 @@
 package com.example.blue_book.auth.domain.usecase
 
 import com.example.blue_book.auth.domain.model.RegisterInfo
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 import com.example.blue_book.auth.domain.repository.AuthRepository
 import javax.inject.Inject
 

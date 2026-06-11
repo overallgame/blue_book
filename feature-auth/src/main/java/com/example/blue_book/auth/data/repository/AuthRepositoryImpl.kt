@@ -1,16 +1,16 @@
 package com.example.blue_book.auth.data.repository
 
 import com.example.blue_book.auth.data.mapper.toDomain
-import com.example.blue_book.auth.data.mapper.toEntity
 import com.example.blue_book.auth.data.remote.AuthRemoteDataSource
 import com.example.blue_book.auth.data.remote.dto.LoginRequest
 import com.example.blue_book.preference.AuthPreferences
 import com.example.blue_book.auth.domain.model.LoginCredentials
 import com.example.blue_book.auth.domain.model.RegisterInfo
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 import com.example.blue_book.auth.domain.repository.AuthRepository
 import com.example.blue_book.network.datasource.TokenRemoteDataSource
-import com.example.blue_book.room.user.UserLocalDataResource
+import com.example.blue_book.provider.IUserDataProvider
+import com.therouter.TheRouter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,12 +18,13 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val remoteDataSource: AuthRemoteDataSource,
     private val authRemote: TokenRemoteDataSource,
-    private val localDataResource: UserLocalDataResource,
     private val preferences: AuthPreferences
 ) : AuthRepository {
 
+    private val userData: IUserDataProvider get() = TheRouter.get(IUserDataProvider::class.java)!!
+
     override suspend fun isLoggedIn(): Boolean {
-        val phone = localDataResource.getCurrentUserPhone()
+        val phone = userData.getCurrentUserPhone()
         val token = preferences.getAuthToken()
         return phone != null && !token.isNullOrBlank()
     }
@@ -47,7 +48,7 @@ class AuthRepositoryImpl @Inject constructor(
                     school = null,
                     background = null
                 )
-                localDataResource.saveUser(account.toEntity(""))
+                userData.saveUser(account)
                 Result.success(account)
             },
             onFailure = { Result.failure(it) }
@@ -60,7 +61,7 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (_: Throwable) {
         }
         return try {
-            localDataResource.clearUser()
+            userData.clearUser()
             Result.success(Unit)
         } catch (throwable: Throwable) {
             Result.failure(throwable)
@@ -91,7 +92,7 @@ class AuthRepositoryImpl @Inject constructor(
                     school = null,
                     background = null
                 )
-                localDataResource.saveUser(account.toEntity(""))
+                userData.saveUser(account)
                 Result.success(account)
             },
             onFailure = { Result.failure(it) }

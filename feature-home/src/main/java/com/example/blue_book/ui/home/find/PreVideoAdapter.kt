@@ -11,11 +11,11 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_home.R
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 
 class PreVideoAdapter(
-	private val onClickLike: (VideoCardInfo) -> Unit,
-	private val onClickItem: (VideoCardInfo) -> Unit = {}
+    private val onClickLike: (VideoCardInfo) -> Unit,
+    private val onClickItem: (VideoCardInfo) -> Unit = {}
 ) : ListAdapter<VideoCardInfo, PreVideoAdapter.VH>(DIFF) {
 
 	init {

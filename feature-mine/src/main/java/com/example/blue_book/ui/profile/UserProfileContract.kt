@@ -3,7 +3,7 @@ package com.example.blue_book.ui.profile
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
 import com.example.blue_book.udf.UiState
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 
 sealed interface UserProfileIntent : UiIntent {
 	data object Init : UserProfileIntent
@@ -22,9 +22,9 @@ sealed interface UserProfileIntent : UiIntent {
 }
 
 data class UserProfileUiState(
-	val user: UserAccount? = null,
-	val isLoading: Boolean = false,
-	val message: String? = null
+    val user: UserAccount? = null,
+    val isLoading: Boolean = false,
+    val message: String? = null
 ) : UiState
 
 sealed interface UserProfileEffect : UiEffect {

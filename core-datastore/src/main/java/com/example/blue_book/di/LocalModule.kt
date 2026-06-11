@@ -1,9 +1,11 @@
 package com.example.blue_book.di
 
-import com.example.blue_book.room.user.UserLocalDataResource
-import com.example.blue_book.room.user.UserLocalDataResourceImpl
 import com.example.blue_book.datastore.AuthDataStoreImpl
 import com.example.blue_book.preference.AuthPreferences
+import com.example.blue_book.provider.IUserDataProvider
+import com.example.blue_book.room.provider.UserDataProviderImpl
+import com.example.blue_book.room.user.UserLocalDataResource
+import com.example.blue_book.room.user.UserLocalDataResourceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,5 +23,9 @@ abstract class LocalModule {
     @Binds
     @Singleton
     abstract fun bindAuthPreferences(impl: AuthDataStoreImpl): AuthPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindUserDataProvider(impl: UserDataProviderImpl): IUserDataProvider
 }
 

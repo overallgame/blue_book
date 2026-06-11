@@ -21,10 +21,11 @@ import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.MinePageBinding
-import com.example.blue_book.ui.image.ImagePickerActivity
+import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.mine.page.MineCollectionFragment
 import com.example.blue_book.ui.mine.page.MineLoveFragment
 import com.example.blue_book.ui.mine.page.MineWorkFragment
+import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -64,7 +65,7 @@ class MineFragment : Fragment() {
         ) { result ->
             if (result.resultCode == AppCompatActivity.RESULT_OK) {
                 val uri = result.data?.data ?: return@registerForActivityResult
-                val tag = result.data?.getStringExtra(ImagePickerActivity.EXTRA_TAG)
+                val tag = result.data?.getStringExtra("tag")
                 when (tag) {
                     "avatar" -> {
                         binding.mineAvatar.setImageURI(uri)
@@ -131,8 +132,9 @@ class MineFragment : Fragment() {
     }
 
     private fun openCustomImagePicker(tag: String) {
-        val intent = Intent(requireContext(), ImagePickerActivity::class.java)
-        intent.putExtra(ImagePickerActivity.EXTRA_TAG, tag)
+        val intent = TheRouter.build(RoutePath.IMAGE_PICKER)
+            .withString("tag", tag)
+            .createIntent(requireContext())
         pickImageLauncher.launch(intent)
     }
 

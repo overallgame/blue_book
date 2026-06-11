@@ -1,6 +1,6 @@
 package com.example.blue_book.data.remote.user
 
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.data.remote.user.dto2.UserV2AvatarUploadResponseDto
 import com.example.blue_book.data.remote.user.dto2.UserV2FollowListResponseDto
 import com.example.blue_book.data.remote.user.dto2.UserV2MeDto

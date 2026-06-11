@@ -5,9 +5,13 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import com.example.blue_book.feature_mine.R
+import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.profile.UserProfileEditFragment
+import com.therouter.TheRouter
+import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
 
+@Route(path = RoutePath.MINE)
 @AndroidEntryPoint
 class MineActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,11 +32,9 @@ class MineActivity : AppCompatActivity() {
     }
 
     fun navigateToAuthEntry() {
-        val intent = Intent().apply {
-            setClassName(packageName, "com.example.blue_book.auth.ui.AuthActivity")
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        startActivity(intent)
+        TheRouter.build(RoutePath.AUTH)
+            .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            .navigation(this)
         finish()
     }
 }

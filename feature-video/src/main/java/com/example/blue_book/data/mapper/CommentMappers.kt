@@ -1,10 +1,10 @@
 package com.example.blue_book.data.mapper
 
-import com.example.blue_book.network.NetworkModule
+import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.data.remote.comment.dto.CommentDto
 import com.example.blue_book.domain.model.Comment
 
-private fun getBaseUrl(): String = NetworkModule.BASE_URL.trimEnd('/')
+private fun getBaseUrl(): String = ApiGateway.BASE_URL.trimEnd('/')
 
 private fun abs(url: String?): String {
     val u = url?.trim().orEmpty()

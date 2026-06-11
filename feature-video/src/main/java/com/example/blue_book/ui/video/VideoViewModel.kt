@@ -1,6 +1,6 @@
 package com.example.blue_book.ui.video
 
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.udf.UdfViewModel
 import com.example.blue_book.domain.model.Video
 import com.example.blue_book.domain.usecase.CollectVideoUseCase

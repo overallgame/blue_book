@@ -1,0 +1,51 @@
+[
+  {
+    "path": "/app/main",
+    "className": "com.example.blue_book.view.MainActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/video/main",
+    "className": "com.example.blue_book.ui.video.VideoActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/mine/main",
+    "className": "com.example.blue_book.ui.mine.MineActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/message/main",
+    "className": "com.example.blue_book.ui.message.MessageActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/image/picker",
+    "className": "com.example.blue_book.ui.image.ImagePickerActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/home/main",
+    "className": "com.example.blue_book.ui.home.HomeActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/auth/entry",
+    "className": "com.example.blue_book.auth.ui.AuthActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  }
+]

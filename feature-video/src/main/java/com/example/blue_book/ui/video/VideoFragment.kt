@@ -13,7 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_video.databinding.VideoPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch

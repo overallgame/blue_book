@@ -3,7 +3,7 @@ package com.example.blue_book.ui.mine
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
 import com.example.blue_book.udf.UiState
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 
 sealed interface MineIntent : UiIntent {
     data object Init : MineIntent

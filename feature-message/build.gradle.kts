@@ -17,6 +17,7 @@ android {
 }
 
 dependencies {
+    kapt("cn.therouter:apt:1.3.0")
     implementation(project(":lib-base"))
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.fragment:fragment-ktx:1.5.0")

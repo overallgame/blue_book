@@ -23,6 +23,7 @@ android {
 }
 
 dependencies {
+    api("cn.therouter:router:1.3.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

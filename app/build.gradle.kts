@@ -4,6 +4,7 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
+    id("therouter")
 }
 
 android {
@@ -63,6 +64,9 @@ configurations.all {
 }
 
 dependencies {
+
+    kapt("cn.therouter:apt:1.3.0")
+    compileOnly("cn.therouter:router:1.3.0")
 
     implementation(project(":lib-base"))
     implementation(project(":core-datastore"))

@@ -1,6 +1,6 @@
 package com.example.blue_book.data.remote.comment
 
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.data.remote.comment.dto.CommentDto
 import com.example.blue_book.data.remote.comment.dto.CommentListDto
 import com.example.blue_book.data.remote.comment.dto.PostCommentRequestDto

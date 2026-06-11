@@ -1,7 +1,8 @@
 package com.example.blue_book.network
 
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.network.dto.CommonResult
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import retrofit2.Response
 
@@ -15,6 +16,8 @@ suspend inline fun <T> apiCall(
         if (body.code != 0) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
         val data = body.data ?: return Result.failure(IllegalStateException("响应体为空"))
         Result.success(data)
+    } catch (e: CancellationException) {
+        throw e
     } catch (t: Throwable) {
         Result.failure(t)
     }
@@ -29,6 +32,8 @@ suspend inline fun apiUnitCall(
         val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
         if (body.code != 0) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
         Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
     } catch (t: Throwable) {
         Result.failure(t)
     }
@@ -48,6 +53,8 @@ suspend inline fun <T> commonCall(
         }
         val data = body.data ?: return Result.failure(IllegalStateException("响应体为空"))
         Result.success(data)
+    } catch (e: CancellationException) {
+        throw e
     } catch (t: Throwable) {
         Result.failure(t)
     }

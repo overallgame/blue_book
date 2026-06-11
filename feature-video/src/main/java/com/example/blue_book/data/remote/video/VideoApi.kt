@@ -1,6 +1,6 @@
 package com.example.blue_book.data.remote.video
 
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.data.remote.video.dto2.FeedResponseDto
 import com.example.blue_book.data.remote.video.dto2.Video2Dto
 import retrofit2.Response

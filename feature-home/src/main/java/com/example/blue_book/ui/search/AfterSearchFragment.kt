@@ -12,7 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.blue_book.ui.home.HomeActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_home.databinding.SearchResultPageBinding
 import com.example.blue_book.ui.home.find.PreVideoAdapter
 import com.example.blue_book.ui.home.find.SpaceItem

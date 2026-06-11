@@ -1,6 +1,6 @@
 package com.example.blue_book.network
 
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.preference.AuthPreferences
 import com.example.blue_book.network.dto.RefreshTokenRequest
 import com.example.blue_book.network.dto.TokenResponse
@@ -13,17 +13,31 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.Route
+import okhttp3.logging.HttpLoggingInterceptor
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class TokenAuthenticator @Inject constructor(
-    private val preferences: AuthPreferences,
-    private val gson: Gson,
-    @Named("refresh") private val refreshClient: OkHttpClient
+    private val preferences: AuthPreferences
 ) : Authenticator {
     private val lock = Any()
+
+    private val gson = Gson()
+
+    /** 刷新专用 OkHttpClient：不带 TokenInterceptor/TokenAuthenticator，避免无限循环 */
+    private val refreshClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
+            .build()
+    }
 
     override fun authenticate(route: Route?, response: Response): Request? {
         val request = response.request
@@ -70,7 +84,7 @@ class TokenAuthenticator @Inject constructor(
 
     private fun refresh(refreshToken: String): TokenResponse? {
         return try {
-            val base = NetworkModule.BASE_URL.trimEnd('/')
+            val base = ApiGateway.BASE_URL.trimEnd('/')
             val url = "$base/api/v2/auth/refresh"
             val json = gson.toJson(RefreshTokenRequest(refreshToken))
             val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())

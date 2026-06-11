@@ -1,6 +1,6 @@
 package com.example.blue_book.ui.home.find
 
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
 import com.example.blue_book.udf.UiState
@@ -13,9 +13,9 @@ sealed interface HomeFindIntent : UiIntent {
 }
 
 data class HomeFindUiState(
-	val items: List<VideoCardInfo> = emptyList(),
-	val isLoading: Boolean = false,
-	val message: String? = null
+    val items: List<VideoCardInfo> = emptyList(),
+    val isLoading: Boolean = false,
+    val message: String? = null
 ) : UiState
 
 sealed interface HomeFindEffect : UiEffect {

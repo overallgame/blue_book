@@ -5,7 +5,7 @@ import com.example.blue_book.auth.data.remote.dto.LoginResponse
 import com.example.blue_book.auth.data.remote.dto.RegisterRequest
 import com.example.blue_book.auth.data.remote.dto.RegisterResponse
 import com.example.blue_book.auth.data.remote.dto.SendCodeRequest
-import com.example.blue_book.common.bean.ApiResponse
+import com.example.blue_book.network.data.ApiResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST

@@ -15,7 +15,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.databinding.UserProfilePageBinding
-import com.example.blue_book.ui.image.ImagePickerActivity
+import com.example.blue_book.router.RoutePath
+import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -50,7 +51,7 @@ class UserProfileEditFragment : Fragment() {
         ) { result ->
             if (result.resultCode != AppCompatActivity.RESULT_OK) return@registerForActivityResult
             val uri = result.data?.data ?: return@registerForActivityResult
-            val tag = result.data?.getStringExtra(ImagePickerActivity.EXTRA_TAG)
+            val tag = result.data?.getStringExtra("tag")
             when (tag) {
                 "avatar" -> {
                     avatarUrl = uri.toString()
@@ -89,8 +90,9 @@ class UserProfileEditFragment : Fragment() {
     }
 
     private fun openCustomImagePicker(tag: String) {
-        val intent = Intent(requireContext(), ImagePickerActivity::class.java)
-        intent.putExtra(ImagePickerActivity.EXTRA_TAG, tag)
+        val intent = TheRouter.build(RoutePath.IMAGE_PICKER)
+            .withString("tag", tag)
+            .createIntent(requireContext())
         pickImageLauncher.launch(intent)
     }
 

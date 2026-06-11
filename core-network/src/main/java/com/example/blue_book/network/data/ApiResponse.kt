@@ -1,4 +1,4 @@
-package com.example.blue_book.common.bean
+package com.example.blue_book.network.data
 
 data class ApiResponse<T>(
 	val code: Int,

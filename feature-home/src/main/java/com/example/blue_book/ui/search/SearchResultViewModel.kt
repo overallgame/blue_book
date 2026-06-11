@@ -1,67 +1,63 @@
 package com.example.blue_book.ui.search
 
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
+import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.udf.UdfViewModel
-import com.example.blue_book.domain.model.Video
-import com.example.blue_book.domain.usecase.FetchVideosByKeywordUseCase
+import com.therouter.TheRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class SearchResultViewModel @Inject constructor(
-	private val fetchByKeyword: FetchVideosByKeywordUseCase
 ) : UdfViewModel<SearchIntent, SearchUiState, SearchUiEffect>(SearchUiState()) {
 
-	override suspend fun handleIntent(intent: SearchIntent) {
-		when (intent) {
-			is SearchIntent.Init -> init(intent.keyword)
-			SearchIntent.LoadMore -> loadMore()
-			is SearchIntent.ToggleLike -> toggleLike(intent.item)
-		}
-	}
+    private val videoProvider: IVideoProvider get() = TheRouter.get(IVideoProvider::class.java)!!
 
-	private suspend fun init(keyword: String) {
-		runResult(
-			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null, keyword = keyword) } },
-			call = { fetchByKeyword(keyword) },
-			onSuccess = { list -> setState { copy(items = items + list.map(::toUi), isLoading = false) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "搜索失败") } }
-		)
-	}
+    override suspend fun handleIntent(intent: SearchIntent) {
+        when (intent) {
+            is SearchIntent.Init -> init(intent.keyword)
+            SearchIntent.LoadMore -> loadMore()
+            is SearchIntent.ToggleLike -> toggleLike(intent.item)
+        }
+    }
 
-	private suspend fun loadMore() {
-		val state = uiState.value
-		if (state.isLoading || state.keyword.isBlank()) return
-		runResult(
-			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { fetchByKeyword(state.keyword) },
-			onSuccess = { list -> setState { copy(items = items + list.map(::toUi), isLoading = false) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
-		)
-	}
+    private suspend fun init(keyword: String) {
+        runResult(
+            onStart = { setState { copy(items = emptyList(), isLoading = true, message = null, keyword = keyword) } },
+            call = { videoProvider.fetchVideosByKeyword(keyword) },
+            onSuccess = { list -> setState { copy(items = items + list, isLoading = false) } },
+            onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "搜索失败") } }
+        )
+    }
 
-	private suspend fun toggleLike(item: VideoCardInfo) {
-		setState {
-			copy(items = items.map { if (it.aid == item.aid && it.cid == item.cid) item else it })
-		}
-		sendEffect(SearchUiEffect.UpdateItem(item))
-	}
+    private suspend fun loadMore() {
+        val state = uiState.value
+        if (state.isLoading || state.keyword.isBlank()) return
+        runResult(
+            onStart = { setState { copy(isLoading = true, message = null) } },
+            call = { videoProvider.fetchVideosByKeyword(state.keyword) },
+            onSuccess = { list -> setState { copy(items = items + list, isLoading = false) } },
+            onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
+        )
+    }
 
-	private fun toUi(v: Video): VideoCardInfo {
-		return VideoCardInfo(
-			aid = v.aid,
-			cid = v.cid,
-			like = v.like,
-			image = v.image,
-			avatar = v.avatar,
-			collection = v.collection,
-			nickname = v.nickname,
-			description = v.description,
-			playUrl = "",
-			isLike = false,
-			isCollect = false
-		)
-	}
+    private suspend fun toggleLike(item: VideoCardInfo) {
+        val targetLiked = !item.isLike
+        val updated = item.copy(
+            isLike = targetLiked,
+            like = item.like + if (targetLiked) 1 else -1
+        )
+        setState {
+            copy(items = items.map { if (it.aid == item.aid && it.cid == item.cid) updated else it })
+        }
+        sendEffect(SearchUiEffect.UpdateItem(updated))
+        val result = videoProvider.likeVideo(item.aid, targetLiked)
+        result.onFailure { e ->
+            setState {
+                copy(items = items.map { if (it.aid == item.aid && it.cid == item.cid) item else it })
+            }
+            sendEffect(SearchUiEffect.UpdateItem(item))
+            sendEffect(SearchUiEffect.ShowToast(e.message ?: "点赞失败"))
+        }
+    }
 }
-
-

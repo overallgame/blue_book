@@ -1,6 +1,6 @@
 package com.example.blue_book.domain.repository
 
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 
 interface UserRepository {
 

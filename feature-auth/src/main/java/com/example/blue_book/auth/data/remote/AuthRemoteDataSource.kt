@@ -5,15 +5,16 @@ import com.example.blue_book.auth.data.remote.dto.LoginResponse
 import com.example.blue_book.auth.data.remote.dto.RegisterRequest
 import com.example.blue_book.auth.data.remote.dto.RegisterResponse
 import com.example.blue_book.auth.data.remote.dto.SendCodeRequest
-import com.example.blue_book.network.apiCall
+import com.example.blue_book.network.ApiGateway
 import javax.inject.Inject
 
 class AuthRemoteDataSource @Inject constructor(
-    private val authApi: AuthApi
+    private val apiGateway: ApiGateway
 ) {
+    private val authApi = apiGateway.createApi(AuthApi::class.java)
 
     suspend fun login(request: LoginRequest): Result<LoginResponse> {
-        return apiCall { authApi.login(request) }
+        return apiGateway.apiResult { authApi.login(request) }
     }
 
     suspend fun register(
@@ -22,7 +23,7 @@ class AuthRemoteDataSource @Inject constructor(
         password: String,
         code: String
     ): Result<RegisterResponse> {
-        return apiCall {
+        return apiGateway.apiResult {
             authApi.register(
                 RegisterRequest(
                     nickname = nickname,
@@ -35,7 +36,7 @@ class AuthRemoteDataSource @Inject constructor(
     }
 
     suspend fun sendVerificationCode(phone: String, nickname: String): Result<String> {
-        return apiCall {
+        return apiGateway.apiResult {
             authApi.sendVerificationCode(
                 SendCodeRequest(phone = phone, nickname = nickname)
             )

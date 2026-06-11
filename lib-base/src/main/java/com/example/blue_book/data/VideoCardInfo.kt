@@ -1,4 +1,4 @@
-package com.example.blue_book.common.bean
+package com.example.blue_book.data
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

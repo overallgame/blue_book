@@ -1,4 +1,4 @@
-package com.example.blue_book.common.bean
+package com.example.blue_book.data
 
 data class UserAccount(
     val phone: String,

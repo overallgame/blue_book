@@ -8,8 +8,12 @@ import com.example.blue_book.auth.ui.entry.AuthEntryFragment
 import com.example.blue_book.auth.ui.login.LoginFragment
 import com.example.blue_book.auth.ui.register.RegisterFragment
 import com.example.blue_book.feature_auth.R
+import com.example.blue_book.router.RoutePath
+import com.therouter.TheRouter
+import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
 
+@Route(path = RoutePath.AUTH)
 @AndroidEntryPoint
 class AuthActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,11 +41,9 @@ class AuthActivity : AppCompatActivity() {
     }
 
     fun navigateToHome() {
-        val intent = Intent().apply {
-            setClassName(packageName, "com.example.blue_book.view.MainActivity")
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        startActivity(intent)
+        TheRouter.build(RoutePath.MAIN)
+            .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            .navigation(this)
         finish()
     }
 }

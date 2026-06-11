@@ -5,8 +5,12 @@ import android.os.Bundle
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import com.example.blue_book.R
+import com.example.blue_book.router.RoutePath
+import com.therouter.TheRouter
+import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
 
+@Route(path = RoutePath.MAIN)
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
@@ -18,26 +22,24 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             radioGroup.check(R.id.tab_home)
-            navigateToTab("com.example.blue_book.presentation.home.HomeActivity")
+            navigateToTab(RoutePath.HOME)
         }
 
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            val targetClass = when (checkedId) {
-                R.id.tab_home -> "com.example.blue_book.presentation.home.HomeActivity"
-                R.id.tab_video -> "com.example.blue_book.presentation.video.VideoActivity"
-                R.id.tab_message -> "com.example.blue_book.presentation.message.MessageActivity"
-                R.id.tab_mine -> "com.example.blue_book.presentation.mine.MineActivity"
+            val targetPath = when (checkedId) {
+                R.id.tab_home -> RoutePath.HOME
+                R.id.tab_video -> RoutePath.VIDEO
+                R.id.tab_message -> RoutePath.MESSAGE
+                R.id.tab_mine -> RoutePath.MINE
                 else -> return@setOnCheckedChangeListener
             }
-            navigateToTab(targetClass)
+            navigateToTab(targetPath)
         }
     }
 
-    private fun navigateToTab(className: String) {
-        val intent = Intent().apply {
-            setClassName(packageName, className)
-            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-        }
-        startActivity(intent)
+    private fun navigateToTab(path: String) {
+        TheRouter.build(path)
+            .withFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            .navigation(this)
     }
 }

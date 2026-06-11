@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_video.R
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_video.databinding.VideoItemViewBinding
 import com.example.blue_book.core.player.PlayerEngine
 import com.example.blue_book.core.player.PlayerEnginePool

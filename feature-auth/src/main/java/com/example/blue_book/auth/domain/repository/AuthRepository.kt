@@ -2,7 +2,7 @@ package com.example.blue_book.auth.domain.repository
 
 import com.example.blue_book.auth.domain.model.LoginCredentials
 import com.example.blue_book.auth.domain.model.RegisterInfo
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 
 interface AuthRepository {
 

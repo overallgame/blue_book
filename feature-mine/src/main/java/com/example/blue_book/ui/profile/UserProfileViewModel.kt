@@ -1,7 +1,7 @@
 package com.example.blue_book.ui.profile
 
 import com.example.blue_book.udf.UdfViewModel
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.data.UserAccount
 import com.example.blue_book.domain.usecase.GetCurrentUserPhoneUseCase
 import com.example.blue_book.domain.usecase.GetUserProfileUseCase
 import com.example.blue_book.domain.usecase.UpdateUserProfileUseCase

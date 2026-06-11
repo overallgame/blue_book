@@ -6,7 +6,10 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import com.example.blue_book.feature_image.R
+import com.example.blue_book.router.RoutePath
+import com.therouter.router.Route
 
+@Route(path = RoutePath.IMAGE_PICKER)
 class ImagePickerActivity : AppCompatActivity() {
 
     private var tag: String? = null

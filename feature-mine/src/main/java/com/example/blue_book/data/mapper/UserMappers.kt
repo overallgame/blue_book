@@ -1,29 +1,12 @@
 package com.example.blue_book.data.mapper
 
-import com.example.blue_book.room.entity.UserEntity
-import com.example.blue_book.network.NetworkModule
-import com.example.blue_book.common.bean.UserAccount
+import com.example.blue_book.network.ApiGateway
+import com.example.blue_book.data.UserAccount
 import com.example.blue_book.data.remote.user.dto2.UserV2MeDto
 import com.example.blue_book.data.remote.user.dto2.UserV2ProfileDto
 
-fun UserEntity.toDomain(): UserAccount {
-    return UserAccount(
-        phone = phone,
-        avatar = avatar,
-        nickname = nickname,
-        password = password,
-        introduction = introduction,
-        sex = sex,
-        birthday = birthday,
-        career = career,
-        region = region,
-        school = school,
-        background = background
-    )
-}
-
 fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
-    val base = NetworkModule.BASE_URL.trimEnd('/')
+    val base = ApiGateway.BASE_URL.trimEnd('/')
     fun n(s: String?): String? {
         val v = s?.trim().orEmpty()
         return v.ifBlank { null }
@@ -48,27 +31,8 @@ fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
     )
 }
 
-fun UserAccount.toEntity(fallbackPassword: String = ""): UserEntity {
-    return UserEntity(
-        phone = phone,
-        avatar = avatar,
-        nickname = nickname,
-        password = password ?: fallbackPassword,
-        introduction = introduction,
-        sex = sex,
-        birthday = birthday,
-        career = career,
-        region = region,
-        school = school,
-        background = background,
-        authToken = null,
-        refreshToken = null,
-        last_Login = System.currentTimeMillis()
-    )
-}
-
 fun UserV2MeDto.toDomain(): UserAccount {
-    val base = NetworkModule.BASE_URL.trimEnd('/')
+    val base = ApiGateway.BASE_URL.trimEnd('/')
     fun n(s: String?): String? {
         val v = s?.trim().orEmpty()
         return v.ifBlank { null }

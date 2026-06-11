@@ -4,9 +4,12 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import com.example.blue_book.feature_video.R
+import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.main.VideoTabFragment
+import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
 
+@Route(path = RoutePath.VIDEO)
 @AndroidEntryPoint
 class VideoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

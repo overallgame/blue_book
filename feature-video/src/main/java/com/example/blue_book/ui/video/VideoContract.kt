@@ -1,6 +1,6 @@
 package com.example.blue_book.ui.video
 
-import com.example.blue_book.common.bean.VideoCardInfo
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
 import com.example.blue_book.udf.UiState
@@ -15,13 +15,13 @@ sealed interface VideoIntent : UiIntent {
 }
 
 data class VideoUiState(
-	val items: List<VideoCardInfo> = emptyList(),
-	val isLoading: Boolean = false,
-	val message: String? = null,
-	val mode: Mode = Mode.Random,
-	val keyword: String = "",
-	val cursorId: Long? = null,
-	val hasMore: Boolean = true
+    val items: List<VideoCardInfo> = emptyList(),
+    val isLoading: Boolean = false,
+    val message: String? = null,
+    val mode: Mode = Mode.Random,
+    val keyword: String = "",
+    val cursorId: Long? = null,
+    val hasMore: Boolean = true
 ): UiState {
 	enum class Mode { Random, Search }
 }

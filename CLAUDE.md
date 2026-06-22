@@ -57,12 +57,12 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 :feature-image       ← 图片选择：Gallery + Crop + ImagePickerActivity
 
 ── 核心能力层 ──
-:core-network        ← OkHttp + AuthInterceptor + TokenAuthenticator + Retrofit API
+:core-network        ← ApiGateway 门面 + TokenHolder + 拦截器 + Retrofit API
 :core-player         ← ExoPlayerEngine + MediaCache(200MB LRU) + PlayerEnginePool + GL 滤镜
-:core-datastore      ← DataStore + TokenCache + Room 数据库 + AuthPreferences
+:core-datastore      ← IDataStore/AppDataStore（DataStore 封装） + Room 数据库
 
 ── 基础层 ──
-:lib-base            ← UDF 基类 + 公共 bean + 领域模型 + 仓库接口 + UseCase
+:lib-base            ← UDF 基类 + 公共 bean + Provider 接口 + 路由常量 + AppContext
 ```
 
 ### 模块依赖层次
@@ -70,28 +70,34 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 ```
 :lib-base
     │
-    ├──────────────┬──────────────┬──────────────┐
-    │              │              │              │
-:core-network  :core-player  :core-datastore     │
-    │              │              │              │
-    └──────┬───────┘              │              │
-           │                      │              │
-    ┌──────┴──────────────────────┴──────────────┘
-    │      │         │         │         │
+    ├──────────┬──────────┬──────────┐
+    │          │          │          │
+:core-network :core-player :core-datastore
+    │          │          │
+    └────┬─────┘          │
+         │                │
+    ┌────┴────────────┬───┴──────────┐
+    │      │          │        │     │
 :feature-auth :feature-home :feature-video :feature-mine :feature-message :feature-image
-    │      │         │         │         │              │
-    └──────┴─────────┴─────────┴─────────┴──────────────┘
-                           │
-                          :app
+    │      │          │        │     │        │              │
+    └──────┴──────────┴────────┴─────┴────────┴──────────────┘
+                              │
+                            :app
 ```
-    ┌──────────────┼──────────────┐
-    │              │              │
-:feature-auth  :feature-image  :feature-home  :feature-video  :feature-message  :feature-mine
-    │              │              │              │                │                │
-    └──────┴─────────┴─────────┴─────────┴──────────────┘
-                           │
-                          :app
-```
+
+- `core-network` → `core-datastore`（TokenHolder 注入 IDataStore）
+- feature 模块互不依赖，通过 TheRouter `@ServiceProvider` 服务发现
+- `feature-home` / `feature-message` / `feature-image` 仅依赖 `lib-base`
+
+### 跨模块服务发现（TheRouter）
+
+| 接口（lib-base） | 实现模块 | 消费模块 |
+|---|---|---|
+| `IAuthProvider` | feature-auth | feature-mine |
+| `IVideoProvider` | feature-video | feature-home |
+| `IUserStore` | core-datastore | feature-auth, feature-mine |
+
+模式：`TheRouter.get(IUserStore::class.java)!!.saveUser(account)` + Hilt `@EntryPoint` 桥接。
 
 ### 权限归属
 
@@ -108,7 +114,7 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 - **colors**：各 feature 模块持有实际使用的颜色值，`:app` 持有完整 Material 色板和主题
 - **主题**：`AppTheme` 保留在 `:app`，各 feature 模块的 `AndroidManifest.xml` 仅声明 Activity
 
-## UDF 模式（`:lib-base/core/udf/`）
+## UDF 模式（`:lib-base/udf/`）
 
 每个页面都在 `*Contract.kt` 文件中定义严格的三件套：
 
@@ -136,77 +142,75 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 ## 网络层（`:core-network`）
 
-- **Base URL**：`http://10.0.2.2:8085/`（Android 模拟器本地地址），定义在 `CoreNetworkModule`
+- **门面**：`ApiGateway`（`@Singleton`）是对外的唯一消费入口，内部创建 OkHttpClient / Retrofit
+- **Token 管理**：`TokenHolder`（`@Singleton`）—— `@Volatile` 字段同步读写 + 自动异步持久化到 `IDataStore`
+- **Base URL**：`ApiGateway.BASE_URL`，通过 BuildConfig 注入（`build.gradle.kts` 中 `buildConfigField`）
 - **响应信封**：
   - `ApiResponse<T>(code: Int, message: String, data: T?)` —— `code == 0` 表示成功
-  - `CommonResultDto<T>(code: Int, msg: String, data: T?)` —— `code == 200` 表示成功（部分接口使用）
-- **API 调用包装器**（`:core-network/.../RemoteCall.kt`）：三个 `suspend inline` 函数封装 Retrofit 调用：
-  - `apiCall<T>()` → 检查 HTTP 成功 → 检查 `ApiResponse.code == 0` → 返回 `Result<T>`
-  - `apiUnitCall()` → 同上，返回 `Result<Unit>`（不关心 data 体）
-  - `commonCall<T>()` → 检查 HTTP 成功 → 检查 `CommonResultDto.code == 200` → 返回 `Result<T>`
-- **两个 OkHttpClient 实例**（`:core-network/CoreNetworkModule`）：
-  - 默认：包含 `AuthInterceptor` + `TokenAuthenticator`，超时 10s，开启 `retryOnConnectionFailure(true)`，日志级别 `BODY`
-  - `@Named("refresh")`：供 `TokenAuthenticator` 刷新 token 专用 —— **不带** auth 拦截器，防无限循环
-- **Retrofit 与 API 接口**：Gson + Retrofit + 6 个 `*Api` 接口，均在 `CoreNetworkModule` 中提供
+  - `CommonResult<T>(code: Int?, msg: String?, data: T?)` —— `code == 200` 表示成功
+- **API 调用**：`ApiGateway.apiResult() / commonResult() / apiUnitResult()` 三种 Result 风格 + `request() / commonRequest()` 回调风格
+- **拦截器链**（`interceptor/` 子包）：`CommonParamsInterceptor` → `TokenInterceptor` → `TokenAuthenticator` → `HttpLoggingInterceptor`
+- **TokenAuthenticator**：内建独立的 `refreshClient`，不带 auth 拦截器防无限循环
 
 ### 鉴权流程
 
-**AuthInterceptor**（`:core-network/core/network/AuthInterceptor.kt`）：
-- 为每个请求添加 `Authorization: Bearer <token>` 头
-- 跳过 `/api/v2/auth/refresh`（否则 refresh 接口自身 401 会造成死循环）
-- token 为空时跳过
-- token 仍从 `TokenCache`（`@Volatile` 缓存）同步读取，因为 OkHttp Interceptor 运行在 I/O 线程池，不能调 DataStore 的 suspend 函数
+**TokenInterceptor**（`:core-network/interceptor/TokenInterceptor.kt`）：
+- 从 `TokenHolder.authToken`（`@Volatile`）同步读取 token，附加 `Authorization: Bearer` 头
+- 跳过 `/api/v2/auth/refresh`
 
-**TokenAuthenticator**（`:core-network/core/network/TokenAuthenticator.kt`）：
+**TokenAuthenticator**（`:core-network/interceptor/TokenAuthenticator.kt`）：
 - OkHttp `Authenticator` —— 收到 `401` 时触发
-- 使用 `synchronized(lock)` 序列化并发刷新请求
-- 双重检查：如果 token 已被其他线程刷新过，直接用新 token 重试原请求，不重复刷新
-- `responseCount` 守卫：最多允许 1 次刷新重试（防止无限 401 循环）
-- 刷新失败或缺少 refreshToken → 清除全部登录态
+- `synchronized(lock)` 序列化 + 双重检查 + `responseCount` 守卫（最多 1 次刷新重试）
+- 刷新成功 → `tokenHolder.saveAuthToken() / saveRefreshToken()`；失败 → `tokenHolder.clear()`
+
+## 数据存储层（`:core-datastore`）
+
+- **IDataStore / AppDataStore**：通用 key-value 封装（putString/getString/putInt/getInt/putBoolean/putLong/remove/clear），底层用 DataStore Preferences
+- **Room**：`AppDatabase`（版本 1）→ `UserDao` → `UserEntity`（表名 `user`，主键 phone）
+- **IUserStore**：lib-base 定义的存储接口，由 `UserStoreProviderImpl` 实现，通过 TheRouter `@ServiceProvider` 暴露
+- **Hilt DI**：`DatabaseModule` 提供 IDataStore、AppDatabase、UserDao
 
 ## 依赖注入（Hilt 2.48.1）
 
-所有 Module 均为 `@InstallIn(SingletonComponent::class)`，分散在各模块中：
+各模块通过 Hilt `@InstallIn(SingletonComponent::class)` 提供 DI：
 
 | 模块 | Hilt Module | 提供内容 |
 |------|-----------|---------|
-| `:core-network` | `CoreNetworkModule` | OkHttpClient（2 个）、HttpLoggingInterceptor、BASE_URL、Gson、Retrofit、6 个 API 接口 |
-| `:core-datastore` | `DataStoreModule`、`DatabaseModule`、`LocalModule` | `SessionDataStore`、Room `AppDatabase`、`UserDao`、`AuthPreferences` 绑定 |
-| `:feature-mine` | `UserRepositoryModule` | `@Binds UserRepositoryImpl → UserRepository` |
-| `:feature-video` | `VideoRepositoryModule` | `@Binds VideoRepositoryImpl → VideoRepository`、`CommentRepositoryImpl → CommentRepository` |
+| `:core-datastore` | `DatabaseModule` | IDataStore、AppDatabase、UserDao |
+| `:core-network` | 无（@Inject constructor 自动装配） | ApiGateway、TokenHolder、TokenInterceptor、TokenAuthenticator |
+| `:feature-auth` | `AuthRepositoryModule` | `@Binds AuthRepositoryImpl → AuthRepository` |
+| `:feature-mine` | `RepositoryModule` | `@Binds UserRepositoryImpl → UserRepository` |
+| `:feature-video` | `RepositoryModule` | `@Binds VideoRepositoryImpl → VideoRepository`、`CommentRepositoryImpl → CommentRepository` |
 
 各 feature 模块的 ViewModel 通过 `@HiltViewModel` + `@Inject constructor` 自动注册，无需额外 Module。
 
-## 导航
+跨模块服务（IAuthProvider、IUserStore、IVideoProvider）通过 TheRouter `@ServiceProvider` + Hilt `@EntryPoint` 暴露，不经过 Hilt DI。
 
-多 Activity 架构，**已移除 Jetpack Navigation**，改用 Intent 字符串跳转。
+## 导航（TheRouter 1.3.0）
+
+多 Activity 架构，使用 TheRouter 路径导航替代 Intent 字符串。
 
 ```
 MainActivity（底部 4 个 Tab，RadioGroup）
-  ├─ tab_home    → Intent → HomeActivity  (首页：瀑布流 + 搜索)
-  ├─ tab_video   → Intent → VideoActivity (视频 Tab + 全屏播放器)
-  ├─ tab_message → Intent → MessageActivity (消息占位)
-  └─ tab_mine    → Intent → MineActivity  (个人中心 + 资料编辑)
+  /app/main
+  ├─ tab_home    → /home/main   (首页：瀑布流 + 搜索)
+  ├─ tab_video   → /video/main  (视频 Tab + 全屏播放器)
+  ├─ tab_message → /message/main (消息占位)
+  └─ tab_mine    → /mine/main   (个人中心 + 资料编辑)
 
 AuthActivity（登录/注册入口）
-  ├─ AuthEntryFragment → 登录/注册 → Intent → MainActivity
-  ├─ LoginFragment → HomeActivity.navigateToHome()
-  └─ RegisterFragment → MineActivity.navigateToHome()
+  /auth/entry
+  ├─ AuthEntryFragment → 登录/注册 → /app/main
+  ├─ LoginFragment → /app/main
+  └─ RegisterFragment → /app/main
 
-HomeActivity 内部 Fragment 跳转（FragmentManager）：
-  HomeFragment → SearchFragment → AfterSearchFragment → VideoActivity（全屏播放）
-
-MineActivity 内部 Fragment 跳转：
-  MineFragment → UserProfileEditFragment
+图片选择器：/image/picker
 ```
 
-**跨模块跳转**：使用 `Intent.setClassName(packageName, "完整类名")`，模块间零编译依赖。  
-**模块内跳转**：Fragment 通过 `(requireActivity() as XxxActivity).navigateToXxx()` 调用宿主 Activity 的公共方法。  
-**底部 Tab**：`singleTask` 启动模式 + `FLAG_ACTIVITY_REORDER_TO_FRONT`，每个 Tab 只有一个 Activity 实例。
-
-## 数据库（`:core-datastore`）
-
-Room（`AppDatabase`，版本 1），目前只有一张表 `UserEntity`（表名 `user`，主键 phone）。单例通过伴生对象中的双重检查锁定实现。`UserDao` 提供 CRUD + 头像/背景图更新方法。
+**跨模块跳转**：`TheRouter.build(RoutePath.XXX).navigation(context)`
+**模块内跳转**：Fragment 通过 `(requireActivity() as XxxActivity).navigateToXxx()` 调用宿主 Activity 的公共方法。
+**底部 Tab**：`FLAG_ACTIVITY_REORDER_TO_FRONT`，每个 Tab 只有一个 Activity 实例。
+**路由常量**：`lib-base/router/RoutePath.kt` 集中管理。
 
 ## 播放器（`:core-player`）
 
@@ -239,12 +243,10 @@ Room（`AppDatabase`，版本 1），目前只有一张表 `UserEntity`（表名
 | 依赖注入 | Hilt 2.48.1 |
 | 网络请求 | Retrofit 2.9.0 + OkHttp 4.11.0 + Gson |
 | 数据库 | Room 2.6.1 |
+| 路由 | TheRouter 1.3.0 |
 | 媒体播放 | AndroidX Media3 1.4.1 |
 | 图片加载 | Glide 4.13.2 + uCrop 2.2.6 |
 | UI | Material 1.12.0 + Compose BOM 2024.06.00 |
-| 导航 | Navigation 2.7.7 |
-| 序列化 | Moshi 1.13.0 |
-| 后端服务 | Firebase Firestore 25.0.0 |
 
 ### UI 技术栈
 
@@ -256,4 +258,4 @@ Room（`AppDatabase`，版本 1），目前只有一张表 `UserEntity`（表名
 2. **ViewBinding**：layout 文件迁入模块后，DataBinding 生成的类在模块自己的包下，需要同步更新 import
 3. **跨模块资源**：共享 drawable 当前采用复制策略（各模块各持一份）。后续计划提取到 `:lib-base`
 4. **kapt 缓存**：新增模块或大改依赖后，如遇 kapt `NonExistentClass` 错误，执行 `./gradlew clean assembleDebug`
-5. **导航 ID 占位**：各 feature 模块的 `res/values/ids.xml` 中定义了 nav_graph 中使用的 action/fragment ID，用于编译期通过。这些 ID 在 ARouter 迁移后应删除
+5. **跨模块依赖**：feature 模块间通过 TheRouter `@ServiceProvider` 服务发现，禁止直接 `implementation(project(":feature-*"))`

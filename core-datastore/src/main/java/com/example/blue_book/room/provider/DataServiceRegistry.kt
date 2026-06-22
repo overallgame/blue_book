@@ -1,8 +1,7 @@
 package com.example.blue_book.room.provider
 
 import com.example.blue_book.AppContext
-import com.example.blue_book.provider.IUserDataProvider
-import com.example.blue_book.room.user.UserLocalDataResource
+import com.example.blue_book.provider.IUserStore
 import com.therouter.inject.ServiceProvider
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -10,14 +9,13 @@ import dagger.hilt.components.SingletonComponent
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
-interface DataServiceEntryPoint {
-    fun userLocalDataResource(): UserLocalDataResource
+interface StoreProviderEntryPoint {
+    fun userStore(): UserStoreProviderImpl
 }
 
-@ServiceProvider(returnType = IUserDataProvider::class)
-fun provideUserDataProvider(): IUserDataProvider {
-    val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
-        AppContext.application, DataServiceEntryPoint::class.java
-    )
-    return UserDataProviderImpl(entryPoint.userLocalDataResource())
+@ServiceProvider(returnType = IUserStore::class)
+fun provideUserStore(): IUserStore {
+    return dagger.hilt.android.EntryPointAccessors.fromApplication(
+        AppContext.application, StoreProviderEntryPoint::class.java
+    ).userStore()
 }

@@ -1,4 +1,4 @@
-package com.example.blue_book.network
+package com.example.blue_book.network.exception
 
 import com.google.gson.JsonParseException
 import retrofit2.HttpException

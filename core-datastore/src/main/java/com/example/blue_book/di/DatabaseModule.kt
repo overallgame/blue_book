@@ -1,6 +1,8 @@
 package com.example.blue_book.di
 
 import android.content.Context
+import com.example.blue_book.datastore.AppDataStore
+import com.example.blue_book.datastore.IDataStore
 import com.example.blue_book.room.AppDatabase
 import com.example.blue_book.room.dao.UserDao
 import dagger.Module
@@ -16,6 +18,10 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideDataStore(appDataStore: AppDataStore): IDataStore = appDataStore
+
+    @Provides
+    @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
         return AppDatabase.getDatabase(context)
     }
@@ -25,4 +31,3 @@ object DatabaseModule {
         return appDatabase.userDao()
     }
 }
-

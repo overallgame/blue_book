@@ -1,7 +1,8 @@
-package com.example.blue_book.network
+package com.example.blue_book.network.interceptor
 
+import com.example.blue_book.network.ApiGateway
+import com.example.blue_book.network.TokenHolder
 import com.example.blue_book.network.data.ApiResponse
-import com.example.blue_book.preference.AuthPreferences
 import com.example.blue_book.network.dto.RefreshTokenRequest
 import com.example.blue_book.network.dto.TokenResponse
 import com.google.gson.Gson
@@ -15,18 +16,13 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class TokenAuthenticator @Inject constructor(
-    private val preferences: AuthPreferences
+class TokenAuthenticator(
+    private val tokenHolder: TokenHolder
 ) : Authenticator {
     private val lock = Any()
-
     private val gson = Gson()
 
-    /** 刷新专用 OkHttpClient：不带 TokenInterceptor/TokenAuthenticator，避免无限循环 */
     private val refreshClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -41,57 +37,33 @@ class TokenAuthenticator @Inject constructor(
 
     override fun authenticate(route: Route?, response: Response): Request? {
         val request = response.request
-        val path = request.url.encodedPath
-        if (path.startsWith("/api/v2/auth/refresh")) return null
+        if (request.url.encodedPath.startsWith("/api/v2/auth/refresh")) return null
+        if (responseCount(response) >= 2) { tokenHolder.clear(); return null }
 
-        if (responseCount(response) >= 2) {
-            clearAuthData()
-            return null
-        }
-
-        val refreshToken = preferences.getRefreshToken()?.trim().orEmpty()
-        if (refreshToken.isBlank()) {
-            clearAuthData()
-            return null
-        }
+        val refresh = tokenHolder.refreshToken?.trim().orEmpty()
+        if (refresh.isBlank()) { tokenHolder.clear(); return null }
 
         synchronized(lock) {
-            val currentToken = preferences.getAuthToken()?.trim().orEmpty()
-            val reqToken = request.header("Authorization")?.removePrefix("Bearer ")?.trim().orEmpty()
-            if (currentToken.isNotBlank() && currentToken != reqToken) {
-                return request.newBuilder()
-                    .header("Authorization", "Bearer $currentToken")
-                    .build()
+            val current = tokenHolder.authToken?.trim().orEmpty()
+            val req = request.header("Authorization")?.removePrefix("Bearer ")?.trim().orEmpty()
+            if (current.isNotBlank() && current != req) {
+                return request.newBuilder().header("Authorization", "Bearer $current").build()
             }
-
-            val refreshResult = refresh(refreshToken)
-            if (refreshResult == null) {
-                clearAuthData()
-                return null
-            }
-            preferences.setAuthToken(refreshResult.token)
-            preferences.setRefreshToken(refreshResult.refreshToken)
-
-            return request.newBuilder()
-                .header("Authorization", "Bearer ${refreshResult.token}")
-                .build()
+            val result = executeRefresh(refresh)
+            if (result == null) { tokenHolder.clear(); return null }
+            tokenHolder.saveAuthToken(result.token)
+            tokenHolder.saveRefreshToken(result.refreshToken)
+            return request.newBuilder().header("Authorization", "Bearer ${result.token}").build()
         }
     }
 
-    private fun clearAuthData() {
-        preferences.clear()
-    }
-
-    private fun refresh(refreshToken: String): TokenResponse? {
+    private fun executeRefresh(refreshToken: String): TokenResponse? {
         return try {
             val base = ApiGateway.BASE_URL.trimEnd('/')
             val url = "$base/api/v2/auth/refresh"
             val json = gson.toJson(RefreshTokenRequest(refreshToken))
             val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
-            val req = Request.Builder()
-                .url(url)
-                .post(body)
-                .build()
+            val req = Request.Builder().url(url).post(body).build()
             refreshClient.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return null
                 val str = resp.body?.string().orEmpty()
@@ -99,20 +71,15 @@ class TokenAuthenticator @Inject constructor(
                 val type = object : TypeToken<ApiResponse<TokenResponse>>() {}.type
                 val parsed: ApiResponse<TokenResponse> = gson.fromJson(str, type)
                 if (parsed.code != 0) return null
-                parsed.data ?: return null
+                parsed.data
             }
-        } catch (_: Throwable) {
-            null
-        }
+        } catch (_: Throwable) { null }
     }
 
     private fun responseCount(response: Response): Int {
         var res: Response? = response
         var count = 1
-        while (res?.priorResponse != null) {
-            count++
-            res = res.priorResponse
-        }
+        while (res?.priorResponse != null) { count++; res = res.priorResponse }
         return count
     }
 }

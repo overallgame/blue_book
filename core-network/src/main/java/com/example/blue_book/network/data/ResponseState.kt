@@ -1,4 +1,4 @@
-package com.example.blue_book.network
+package com.example.blue_book.network.data
 
 /**
  * 统一的响应状态常量，全项目引用，避免硬编码字符串。

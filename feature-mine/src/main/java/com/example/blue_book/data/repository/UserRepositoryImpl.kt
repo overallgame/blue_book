@@ -1,15 +1,16 @@
 package com.example.blue_book.data.repository
 
 import android.net.Uri
+import com.example.blue_book.data.UserAccount
 import com.example.blue_book.data.mapper.toDomain
 import com.example.blue_book.data.remote.file.FileRemoteDataSource
 import com.example.blue_book.data.remote.user.UserRemoteDataSource
-import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.data.remote.user.dto2.UserV2UpdateRequestDto
-import com.example.blue_book.util.UriFileResolver
-import com.example.blue_book.data.UserAccount
 import com.example.blue_book.domain.repository.UserRepository
-import com.example.blue_book.provider.IUserDataProvider
+import com.example.blue_book.network.ApiGateway
+import com.example.blue_book.network.TokenHolder
+import com.example.blue_book.provider.IUserStore
+import com.example.blue_book.util.UriFileResolver
 import com.therouter.TheRouter
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -21,86 +22,62 @@ import javax.inject.Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userRemote: UserRemoteDataSource,
     private val fileRemote: FileRemoteDataSource,
-    private val uriFileResolver: UriFileResolver
+    private val uriFileResolver: UriFileResolver,
+    private val tokenHolder: TokenHolder
 ) : UserRepository {
 
-    private val userData: IUserDataProvider get() = TheRouter.get(IUserDataProvider::class.java)!!
+    private val userStore: IUserStore get() = TheRouter.get(IUserStore::class.java)!!
 
     override suspend fun getUserProfile(phone: String): Result<UserAccount> {
         val remote = userRemote.me()
         return remote.fold(
             onSuccess = { dto ->
                 val domain = dto.toDomain()
-                val fallbackPassword = userData.getUserByPhone(domain.phone)?.password
-                    ?: userData.getUserByPhone(phone)?.password
-                    ?: ""
+                val fallbackPassword = userStore.getUserByPhone(domain.phone)?.password
+                    ?: userStore.getUserByPhone(phone)?.password ?: ""
                 val domainWithPwd = domain.copy(password = fallbackPassword)
-                val existing = userData.getUserByPhone(domain.phone)
-                if (existing == null) {
-                    userData.saveUser(domainWithPwd)
-                } else {
-                    userData.updateUser(domainWithPwd)
-                }
+                val existing = userStore.getUserByPhone(domain.phone)
+                if (existing == null) userStore.saveUser(domainWithPwd)
+                else userStore.updateUser(domainWithPwd)
+                tokenHolder.savePhone(domain.phone)
                 Result.success(domain)
             },
             onFailure = {
                 try {
-                    val local = userData.getUserByPhone(phone)
+                    val local = userStore.getUserByPhone(phone)
                         ?: throw IllegalStateException("本地不存在该用户信息")
                     Result.success(local)
-                } catch (t: Throwable) {
-                    Result.failure(t)
-                }
+                } catch (t: Throwable) { Result.failure(t) }
             }
         )
     }
 
     override suspend fun updateUserProfile(account: UserAccount): Result<Unit> {
-        fun isLocalUri(s: String?): Boolean {
-            val v = s?.trim().orEmpty()
-            if (v.isBlank()) return false
-            return v.startsWith("content://") || v.startsWith("file://")
-        }
-
-        fun toRelativeIfBackendUrl(url: String?): String? {
+        fun isLocalUri(s: String?) = !s.isNullOrBlank() && (s.startsWith("content://") || s.startsWith("file://"))
+        fun toRelative(url: String?): String? {
             val v = url?.trim().orEmpty()
             if (v.isBlank()) return null
             val base = ApiGateway.BASE_URL.trimEnd('/')
             return if (v.startsWith(base)) v.removePrefix(base) else v
         }
-
-        suspend fun uploadAsPart(uriStr: String, formName: String, filenamePrefix: String): Result<MultipartBody.Part> {
+        suspend fun uploadPart(uriStr: String, name: String, prefix: String): Result<MultipartBody.Part> {
             val uri = Uri.parse(uriStr)
-            val file = uriFileResolver.copyToCacheFile(uri, filenamePrefix)
-                ?: return Result.failure(IllegalStateException("无法读取图片"))
-            val mimeStr = uriFileResolver.mimeTypeOf(uri) ?: uriFileResolver.guessMimeType(file)
-            val mime = mimeStr.toMediaTypeOrNull()
-            val body = file.asRequestBody(mime)
-            val part = MultipartBody.Part.createFormData(formName, file.name, body)
-            return Result.success(part)
+            val file = uriFileResolver.copyToCacheFile(uri, prefix) ?: return Result.failure(IllegalStateException("无法读取图片"))
+            val mime = uriFileResolver.mimeTypeOf(uri) ?: uriFileResolver.guessMimeType(file)
+            return Result.success(MultipartBody.Part.createFormData(name, file.name, file.asRequestBody(mime.toMediaTypeOrNull())))
         }
-
-        var backgroundToUpdate: String? = account.background
-
+        var bg = account.background
         if (isLocalUri(account.avatar)) {
-            val partResult = uploadAsPart(account.avatar!!, formName = "avatar", filenamePrefix = "avatar")
-            val upload = partResult.fold(
-                onSuccess = { part -> userRemote.uploadAvatar(part) },
-                onFailure = { Result.failure(it) }
-            )
-            upload.getOrElse { return Result.failure(it) }.avatarUrl
+            uploadPart(account.avatar!!, "avatar", "avatar")
+                .mapCatching { part -> userRemote.uploadAvatar(part).getOrThrow().avatarUrl }
+                .getOrElse { return Result.failure(it) }
         }
-
         if (isLocalUri(account.background)) {
-            val partResult = uploadAsPart(account.background!!, formName = "file", filenamePrefix = "bg")
-            val upload = partResult.fold(
-                onSuccess = { part -> fileRemote.uploadImage(part) },
-                onFailure = { Result.failure(it) }
-            )
-            val uploaded = upload.getOrElse { return Result.failure(it) }
-            backgroundToUpdate = uploaded
+            uploadPart(account.background!!, "file", "bg")
+                .mapCatching { part -> fileRemote.uploadImage(part).getOrThrow() }
+                .onSuccess { bg = it }
+                .getOrElse { return Result.failure(it) }
         }
-
         val body = UserV2UpdateRequestDto(
             nickname = account.nickname?.trim()?.ifBlank { null },
             bio = account.introduction?.trim()?.ifBlank { null },
@@ -109,35 +86,22 @@ class UserRepositoryImpl @Inject constructor(
             occupation = account.career?.trim()?.ifBlank { null },
             region = account.region?.trim()?.ifBlank { null },
             school = account.school?.trim()?.ifBlank { null },
-            backgroundImage = toRelativeIfBackendUrl(backgroundToUpdate)
+            backgroundImage = toRelative(bg)
         )
-
-        val remote = userRemote.updateMe(body)
-        return remote.fold(
+        return userRemote.updateMe(body).fold(
             onSuccess = { dto ->
-                try {
-                    val updated = dto.toDomain()
-                    val fallbackPassword = account.password
-                        ?: userData.getUserByPhone(updated.phone)?.password
-                        ?: userData.getUserByPhone(account.phone)?.password
-                        ?: ""
-                    val updatedWithPwd = updated.copy(password = fallbackPassword)
-                    val existing = userData.getUserByPhone(updated.phone)
-                    if (existing == null) {
-                        userData.saveUser(updatedWithPwd)
-                    } else {
-                        userData.updateUser(updatedWithPwd)
-                    }
-                    Result.success(Unit)
-                } catch (t: Throwable) {
-                    Result.failure(t)
-                }
+                val updated = dto.toDomain()
+                val pwd = account.password
+                    ?: userStore.getUserByPhone(updated.phone)?.password
+                    ?: userStore.getUserByPhone(account.phone)?.password ?: ""
+                val updatedWithPwd = updated.copy(password = pwd)
+                if (userStore.getUserByPhone(updated.phone) == null) userStore.saveUser(updatedWithPwd)
+                else userStore.updateUser(updatedWithPwd)
+                Result.success(Unit)
             },
             onFailure = { Result.failure(it) }
         )
     }
 
-    override suspend fun currentUserPhone(): String? {
-        return userData.getCurrentUserPhone()
-    }
+    override suspend fun currentUserPhone(): String? = tokenHolder.phone
 }

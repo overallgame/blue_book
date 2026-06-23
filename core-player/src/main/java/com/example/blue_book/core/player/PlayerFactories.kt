@@ -2,7 +2,9 @@
 package com.example.blue_book.core.player
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -15,11 +17,9 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import java.util.concurrent.TimeUnit
-
-data class PlayerFactories(
+import com.example.blue_book.network.VideoOkHttpProvider
+data class PlayerFactories @OptIn(UnstableApi::class) constructor
+    (
     val renderersFactory: RenderersFactory,
     val trackSelector: TrackSelector,
     val loadControl: LoadControl,
@@ -28,6 +28,7 @@ data class PlayerFactories(
 )
 
 object PlayerFactoriesProvider {
+    @OptIn(UnstableApi::class)
     fun default(context: Context): PlayerFactories {
         val renderersFactory = DefaultRenderersFactory(context)
             .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
@@ -40,13 +41,7 @@ object PlayerFactoriesProvider {
             .setBufferDurationsMs(1500, 12000, 250, 500)
             .build()
 
-        // OkHttp 客户端（可添加鉴权/UA/重试等拦截器）
-        val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .writeTimeout(20, TimeUnit.SECONDS)
-            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
-            .build()
+        val okHttpClient = VideoOkHttpProvider.getInstance(context)
 
         val upstreamFactory: DataSource.Factory = OkHttpDataSource.Factory(okHttpClient)
 

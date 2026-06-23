@@ -1,5 +1,6 @@
 package com.example.blue_book.ui.comment
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -83,11 +84,10 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupToolbar() {
-        binding.commentToolbar.setNavigationOnClickListener {
-            dismiss()
-        }
+        binding.commentToolbar.setOnClickListener { dismiss() }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun setupRecyclerView() {
         commentAdapter = CommentAdapter(
             currentUserId = currentUserId,

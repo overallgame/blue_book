@@ -1,8 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- MD3 Dark Surface -->
+    <color name="video_background">#FF000000</color>
+    <color name="video_surface">#FF1C1B1F</color>
+    <color name="video_surface_high">#FF28262C</color>
+    <color name="video_surface_container">#FF211F26</color>
+
+    <!-- MD3 Dark Text -->
+    <color name="video_on_surface">#FFE6E1E5</color>
+    <color name="video_on_surface_variant">#FFCAC4D0</color>
+    <color name="video_text_secondary">#FF9E9E9E</color>
+    <color name="video_text_tertiary">#FF757575</color>
+
+    <!-- MD3 Dark Outline / Divider -->
+    <color name="video_outline">#FF938F99</color>
+    <color name="video_divider">#33FFFFFF</color>
+
+    <!-- MD3 Primary (Accent) -->
+    <color name="video_primary">#FFD0BCFF</color>
+    <color name="video_error">#FFF2B8B5</color>
+
+    <!-- Bottom Sheet -->
+    <color name="video_bottom_sheet">#FF1C1B1F</color>
+    <color name="video_input_bg">#FF28262C</color>
+    <color name="video_send_btn">#FFD0BCFF</color>
+
+    <!-- Progress Bar -->
+    <color name="video_progress_track_bg">#33FFFFFF</color>
+    <color name="video_progress_active">#FFFFFFFF</color>
+
+
     <color name="md_theme_onPrimary">#FFFFFF</color>
     <color name="md_theme_onSurface">#1C1B1C</color>
     <color name="md_theme_onSurfaceVariant">#48464B</color>
     <color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
     <color name="md_theme_outline">#79767B</color>
     <color name="md_theme_surfaceContainer">#F1EDED</color>
+
 </resources>

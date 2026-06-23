@@ -15,6 +15,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_video.databinding.VideoPageBinding
+import com.example.blue_book.ui.comment.CommentBottomSheet
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -43,13 +44,14 @@ class VideoFragment : Fragment() {
 			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
 			onClickCollect = { video -> viewModel.dispatch(VideoIntent.ToggleCollect(video)) },
 			onClickComment = { video ->
-				// TODO: Open comment bottom sheet
+				CommentBottomSheet.newInstance(video.aid, 0)
+					.show(parentFragmentManager, CommentBottomSheet.TAG)
 			},
 			onClickShare = { video ->
 				// TODO: Handle share
 			},
 			onClickAvatar = { video ->
-				// TODO: Navigate to user profile
+				// TODO: Navigate to Author profile
 			},
 			onPlayerError = { msg ->
 				Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
@@ -129,9 +131,27 @@ class VideoFragment : Fragment() {
 		}
 	}
 
+	private var savedPosition: Int = 0
+
 	override fun onPause() {
 		super.onPause()
+		savedPosition = binding.videoViewPager.currentItem
 		adapter.pauseAll()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		adapter.playAtPosition(savedPosition)
+	}
+
+	override fun onStart() {
+		super.onStart()
+		adapter.restore()
+	}
+
+	override fun onStop() {
+		super.onStop()
+		adapter.release()
 	}
 
 	override fun onDestroyView() {

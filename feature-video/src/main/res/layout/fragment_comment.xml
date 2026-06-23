@@ -16,28 +16,42 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/comment_toolbar"
+    <TextView
+        android:id="@+id/comment_toolbar_title"
         android:layout_width="0dp"
-        android:layout_height="?attr/actionBarSize"
-        android:layout_marginTop="8dp"
-        android:background="@android:color/white"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="评论"
+        android:textColor="@color/video_on_surface"
+        android:textSize="16sp"
+        android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/comment_drag_handle" />
+
+    <ImageButton
+        android:id="@+id/comment_toolbar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="关闭"
+        android:src="@drawable/_chevron_left1"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/comment_drag_handle"
-        app:navigationIcon="@drawable/_chevron_left1"
-        app:navigationIconTint="@color/md_theme_onSurface"
-        app:title="评论"
-        app:titleTextColor="#333333" />
+        app:tint="@color/video_on_surface" />
 
     <View
         android:id="@+id/comment_divider"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        android:background="#EEEEEE"
+        android:layout_marginTop="12dp"
+        android:background="@color/video_divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/comment_toolbar" />
+        app:layout_constraintTop_toBottomOf="@id/comment_toolbar_title" />
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/comment_swipe_refresh"
@@ -74,7 +88,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="暂无评论，快来抢沙发吧~"
-        android:textColor="#999999"
+        android:textColor="@color/video_text_secondary"
         android:textSize="14sp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/comment_input_layout"
@@ -86,9 +100,9 @@
         android:id="@+id/comment_input_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#FAFAFA"
+        android:background="@color/video_surface_high"
         android:orientation="vertical"
-        android:padding="8dp"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -98,7 +112,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:textColor="#1E90FF"
+            android:textColor="@color/video_primary"
             android:textSize="12sp"
             android:visibility="gone"
             tools:text="回复 @用户名"
@@ -119,23 +133,24 @@
                 android:hint="说点什么..."
                 android:maxLines="3"
                 android:minHeight="40dp"
-                android:paddingHorizontal="12dp"
+                android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:textColor="#333333"
-                android:textColorHint="#999999"
+                android:textColor="@color/video_on_surface"
+                android:textColorHint="@color/video_text_secondary"
                 android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/comment_send_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="16dp"
                 android:background="@drawable/bg_send_button"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="10dp"
                 android:text="发送"
-                android:textColor="@android:color/white"
-                android:textSize="14sp" />
+                android:textColor="@color/video_background"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 

@@ -4,43 +4,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="@color/video_background">
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/video_item_VideoPlayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <FrameLayout
-        android:id="@+id/video_item_gl_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <ImageButton
-        android:id="@+id/video_item_filter_toggle"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_gravity="top|end"
-        android:layout_margin="8dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="filter"
-        android:src="@drawable/like_icon3"
-        android:visibility="gone" />
-
+    <!-- 播放进度条 — 暂停时可见 -->
     <SeekBar
-        android:id="@+id/video_item_filter_intensity"
+        android:id="@+id/video_item_progress"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="2dp"
         android:layout_gravity="bottom"
-        android:layout_margin="8dp"
-        android:max="100"
-        android:progress="100"
+        android:max="1000"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        android:progressDrawable="@drawable/video_progress_track"
+        android:thumb="@drawable/video_progress_thumb"
+        android:splitTrack="false"
         android:visibility="gone" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="12dp">
+        android:padding="16dp"
+        android:paddingBottom="24dp">
 
         <LinearLayout
             android:id="@+id/video_item_right_actions"
@@ -71,10 +61,11 @@
                 android:src="@drawable/ic_launcher_foreground"
                 android:visibility="gone" />
 
+            <!-- 点赞 -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="24dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
@@ -90,11 +81,13 @@
                     android:id="@+id/video_item_like_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/video_on_surface"
                     android:textSize="12sp"
                     tools:text="1.2w" />
             </LinearLayout>
 
+            <!-- 收藏 -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -114,11 +107,13 @@
                     android:id="@+id/video_item_collect_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/video_on_surface"
                     android:textSize="12sp"
                     tools:text="2.3w" />
             </LinearLayout>
 
+            <!-- 评论 -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -138,11 +133,13 @@
                     android:id="@+id/video_item_comment_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/video_on_surface"
                     android:textSize="12sp"
                     tools:text="456" />
             </LinearLayout>
 
+            <!-- 分享 -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -162,18 +159,20 @@
                     android:id="@+id/video_item_share_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/video_on_surface"
                     android:textSize="12sp"
                     tools:text="分享" />
             </LinearLayout>
         </LinearLayout>
 
+        <!-- 底部信息区 -->
         <LinearLayout
             android:id="@+id/video_item_bottom_info"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="60dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -183,18 +182,18 @@
                 android:id="@+id/video_item_nickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="@color/video_on_surface"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                tools:text="@nickname" />
+                tools:text="nickname" />
 
             <TextView
                 android:id="@+id/video_item_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:maxLines="3"
-                android:textColor="@android:color/white"
+                android:textColor="@color/video_on_surface_variant"
                 android:textSize="14sp"
                 tools:text="这是视频描述内容，最多显示3行，超过后省略显示..." />
 
@@ -219,7 +218,7 @@
                     android:ellipsize="marquee"
                     android:marqueeRepeatLimit="marquee_forever"
                     android:singleLine="true"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/video_on_surface_variant"
                     android:textSize="12sp"
                     android:visibility="gone"
                     tools:text="背景音乐名称 - 歌手" />

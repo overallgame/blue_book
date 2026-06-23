@@ -2,6 +2,7 @@ package com.example.blue_book.core.player
 
 import android.content.Context
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.AudioAttributes
 import androidx.media3.exoplayer.ExoPlayer
@@ -24,7 +25,6 @@ class ExoPlayerEngine(
         .setMediaSourceFactory(factories.mediaSourceFactory)
         .build().apply {
             factories.analyticsListener?.let { addListener(it) }
-            // 基础音频焦点与属性
             setAudioAttributes(
                 AudioAttributes.Builder()
                     .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MOVIE)
@@ -32,6 +32,8 @@ class ExoPlayerEngine(
                     .build(), true
             )
         }
+
+    @Volatile private var isReleased = false
 
     // READY 超时与退避重试（仅起播阶段）
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -42,12 +44,15 @@ class ExoPlayerEngine(
     private var currentUrl: String? = null
     private var timeoutRunnable: Runnable? = null
     private var isInitialBuffering = false
+    private var stallRunnable: Runnable? = null
+    private var bufferingStartMs: Long = 0L
+    private val midStreamStallTimeoutMs = 15_000L
 
     override fun bindTo(playerView: PlayerView) {
+        if (isReleased) return
         if (surfaceProvider == null) {
             playerView.player = player
         } else {
-            // 使用自定义 Surface，不绑定到 PlayerView 的内部 SurfaceView
             surfaceProvider!!.getSurface { surface ->
                 player.setVideoSurface(surface)
             }
@@ -55,24 +60,34 @@ class ExoPlayerEngine(
     }
 
     override fun prepare(url: String) {
+        if (isReleased) return
         currentUrl = url
         timeoutRetryCount = 0
         isInitialBuffering = true
         cancelReadyTimeout()
+        cancelStallTimeout()
+        resetStallRetry()
         player.setMediaItem(MediaItem.fromUri(url))
         player.prepare()
     }
 
-    override fun play() { player.play() }
-    override fun pause() { player.pause() }
+    override fun play() { if (!isReleased) player.play() }
+    override fun pause() { if (!isReleased) player.pause() }
     override fun release() {
+        if (isReleased) return
+        isReleased = true
         player.clearVideoSurface()
         surfaceProvider?.release()
+        surfaceProvider = null
         cancelReadyTimeout()
+        cancelStallTimeout()
+        player.removeListener(bridgeListener)
+        eventBridges.clear()
         player.release()
     }
 
     override fun setSurfaceProvider(provider: VideoSurfaceProvider?) {
+        if (isReleased) return
         surfaceProvider = provider
         if (provider == null) {
             player.clearVideoSurface()
@@ -81,14 +96,13 @@ class ExoPlayerEngine(
         }
     }
 
-    // 扩展能力实现
-    override fun setPlayWhenReady(ready: Boolean) { player.playWhenReady = ready }
-    override fun setVolume(volume: Float) { player.volume = volume }
-    override fun setSpeed(speed: Float) { player.setPlaybackSpeed(speed) }
-    override fun setRepeatMode(mode: Int) { player.repeatMode = mode }
-    override fun seekTo(positionMs: Long) { player.seekTo(positionMs) }
-    override fun currentPosition(): Long = player.currentPosition
-    override fun duration(): Long = player.duration
+    override fun setPlayWhenReady(ready: Boolean) { if (!isReleased) player.playWhenReady = ready }
+    override fun setVolume(volume: Float) { if (!isReleased) player.volume = volume }
+    override fun setSpeed(speed: Float) { if (!isReleased) player.setPlaybackSpeed(speed) }
+    override fun setRepeatMode(mode: Int) { if (!isReleased) player.repeatMode = mode }
+    override fun seekTo(positionMs: Long) { if (!isReleased) player.seekTo(positionMs) }
+    override fun currentPosition(): Long = if (isReleased) 0L else player.currentPosition
+    override fun duration(): Long = if (isReleased) 0L else player.duration
 
     private val eventBridges = mutableSetOf<PlayerEvents>()
     private val bridgeListener = object : Player.Listener {
@@ -96,19 +110,26 @@ class ExoPlayerEngine(
             when (state) {
                 Player.STATE_BUFFERING -> {
                     eventBridges.forEach { it.onBuffering() }
-                    scheduleReadyTimeout()
+                    if (isInitialBuffering) {
+                        scheduleReadyTimeout()
+                    } else {
+                        scheduleStallTimeout()
+                    }
                 }
                 Player.STATE_READY -> {
                     isInitialBuffering = false
                     cancelReadyTimeout()
+                    cancelStallTimeout()
+                    resetStallRetry()
                     eventBridges.forEach { it.onReady() }
                 }
                 Player.STATE_ENDED -> eventBridges.forEach { it.onEnded() }
             }
         }
-        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+        override fun onPlayerError(error: PlaybackException) {
             cancelReadyTimeout()
-            eventBridges.forEach { it.onError(error.message ?: "") }
+            cancelStallTimeout()
+            eventBridges.forEach { it.onError(error.message ?: "", error.errorCode) }
         }
     }
 
@@ -117,22 +138,19 @@ class ExoPlayerEngine(
     override fun removeListener(listener: PlayerEvents) { eventBridges.remove(listener) }
 
     private fun scheduleReadyTimeout() {
-        if (!isInitialBuffering) return  // 播放中卡顿交给 LoadControl 处理，不触发起播重试
         val url = currentUrl ?: return
         cancelReadyTimeout()
         val delay = readyTimeoutMs + backoffBaseMs * timeoutRetryCount
         timeoutRunnable = Runnable {
-            // 若仍未 READY，则执行退避重试或上报错误
+            if (isReleased) return@Runnable
             if (player.playbackState != Player.STATE_READY && currentUrl == url) {
                 if (timeoutRetryCount < maxTimeoutRetries) {
                     timeoutRetryCount += 1
-                    // 记录当前位置以尽量平滑恢复
                     val pos = player.currentPosition
                     player.stop()
                     player.setMediaItem(MediaItem.fromUri(url))
                     player.prepare()
                     if (pos > 0) player.seekTo(pos)
-                    // 新一轮 BUFFERING 时会重新计时
                 } else {
                     eventBridges.forEach { it.onError("起播超时") }
                     cancelReadyTimeout()
@@ -146,6 +164,39 @@ class ExoPlayerEngine(
         timeoutRunnable?.let { mainHandler.removeCallbacks(it) }
         timeoutRunnable = null
     }
+
+    private var stallRetryCount = 0
+    private var stallSavedPosition: Long = 0L
+
+    private fun scheduleStallTimeout() {
+        cancelStallTimeout()
+        bufferingStartMs = SystemClock.elapsedRealtime()
+        stallRunnable = Runnable {
+            if (!isReleased && player.playbackState == Player.STATE_BUFFERING) {
+                if (stallRetryCount < 1) {
+                    stallRetryCount++
+                    stallSavedPosition = player.currentPosition
+                    val url = currentUrl ?: return@Runnable
+                    player.stop()
+                    player.setMediaItem(MediaItem.fromUri(url))
+                    player.prepare()
+                    if (stallSavedPosition > 0) player.seekTo(stallSavedPosition)
+                } else {
+                    eventBridges.forEach { it.onError("播放卡顿超时") }
+                }
+            }
+        }
+        mainHandler.postDelayed(stallRunnable!!, midStreamStallTimeoutMs)
+    }
+
+    private fun resetStallRetry() {
+        stallRetryCount = 0
+        stallSavedPosition = 0L
+    }
+
+    private fun cancelStallTimeout() {
+        stallRunnable?.let { mainHandler.removeCallbacks(it) }
+        stallRunnable = null
+        bufferingStartMs = 0L
+    }
 }
-
-

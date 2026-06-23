@@ -4,7 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp">
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="12dp">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/comment_avatar"
@@ -24,7 +27,7 @@
         android:layout_marginEnd="8dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="#333333"
+        android:textColor="@color/video_on_surface"
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@id/comment_like_layout"
@@ -38,8 +41,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="2dp"
-        android:textColor="#999999"
-        android:textSize="12sp"
+        android:textColor="@color/video_text_tertiary"
+        android:textSize="11sp"
         app:layout_constraintStart_toEndOf="@id/comment_avatar"
         app:layout_constraintTop_toBottomOf="@id/comment_nickname"
         tools:text="2小时前" />
@@ -55,8 +58,8 @@
 
         <ImageButton
             android:id="@+id/comment_like_btn"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="点赞"
             android:src="@drawable/like_icon3" />
@@ -65,7 +68,7 @@
             android:id="@+id/comment_like_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#999999"
+            android:textColor="@color/video_text_tertiary"
             android:textSize="11sp"
             tools:text="1.2w" />
     </LinearLayout>
@@ -75,21 +78,21 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:layout_marginEnd="8dp"
-        android:textColor="#333333"
+        android:textColor="@color/video_on_surface"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/comment_avatar"
         app:layout_constraintTop_toBottomOf="@id/comment_time"
-        tools:text="这是一条评论内容，最多显示3行，超过后省略。这是一条评论内容，最多显示3行，超过后省略。" />
+        tools:text="这是一条评论内容" />
 
     <LinearLayout
         android:id="@+id/comment_action_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:orientation="horizontal"
         app:layout_constraintStart_toEndOf="@id/comment_avatar"
         app:layout_constraintTop_toBottomOf="@id/comment_content">
@@ -101,7 +104,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="4dp"
             android:text="回复"
-            android:textColor="#666666"
+            android:textColor="@color/video_text_secondary"
             android:textSize="12sp" />
 
         <TextView
@@ -112,7 +115,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="4dp"
             android:text="删除"
-            android:textColor="#666666"
+            android:textColor="@color/video_error"
             android:textSize="12sp"
             android:visibility="gone"
             tools:visibility="visible" />
@@ -124,7 +127,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="8dp"
-        android:background="#F5F5F5"
+        android:background="@color/video_surface_container"
         android:nestedScrollingEnabled="false"
         android:overScrollMode="never"
         android:visibility="gone"
@@ -140,9 +143,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:padding="4dp"
-        android:textColor="#1E90FF"
+        android:textColor="@color/video_primary"
         android:textSize="12sp"
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/comment_avatar"

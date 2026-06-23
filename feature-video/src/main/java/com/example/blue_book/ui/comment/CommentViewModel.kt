@@ -161,19 +161,20 @@ class CommentViewModel @Inject constructor(
     }
 
     fun likeComment(commentId: Long) {
-        viewModelScope.launch {
-            val comment = findCommentById(commentId)
-            val newLikedState = comment?.isLiked?.not() ?: return@launch
+        val current = findCommentById(commentId) ?: return
+        val newLiked = current.isLiked.not()
+        val prevState = _uiState.value
 
-            likeCommentUseCase(commentId, newLikedState)
-                .onSuccess {
-                    _uiState.update { state ->
-                        val updatedComments = updateCommentLike(state.comments, commentId, newLikedState)
-                        state.copy(comments = updatedComments)
-                    }
-                }
+        // 乐观更新 — 先改 UI
+        _uiState.update { state ->
+            state.copy(comments = updateCommentLike(state.comments, commentId, newLiked))
+        }
+
+        viewModelScope.launch {
+            likeCommentUseCase(commentId, newLiked)
                 .onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
+                    // 失败回滚 + 提示
+                    _uiState.update { prevState.copy(error = e.message ?: "操作失败") }
                 }
         }
     }

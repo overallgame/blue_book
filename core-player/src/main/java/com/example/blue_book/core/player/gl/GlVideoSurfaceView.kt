@@ -5,17 +5,22 @@ import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import android.opengl.GLUtils
+import android.util.Log
 import android.view.Surface
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
-import android.opengl.Matrix
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
 
-    private val renderer = VideoRenderer()
+    private val renderer = VideoRenderer(this)
+
+    /** GL context 被重建（退后台/旋转等）后递增，GlSurfaceProvider 据此刷新 Surface */
+    internal var contextGeneration: Int = 0
+        private set
 
     init {
         setEGLContextClientVersion(2)
@@ -36,12 +41,14 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
         requestRender()
     }
 
-	fun setIntensity(value: Float) {
-		renderer.setIntensity(value)
+    fun setIntensity(value: Float) {
+        renderer.setIntensity(value)
         requestRender()
-	}
+    }
 
-    private class VideoRenderer : Renderer, SurfaceTexture.OnFrameAvailableListener {
+    internal class VideoRenderer(
+        private val view: GlVideoSurfaceView
+    ) : Renderer, SurfaceTexture.OnFrameAvailableListener {
         private var oesTexId: Int = 0
         private var surfaceTexture: SurfaceTexture? = null
         private var surface: Surface? = null
@@ -65,6 +72,10 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
         private var intensity: Float = 1.0f
 
         override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+            // 释放上一个 context 的 Surface / SurfaceTexture
+            release()
+
+            view.contextGeneration++
             oesTexId = createOesTexture()
             surfaceTexture = SurfaceTexture(oesTexId).apply {
                 setOnFrameAvailableListener(this@VideoRenderer)
@@ -72,7 +83,13 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
             surface = Surface(surfaceTexture)
             onSurfaceReady?.invoke(surface!!)
 
-            program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            try {
+                program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            } catch (e: RuntimeException) {
+                Log.e("GlVideoSurfaceView", "Shader init failed, falling back", e)
+                program = 0
+                return
+            }
             aPositionLoc = GLES20.glGetAttribLocation(program, "aPosition")
             aTexCoordLoc = GLES20.glGetAttribLocation(program, "aTexCoord")
             uTexTransformLoc = GLES20.glGetUniformLocation(program, "uTexTransform")
@@ -85,6 +102,7 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
         }
 
         override fun onDrawFrame(gl: GL10?) {
+            if (program == 0) return
             GLES20.glClearColor(0f, 0f, 0f, 1f)
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
             surfaceTexture?.let {
@@ -111,14 +129,16 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTexId)
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+
+            checkGlError()
         }
 
         override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-            // 请求下一帧渲染
-            // GLSurfaceView 实例在外部，会触发 requestRender()
+            view.requestRender()
         }
 
         fun release() {
+            // Surface 由此处独立管理，不二次释放
             surface?.release()
             surface = null
             surfaceTexture?.release()
@@ -127,6 +147,13 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
 
         fun setFilter(type: FilterType) { filterType = type }
         fun setIntensity(v: Float) { intensity = v }
+
+        private fun checkGlError() {
+            val error = GLES20.glGetError()
+            if (error != GLES20.GL_NO_ERROR) {
+                Log.e("GlVideoSurfaceView", "GL error: ${GLUtils.getEGLErrorString(error)} ($error)")
+            }
+        }
 
         private fun createOesTexture(): Int {
             val tex = IntArray(1)
@@ -193,20 +220,18 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
 
             private const val FRAGMENT_SHADER = """
                 #extension GL_OES_EGL_image_external : require
-                precision mediump float;
+                precision highp float;
                 varying vec2 vTexCoord;
                 uniform samplerExternalOES sTexture;
-                uniform int uMode; // 0: normal, 1: gray, 2: warm
-                uniform float uIntensity; // 0..1
+                uniform int uMode;
+                uniform float uIntensity;
                 void main() {
                     vec4 c = texture2D(sTexture, vTexCoord);
                     if (uMode == 1) {
                         float y = dot(c.rgb, vec3(0.299, 0.587, 0.114));
-                        vec3 gray = vec3(y);
-                        gl_FragColor = vec4(mix(c.rgb, gray, clamp(uIntensity, 0.0, 1.0)), 1.0);
+                        gl_FragColor = vec4(mix(c.rgb, vec3(y), clamp(uIntensity, 0.0, 1.0)), 1.0);
                     } else if (uMode == 2) {
-                        // 简单暖色：提升红/绿，降低蓝
-                        vec3 warm = vec3(c.r + 0.1, c.g + 0.05, c.b - 0.05);
+                        vec3 warm = clamp(vec3(c.r + 0.1, c.g + 0.05, c.b - 0.05), 0.0, 1.0);
                         gl_FragColor = vec4(mix(c.rgb, warm, clamp(uIntensity, 0.0, 1.0)), 1.0);
                     } else {
                         gl_FragColor = c;
@@ -216,5 +241,3 @@ class GlVideoSurfaceView(context: Context) : GLSurfaceView(context) {
         }
     }
 }
-
-

@@ -53,16 +53,20 @@ class VideoViewModel @Inject constructor(
 
 	private suspend fun loadMore() {
 		val state = uiState.value
-		if (state.isLoading) return
+		if (state.isLoading || !state.hasMore) return
+		val cursorId = if (state.items.isNotEmpty()) state.items.last().aid else null
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
 			call = {
 				when (state.mode) {
-					VideoUiState.Mode.Random -> fetchRandomVideos()
-					VideoUiState.Mode.Search -> fetchByKeyword(state.keyword)
+					VideoUiState.Mode.Random -> fetchRandomVideos(cursorId)
+					VideoUiState.Mode.Search -> fetchByKeyword(state.keyword, cursorId)
 				}
 			},
-			onSuccess = { list -> setState { copy(items = items + list.map(::toUi), isLoading = false) } },
+			onSuccess = { list ->
+				val mapped = list.map(::toUi)
+				setState { copy(items = items + mapped, isLoading = false, hasMore = mapped.isNotEmpty()) }
+			},
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)
 	}

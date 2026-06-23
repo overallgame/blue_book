@@ -19,11 +19,13 @@ object MediaCacheProvider {
         }
     }
 
-    fun clear() {
+    fun clear(context: Context) {
         synchronized(this) {
             simpleCache?.release()
             simpleCache = null
         }
+        val cacheDir = File(context.applicationContext.cacheDir, "media_cache")
+        cacheDir.deleteRecursively()
     }
 
     private fun buildCache(context: Context): SimpleCache {

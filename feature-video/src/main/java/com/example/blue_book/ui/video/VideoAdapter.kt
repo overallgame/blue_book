@@ -2,6 +2,7 @@ package com.example.blue_book.ui.video
 
 import android.content.Context
 import android.view.LayoutInflater
+import java.util.LinkedHashMap
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
@@ -16,9 +17,6 @@ import com.example.blue_book.feature_video.databinding.VideoItemViewBinding
 import com.example.blue_book.core.player.PlayerEngine
 import com.example.blue_book.core.player.PlayerEnginePool
 import com.example.blue_book.core.player.ExoPlayerEngine
-import com.example.blue_book.core.player.gl.GlVideoSurfaceView
-import com.example.blue_book.core.player.gl.GlSurfaceProvider
-import com.example.blue_book.core.player.gl.FilterType
 import com.example.blue_book.core.player.PlayerEvents
 
 @UnstableApi
@@ -33,14 +31,11 @@ class VideoAdapter(
     private val onRequestPlayUrl: (VideoCardInfo) -> Unit
 ) : ListAdapter<VideoCardInfo, VideoAdapter.ViewHolder>(VideoDiffCallback()) {
 
-    private val viewHolderMap = mutableMapOf<Int, ViewHolder>()
+    private val viewHolderMap = mutableMapOf<Long, ViewHolder>()
     private val enginePool = PlayerEnginePool(maxSize = 3) { ExoPlayerEngine(context) }
-    private val useGl = true
-    private val retryCountByUrl = mutableMapOf<String, Int>()
+    private val savedPositions = LinkedHashMap<String, Long>(100, 0.75f, true)
 
-    init {
-        setHasStableIds(true)
-    }
+    init { setHasStableIds(true) }
 
     override fun getItemId(position: Int): Long = getItem(position).aid
 
@@ -49,12 +44,9 @@ class VideoAdapter(
 
         private var currentUrl: String? = null
         private var engine: PlayerEngine? = null
-        private var glView: GlVideoSurfaceView? = null
-        private var glProvider: GlSurfaceProvider? = null
-        private var filterType: FilterType = FilterType.GRAY
-        private var filterIntensity: Int = 100
         private var eventBridge: PlayerEvents? = null
         private var currentVideo: VideoCardInfo? = null
+        private var isProgressTracking = false
 
         private fun releaseEngineToPool() {
             val url = currentUrl
@@ -64,6 +56,7 @@ class VideoAdapter(
                 currentUrl = null
                 return
             }
+            savedPositions[url] = e.currentPosition()
             eventBridge?.let { eb -> e.removeListener(eb) }
             eventBridge = null
             e.setSurfaceProvider(null)
@@ -76,164 +69,90 @@ class VideoAdapter(
         fun bind(videoInfo: VideoCardInfo) {
             currentVideo = videoInfo
             val url = videoInfo.playUrl
-            val previousUrl = currentUrl
-            if (!previousUrl.isNullOrBlank() && previousUrl != url) {
+            val isNewUrl = currentUrl != url
+            if (isNewUrl && !currentUrl.isNullOrBlank()) {
                 releaseEngineToPool()
             }
             currentUrl = url
 
-            // Bind basic info
             binding.videoItemNickname.text = videoInfo.nickname
             binding.videoItemDescription.text = videoInfo.description
             binding.videoItemLikeCount.text = formatCount(videoInfo.like)
             binding.videoItemCollectCount.text = formatCount(videoInfo.collection)
             binding.videoItemCommentCount.text = formatCount(videoInfo.commentCount)
 
-            // Bind avatar
             Glide.with(binding.root.context)
                 .load(videoInfo.avatar)
                 .placeholder(R.drawable.ic_launcher_background)
                 .circleCrop()
                 .into(binding.videoItemAvatar)
 
-            // Bind like state
             binding.videoItemLikeBtn.setImageResource(
                 if (videoInfo.isLike) R.drawable.like_icon3 else R.drawable.like_icon2
             )
 
-            // Bind collect state (if available in VideoCardInfo)
-            // binding.videoItemCollectBtn.setImageResource(...)
+            // 收藏按钮视觉切换
+            binding.videoItemCollectBtn.setImageResource(
+                if (videoInfo.isCollect) R.drawable.collection_icon1 else R.drawable.collection_icon
+            )
 
-            // Set click listeners for right side action buttons
-            binding.videoItemLikeBtn.setOnClickListener {
-                currentVideo?.let(onClickLike)
-            }
+            binding.videoItemLikeBtn.setOnClickListener { currentVideo?.let(onClickLike) }
+            binding.videoItemCollectBtn.setOnClickListener { currentVideo?.let(onClickCollect) }
+            binding.videoItemCommentBtn.setOnClickListener { currentVideo?.let(onClickComment) }
+            binding.videoItemShareBtn.setOnClickListener { currentVideo?.let(onClickShare) }
+            binding.videoItemAvatar.setOnClickListener { currentVideo?.let(onClickAvatar) }
 
-            binding.videoItemCollectBtn.setOnClickListener {
-                currentVideo?.let(onClickCollect)
-            }
+            // 进度条 — 只在暂停时可见
+            binding.videoItemProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    if (fromUser) engine?.seekTo(progress * engine!!.duration() / 1000L)
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) { isProgressTracking = true }
+                override fun onStopTrackingTouch(seekBar: SeekBar?) { isProgressTracking = false }
+            })
 
-            binding.videoItemCommentBtn.setOnClickListener {
-                currentVideo?.let(onClickComment)
-            }
-
-            binding.videoItemShareBtn.setOnClickListener {
-                currentVideo?.let(onClickShare)
-            }
-
-            binding.videoItemAvatar.setOnClickListener {
-                currentVideo?.let(onClickAvatar)
-            }
-
-            // Filter controls
             if (url.isBlank()) {
                 onRequestPlayUrl(videoInfo)
                 return
-            } else if (useGl) {
-                if (glView == null) {
-                    glView = GlVideoSurfaceView(binding.root.context)
-                    glView?.setFilter(filterType)
-                    glProvider = GlSurfaceProvider(glView!!)
-                    binding.videoItemGlContainer.addView(glView, ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    ))
-                    binding.videoItemVideoPlayer.visibility = View.GONE
-                }
-                binding.videoItemFilterToggle.visibility = View.VISIBLE
-                binding.videoItemFilterToggle.setOnClickListener {
-                    filterType = when (filterType) {
-                        FilterType.NONE -> FilterType.GRAY
-                        FilterType.GRAY -> FilterType.WARM
-                        FilterType.WARM -> FilterType.NONE
-                    }
-                    glView?.setFilter(filterType)
-                    if (filterType == FilterType.NONE) binding.videoItemFilterIntensity.visibility = View.GONE
-                }
-                binding.videoItemFilterToggle.setOnLongClickListener {
-                    val v = if (binding.videoItemFilterIntensity.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-                    binding.videoItemFilterIntensity.visibility = v
-                    true
-                }
-                binding.videoItemFilterIntensity.progress = filterIntensity
-                binding.videoItemFilterIntensity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                        filterIntensity = progress
-                        glView?.setIntensity(progress / 100f)
-                        glView?.requestRender()
-                    }
-                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-                })
-                releaseEngineToPool()
-                currentUrl = url
+            }
+            if (isNewUrl) {
                 engine = enginePool.acquire(url).apply {
-                    setSurfaceProvider(glProvider)
-                    attachEvents(this, url)
+                    attachEvents(this)
                     bindTo(binding.videoItemVideoPlayer)
                     prepare(url)
-                    pause()
-                }
-            } else {
-                binding.videoItemFilterToggle.visibility = View.GONE
-                releaseEngineToPool()
-                currentUrl = url
-                engine = enginePool.acquire(url).apply {
-                    attachEvents(this, url)
-                    bindTo(binding.videoItemVideoPlayer)
-                    prepare(url)
+                    savedPositions[url]?.takeIf { it > 0 }?.let { seekTo(it) }
                     pause()
                 }
             }
         }
 
-        fun play() = engine?.play()
-        fun pause() = engine?.pause()
+        fun play() {
+            engine?.play()
+            binding.videoItemProgress.visibility = View.GONE
+        }
+
+        fun pause() {
+            engine?.pause()
+            val e = engine ?: return
+            val dur = e.duration()
+            if (dur > 0) {
+                binding.videoItemProgress.max = 1000
+                binding.videoItemProgress.progress = ((e.currentPosition() * 1000L) / dur).toInt()
+                binding.videoItemProgress.visibility = View.VISIBLE
+            }
+        }
+
+        private fun attachEvents(playerEngine: PlayerEngine) {
+            eventBridge = object : PlayerEvents {
+                override fun onError(message: String, errorCode: Int) {
+                    onPlayerError(message.ifEmpty { "播放失败" })
+                }
+            }
+            playerEngine.addListener(eventBridge!!)
+        }
 
         fun release() {
-            if (useGl) {
-                releaseEngineToPool()
-                glProvider?.release()
-                glProvider = null
-                glView?.let { binding.videoItemGlContainer.removeView(it) }
-                glView = null
-                binding.videoItemVideoPlayer.visibility = View.GONE
-            } else {
-                releaseEngineToPool()
-            }
-        }
-
-        fun updateLike(like: Int, isLike: Boolean) {
-            binding.videoItemLikeCount.text = formatCount(like)
-            binding.videoItemLikeBtn.setImageResource(
-                if (isLike) R.drawable.like_icon3 else R.drawable.like_icon2
-            )
-        }
-
-        fun updateCollect(collect: Int) {
-            binding.videoItemCollectCount.text = formatCount(collect)
-        }
-
-        fun updateCommentCount(commentCount: Int) {
-            binding.videoItemCommentCount.text = formatCount(commentCount)
-        }
-
-        private fun attachEvents(playerEngine: PlayerEngine, url: String) {
-            val bridge = object : PlayerEvents {
-                override fun onReady() { retryCountByUrl.remove(url) }
-                override fun onError(message: String) {
-                    val cnt = retryCountByUrl.getOrDefault(url, 0)
-                    if (cnt < 2) {
-                        retryCountByUrl[url] = cnt + 1
-                        playerEngine.prepare(url)
-                        playerEngine.pause()
-                    } else {
-                        onPlayerError(message.ifEmpty { "播放失败" })
-                    }
-                }
-            }
-            eventBridge = bridge
-            playerEngine.addListener(bridge)
+            releaseEngineToPool()
         }
     }
 
@@ -243,17 +162,13 @@ class VideoAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        viewHolderMap[position] = holder
-        holder.bind(getItem(position))
-        if (!useGl) {
-            val next = position + 1
-            if (next < itemCount) {
-                val nv = getItem(next)
-                val nextUrl = nv.playUrl
-                if (nextUrl.isNotBlank()) {
-                    enginePool.preload(nextUrl, nextUrl)
-                }
-            }
+        val video = getItem(position)
+        viewHolderMap[video.aid] = holder
+        holder.bind(video)
+        val next = position + 1
+        if (next < itemCount) {
+            val nv = getItem(next)
+            if (nv.playUrl.isNotBlank()) enginePool.preload(nv.playUrl, nv.playUrl)
         }
     }
 
@@ -263,58 +178,51 @@ class VideoAdapter(
         holder.release()
     }
 
-    override fun getItemCount(): Int = itemCount
-
     fun addFirstVideo(video: VideoCardInfo) {
-        val newList = mutableListOf(video).apply { addAll(currentList) }
-        submitList(newList)
+        submitList(mutableListOf(video).apply { addAll(currentList) })
     }
 
     fun submitAppend(newVideos: List<VideoCardInfo>) {
-        val uniqueNewVideos = newVideos.filterNot { newVideo ->
-            currentList.any { existingVideo -> existingVideo.aid == newVideo.aid }
-        }
-        if (uniqueNewVideos.isNotEmpty()) {
-            val newList = currentList.toMutableList().apply { addAll(uniqueNewVideos) }
-            submitList(newList)
-        }
+        val unique = newVideos.filterNot { nv -> currentList.any { it.aid == nv.aid } }
+        if (unique.isNotEmpty()) submitList(currentList.toMutableList().apply { addAll(unique) })
     }
 
     fun updateVideoList(video: VideoCardInfo) {
         val idx = currentList.indexOfFirst { it.aid == video.aid }
         if (idx == -1) return
-        val newList = currentList.toMutableList().apply { this[idx] = video }
-        submitList(newList)
+        submitList(currentList.toMutableList().apply { this[idx] = video })
     }
 
-    fun playAtPosition(position: Int) { viewHolderMap[position]?.play() }
-    fun pauseAtPosition(position: Int) { viewHolderMap[position]?.pause() }
+    fun playAtPosition(position: Int) {
+        if (position in 0 until itemCount) viewHolderMap[getItem(position).aid]?.play()
+    }
+
+    fun pauseAtPosition(position: Int) {
+        if (position in 0 until itemCount) viewHolderMap[getItem(position).aid]?.pause()
+    }
+
     fun pauseAll() { viewHolderMap.values.forEach { it.pause() } }
-    fun resumeCurrent(position: Int) { viewHolderMap[position]?.play() }
-    fun release() { enginePool.releaseAll() }
-
-    private fun formatCount(v: Int): String = when {
-        v >= 10000 -> "%.1fw".format(v / 10000.0)
-        v >= 1000 -> "%.1fk".format(v / 1000.0)
-        else -> v.toString()
-    }
+    fun restore() {}
+    fun release() { enginePool.releaseAll(); savedPositions.clear() }
 
     fun preloadByPosition(pos: Int) {
         if (pos in 0 until itemCount) {
             val url = getItem(pos).playUrl
-            if (url.isNotBlank()) {
-                enginePool.preload(url, url)
-            }
+            if (url.isNotBlank()) enginePool.preload(url, url)
         }
     }
 
     fun releaseByPosition(pos: Int) {
         if (pos in 0 until itemCount) {
             val url = getItem(pos).playUrl
-            if (url.isNotBlank()) {
-                enginePool.release(url)
-            }
+            if (url.isNotBlank()) enginePool.release(url)
         }
+    }
+
+    private fun formatCount(v: Int): String = when {
+        v >= 10000 -> "%.1fw".format(v / 10000.0)
+        v >= 1000 -> "%.1fk".format(v / 1000.0)
+        else -> v.toString()
     }
 
     private sealed interface VideoPayload {
@@ -324,25 +232,16 @@ class VideoAdapter(
     }
 
     private class VideoDiffCallback : DiffUtil.ItemCallback<VideoCardInfo>() {
-        override fun areItemsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo): Boolean {
-            return oldItem.aid == newItem.aid
-        }
-
-        override fun areContentsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo): Boolean {
-            return oldItem == newItem
-        }
-
+        override fun areItemsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo) = oldItem.aid == newItem.aid
+        override fun areContentsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo) = oldItem == newItem
         override fun getChangePayload(oldItem: VideoCardInfo, newItem: VideoCardInfo): Any? {
             val payloads = mutableListOf<VideoPayload>()
-            if (oldItem.isLike != newItem.isLike || oldItem.like != newItem.like) {
+            if (oldItem.isLike != newItem.isLike || oldItem.like != newItem.like)
                 payloads.add(VideoPayload.LikeChanged(newItem.like, newItem.isLike))
-            }
-            if (oldItem.collection != newItem.collection) {
+            if (oldItem.collection != newItem.collection)
                 payloads.add(VideoPayload.CollectChanged(newItem.collection))
-            }
-            if (oldItem.commentCount != newItem.commentCount) {
+            if (oldItem.commentCount != newItem.commentCount)
                 payloads.add(VideoPayload.CommentCountChanged(newItem.commentCount))
-            }
             return payloads.ifEmpty { null }
         }
     }

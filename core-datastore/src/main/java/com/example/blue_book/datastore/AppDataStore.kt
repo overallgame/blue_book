@@ -59,7 +59,12 @@ class AppDataStore @Inject constructor(
     }
 
     override suspend fun remove(key: String) {
-        context.dataStore.edit { it.remove(stringPreferencesKey(key)) }
+        context.dataStore.edit {
+            it.remove(stringPreferencesKey(key))
+            it.remove(intPreferencesKey(key))
+            it.remove(booleanPreferencesKey(key))
+            it.remove(longPreferencesKey(key))
+        }
     }
 
     override suspend fun clear() {

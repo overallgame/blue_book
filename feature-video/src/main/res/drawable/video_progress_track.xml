@@ -8,7 +8,7 @@
     <item android:id="@android:id/progress">
         <clip>
             <shape>
-                <solid android:color="@color/video_progress_active" />
+                <gradient android:angle="0" android:endColor="#FF6B6B" android:startColor="#6366F1" android:type="linear" />
             </shape>
         </clip>
     </item>

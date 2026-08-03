@@ -33,7 +33,7 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.5.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.github.bumptech.glide:glide:4.13.2")
-    kapt("com.github.bumptech.glide:compiler:4.12.0")
+    kapt("com.github.bumptech.glide:compiler:4.13.2")
     // uCrop 与 AGP 8.x 不兼容，暂时注释
     // implementation("com.github.yalantis:ucrop:2.2.8")
     implementation("com.google.dagger:hilt-android:2.48.1")

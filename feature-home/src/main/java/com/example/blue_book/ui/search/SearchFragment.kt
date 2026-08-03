@@ -25,7 +25,6 @@ class SearchFragment : Fragment() {
 		binding.searchBack.setOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
 		binding.searchSearch.setOnClickListener {
 			val keyword = binding.searchComment.text?.toString().orEmpty()
-			val args = Bundle().apply { putString("keyword", keyword) }
 			(requireActivity() as HomeActivity).navigateToSearchResult(keyword)
 		}
 	}

@@ -8,6 +8,7 @@ import com.example.blue_book.domain.usecase.FetchPlayUrlUseCase
 import com.example.blue_book.domain.usecase.FetchRandomVideosUseCase
 import com.example.blue_book.domain.usecase.FetchVideosByKeywordUseCase
 import com.example.blue_book.domain.usecase.LikeVideoUseCase
+import com.therouter.TheRouter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,21 +16,26 @@ import javax.inject.Inject
 
 @HiltViewModel
 class VideoViewModel @Inject constructor(
-    private val fetchRandomVideos: FetchRandomVideosUseCase,
-    private val fetchByKeyword: FetchVideosByKeywordUseCase,
-    private val fetchPlayUrl: FetchPlayUrlUseCase,
-    private val likeVideoUseCase: LikeVideoUseCase,
-    private val collectVideoUseCase: CollectVideoUseCase
+	private val fetchRandomVideos: FetchRandomVideosUseCase,
+	private val fetchByKeyword: FetchVideosByKeywordUseCase,
+	private val fetchPlayUrl: FetchPlayUrlUseCase,
+	private val likeVideoUseCase: LikeVideoUseCase,
+	private val collectVideoUseCase: CollectVideoUseCase
 ) : UdfViewModel<VideoIntent, VideoUiState, VideoUiEffect>(VideoUiState()) {
+
+	private val togglingAids = mutableSetOf<Long>()
+	private val togglingCollectAids = mutableSetOf<Long>()
+	private val followingIds = mutableSetOf<Long>()
 
 	override suspend fun handleIntent(intent: VideoIntent) {
 		when (intent) {
 			VideoIntent.InitRandom -> initRandom()
 			is VideoIntent.InitSearch -> initSearch(intent.keyword)
 			VideoIntent.LoadMore -> loadMore()
-            is VideoIntent.RequestPlayUrl -> requestPlayUrl(intent.aid, intent.cid)
-            is VideoIntent.ToggleLike -> toggleLike(intent.video)
-            is VideoIntent.ToggleCollect -> toggleCollect(intent.video)
+			is VideoIntent.RequestPlayUrl -> requestPlayUrl(intent.aid, intent.cid)
+			is VideoIntent.ToggleLike -> toggleLike(intent.video)
+			is VideoIntent.ToggleCollect -> toggleCollect(intent.video)
+			is VideoIntent.ToggleFollow -> toggleFollow(intent.video)
 		}
 	}
 
@@ -71,7 +77,7 @@ class VideoViewModel @Inject constructor(
 		)
 	}
 
-    private fun toUi(v: Video): VideoCardInfo {
+	private fun toUi(v: Video): VideoCardInfo {
 		return VideoCardInfo(
 			aid = v.aid,
 			cid = v.cid,
@@ -81,74 +87,89 @@ class VideoViewModel @Inject constructor(
 			collection = v.collection,
 			nickname = v.nickname,
 			description = v.description,
-            playUrl = "",
-			isLike = false,
-			isCollect = false
+			playUrl = v.playUrl,
+			isLike = v.isLike,
+			isCollect = v.isCollect,
+			commentCount = v.commentCount,
+			uploaderId = v.uploaderId
 		)
 	}
 
-    private suspend fun requestPlayUrl(aid: Long, cid: Long) {
-        val current = uiState.value.items
-        val target = current.firstOrNull { it.aid == aid && it.cid == cid } ?: return
-        if (target.playUrl.isNotBlank()) return
+	private suspend fun requestPlayUrl(aid: Long, cid: Long) {
+		val current = uiState.value.items
+		val target = current.firstOrNull { it.aid == aid && it.cid == cid } ?: return
+		if (target.playUrl.isNotBlank()) return
 		runResult(
 			call = { withContext(Dispatchers.IO) { fetchPlayUrl(aid, cid) } },
 			onSuccess = { url -> sendEffect(VideoUiEffect.UpdateItem(target.copy(playUrl = url))) },
 			onFailure = { e -> sendEffect(VideoUiEffect.ShowToast(e.message ?: "获取播放地址失败")) }
 		)
-    }
+	}
 
-    private suspend fun toggleLike(video: VideoCardInfo) {
-        val newStatus = !video.isLike
-        val newLikeNumber = video.like + if (newStatus) 1 else -1
-        val updatedVideo = video.copy(isLike = newStatus, like = newLikeNumber)
+	private suspend fun toggleLike(video: VideoCardInfo) {
+		if (video.aid in togglingAids) return
+		togglingAids.add(video.aid)
+		val newStatus = !video.isLike
+		val newLikeNumber = video.like + if (newStatus) 1 else -1
+		val updatedVideo = video.copy(isLike = newStatus, like = newLikeNumber)
 
-        // 先更新本地UI
-        updateItemInList(updatedVideo)
+		// 先更新本地UI
+		updateItemInList(updatedVideo)
 
-        // 发送网络请求
-        runResult(
-            call = { withContext(Dispatchers.IO) {
-                likeVideoUseCase(
-                    video.aid,
-                    newStatus
-                )
-            } },
-            onSuccess = { /* 已经更新了 */ },
-            onFailure = { e ->
-                // 失败回滚
-                updateItemInList(video)
-                sendEffect(VideoUiEffect.ShowToast(e.message ?: "操作失败"))
-            }
-        )
-    }
+		// 发送网络请求
+		runResult(
+			call = { withContext(Dispatchers.IO) {
+				likeVideoUseCase(video.aid, newStatus)
+			} },
+			onSuccess = { togglingAids.remove(video.aid) },
+			onFailure = { e ->
+				// 失败回滚
+				updateItemInList(video)
+				sendEffect(VideoUiEffect.ShowToast(e.message ?: "操作失败"))
+				togglingAids.remove(video.aid)
+			}
+		)
+	}
 
-    private suspend fun toggleCollect(video: VideoCardInfo) {
-        val newStatus = !video.isCollect
-        val newCollectionNumber = video.collection + if (newStatus) 1 else -1
-        val updatedVideo = video.copy(isCollect = newStatus, collection = newCollectionNumber)
+	private suspend fun toggleCollect(video: VideoCardInfo) {
+		if (video.aid in togglingCollectAids) return
+		togglingCollectAids.add(video.aid)
+		val newStatus = !video.isCollect
+		val newCollectionNumber = video.collection + if (newStatus) 1 else -1
+		val updatedVideo = video.copy(isCollect = newStatus, collection = newCollectionNumber)
 
-        // 先更新本地UI
-        updateItemInList(updatedVideo)
+		// 先更新本地UI
+		updateItemInList(updatedVideo)
 
-        // 发送网络请求
-        runResult(
-            call = { withContext(Dispatchers.IO) { collectVideoUseCase(video.aid, newStatus) } },
-            onSuccess = { /* 已经更新了 */ },
-            onFailure = { e ->
-                // 失败回滚
-                updateItemInList(video)
-                sendEffect(VideoUiEffect.ShowToast(e.message ?: "操作失败"))
-            }
-        )
-    }
+		// 发送网络请求
+		runResult(
+			call = { withContext(Dispatchers.IO) { collectVideoUseCase(video.aid, newStatus) } },
+			onSuccess = { togglingCollectAids.remove(video.aid) },
+			onFailure = { e ->
+				// 失败回滚
+				updateItemInList(video)
+				sendEffect(VideoUiEffect.ShowToast(e.message ?: "操作失败"))
+				togglingCollectAids.remove(video.aid)
+			}
+		)
+	}
 
-    private fun updateItemInList(updatedVideo: VideoCardInfo) {
-        setState {
-            val newItems = items.map { if (it.aid == updatedVideo.aid) updatedVideo else it }
-            copy(items = newItems)
-        }
-    }
+	private suspend fun toggleFollow(video: VideoCardInfo) {
+		if (video.uploaderId == 0L) return
+		val isNowFollowing = video.uploaderId !in followingIds
+		if (isNowFollowing) {
+			followingIds.add(video.uploaderId)
+			sendEffect(VideoUiEffect.ShowToast("已关注 ${video.nickname}"))
+		} else {
+			followingIds.remove(video.uploaderId)
+			sendEffect(VideoUiEffect.ShowToast("已取消关注 ${video.nickname}"))
+		}
+	}
+
+	private fun updateItemInList(updatedVideo: VideoCardInfo) {
+		setState {
+			val newItems = items.map { if (it.aid == updatedVideo.aid) updatedVideo else it }
+			copy(items = newItems)
+		}
+	}
 }
-
-

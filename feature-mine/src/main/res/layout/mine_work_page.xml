@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mine_work_pager_swipeRefreshLayout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/mine_work_pager_swipeRefreshLayout"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/mine_work_recycleView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/md_theme_surfaceContainer"/>
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/mine_work_recycleView"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:background="@color/md_theme_surfaceContainer"
+		android:clipToPadding="false"
+		android:padding="4dp" />
 
-</LinearLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -22,9 +22,9 @@ sealed interface UserProfileIntent : UiIntent {
 }
 
 data class UserProfileUiState(
-    val user: UserAccount? = null,
-    val isLoading: Boolean = false,
-    val message: String? = null
+	val user: UserAccount? = null,
+	val isLoading: Boolean = false,
+	val message: String? = null
 ) : UiState
 
 sealed interface UserProfileEffect : UiEffect {

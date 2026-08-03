@@ -13,10 +13,11 @@ data class VideoCardInfo(
 	var collection: Int,
 	val nickname: String,
 	val description: String,
-    val playUrl: String,
+	val playUrl: String,
 	var isLike: Boolean,
 	var isCollect: Boolean,
-	var commentCount: Int = 0
+	var commentCount: Int = 0,
+	val uploaderId: Long = 0
 ): Parcelable
 
 

@@ -13,21 +13,22 @@ import com.example.blue_book.ui.home.HomeActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.data.VideoCardInfo
+import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.feature_home.databinding.SearchResultPageBinding
-import com.example.blue_book.ui.home.find.PreVideoAdapter
-import com.example.blue_book.ui.home.find.SpaceItem
+import com.example.blue_book.widget.PreVideoAdapter
+import com.example.blue_book.widget.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class AfterSearchFragment : Fragment() {
 
-    private var _binding: SearchResultPageBinding? = null
-    private val binding get() = _binding!!
-    private val viewModel: SearchResultViewModel by viewModels()
+	private var _binding: SearchResultPageBinding? = null
+	private val binding get() = _binding!!
+	private val viewModel: SearchResultViewModel by viewModels()
 
-    private var isLoading = false
-    private var keyword: String = ""
+	private var isLoading = false
+	private var keyword: String = ""
 
 	private lateinit var adapter: PreVideoAdapter
 
@@ -38,7 +39,7 @@ class AfterSearchFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		keyword = arguments?.getString("keyword").orEmpty()
+		keyword = arguments?.getString(ExtraKeys.EXTRA_KEYWORD).orEmpty()
 		initToolbar()
 		initRecyclerView()
 		observeViewModel()
@@ -59,12 +60,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { video -> toggleLike(video) },
 			onClickItem = { v ->
-				val args = Bundle().apply {
-					putParcelable("EXTRA_VIDEO", v)
-					putString("TAG_SHOW", "search")
-					putString("keyword", keyword)
-				}
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, "search", keyword)
 			}
 		)
 	binding.afterSearchRecycleView.run {
@@ -103,11 +99,9 @@ class AfterSearchFragment : Fragment() {
 	}
 
 	private fun toggleLike(video: VideoCardInfo) {
-		val newStatus = !video.isLike
-		val newLikeNumber = video.like + if (newStatus) +1 else -1
-		val newVideo = video.copy(isLike = newStatus, like = newLikeNumber)
-		adapter.updateVideoList(newVideo)
-		viewModel.dispatch(SearchIntent.ToggleLike(newVideo))
+		// 由 ViewModel 统一执行乐观更新，Fragment 层不重复修改，
+		// 否则 ViewModel 收到已翻转的状态会再次翻转导致点赞状态错误。
+		viewModel.dispatch(SearchIntent.ToggleLike(video))
 	}
 
 	private fun adapterSubmitClear() {
@@ -115,12 +109,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> toggleLike(v) },
 			onClickItem = { v ->
-				val args = Bundle().apply {
-					putParcelable("EXTRA_VIDEO", v)
-					putString("TAG_SHOW", "search")
-					putString("keyword", keyword)
-				}
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, "search", keyword)
 			}
 		)
 		binding.afterSearchRecycleView.adapter = adapter

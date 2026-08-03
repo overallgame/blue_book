@@ -19,73 +19,73 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
 
-    private var _binding: LoginPageBinding? = null
-    private val binding get() = _binding!!
-    private val viewModel: LoginViewModel by viewModels()
-    private var lastMessage: String? = null
+	private var _binding: LoginPageBinding? = null
+	private val binding get() = _binding!!
+	private val viewModel: LoginViewModel by viewModels()
+	private var lastMessage: String? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = LoginPageBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+		_binding = LoginPageBinding.inflate(inflater, container, false)
+		return binding.root
+	}
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupListeners()
-        observeViewModel()
-    }
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+		super.onViewCreated(view, savedInstanceState)
+		setupListeners()
+		observeViewModel()
+	}
 
-    private fun setupListeners() {
-        binding.logToolbar.setNavigationOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
-        binding.logPhone.doAfterTextChanged {
-            viewModel.dispatch(LoginIntent.PhoneChanged(it?.toString().orEmpty()))
-        }
-        binding.logPassword.doAfterTextChanged {
-            viewModel.dispatch(LoginIntent.PasswordChanged(it?.toString().orEmpty()))
-        }
-        binding.logButton.setOnClickListener { viewModel.dispatch(LoginIntent.Submit) }
-    }
+	private fun setupListeners() {
+		binding.logToolbar.setNavigationOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
+		binding.logPhone.doAfterTextChanged {
+			viewModel.dispatch(LoginIntent.PhoneChanged(it?.toString().orEmpty()))
+		}
+		binding.logPassword.doAfterTextChanged {
+			viewModel.dispatch(LoginIntent.PasswordChanged(it?.toString().orEmpty()))
+		}
+		binding.logButton.setOnClickListener { viewModel.dispatch(LoginIntent.Submit) }
+	}
 
-    private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch { viewModel.uiState.collect { renderState(it) } }
-                launch { viewModel.uiEffect.collect { handleEffect(it) } }
-            }
-        }
-    }
+	private fun observeViewModel() {
+		viewLifecycleOwner.lifecycleScope.launch {
+			repeatOnLifecycle(Lifecycle.State.STARTED) {
+				launch { viewModel.uiState.collect { renderState(it) } }
+				launch { viewModel.uiEffect.collect { handleEffect(it) } }
+			}
+		}
+	}
 
-    private fun renderState(state: LoginUiState) {
-        if (binding.logPhone.text.toString() != state.phone) {
-            binding.logPhone.setText(state.phone)
-            binding.logPhone.setSelection(state.phone.length)
-        }
-        if (binding.logPassword.text.toString() != state.password) {
-            binding.logPassword.setText(state.password)
-            binding.logPassword.setSelection(state.password.length)
-        }
-        binding.logButton.isEnabled = state.isLoginEnabled && !state.isLoading
-        binding.logButton.text = if (state.isLoading) "登录中..." else "登录"
+	private fun renderState(state: LoginUiState) {
+		if (binding.logPhone.text.toString() != state.phone) {
+			binding.logPhone.setText(state.phone)
+			binding.logPhone.setSelection(state.phone.length)
+		}
+		if (binding.logPassword.text.toString() != state.password) {
+			binding.logPassword.setText(state.password)
+			binding.logPassword.setSelection(state.password.length)
+		}
+		binding.logButton.isEnabled = state.isLoginEnabled && !state.isLoading
+		binding.logButton.text = if (state.isLoading) "登录中..." else "登录"
 
-        state.message?.takeIf { it.isNotBlank() && it != lastMessage }?.let {
-            Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-            lastMessage = it
-        }
-    }
+		state.message?.takeIf { it.isNotBlank() && it != lastMessage }?.let {
+			Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+			lastMessage = it
+		}
+	}
 
-    private fun handleEffect(effect: LoginUiEffect) {
-        when (effect) {
-            LoginUiEffect.NavigateHome -> (requireActivity() as AuthActivity).navigateToHome()
-            is LoginUiEffect.ShowToast -> {
-                if (effect.message.isNotBlank()) {
-                    Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
+	private fun handleEffect(effect: LoginUiEffect) {
+		when (effect) {
+			LoginUiEffect.NavigateHome -> (requireActivity() as AuthActivity).navigateToHome()
+			is LoginUiEffect.ShowToast -> {
+				if (effect.message.isNotBlank()) {
+					Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
+				}
+			}
+		}
+	}
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+	override fun onDestroyView() {
+		super.onDestroyView()
+		_binding = null
+	}
 }

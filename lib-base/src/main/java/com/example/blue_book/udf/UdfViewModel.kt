@@ -12,57 +12,57 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 abstract class UdfViewModel<I : UiIntent, S : UiState, E : UiEffect>(
-    initialState: S
+	initialState: S
 ) : ViewModel() {
 
-    private val intents = MutableSharedFlow<I>(extraBufferCapacity = 64)
-    private val _uiState = MutableStateFlow(initialState)
-    val uiState: StateFlow<S> = _uiState.asStateFlow()
+	private val intents = MutableSharedFlow<I>(extraBufferCapacity = 64)
+	private val _uiState = MutableStateFlow(initialState)
+	val uiState: StateFlow<S> = _uiState.asStateFlow()
 
-    private val _uiEffect = MutableSharedFlow<E>(extraBufferCapacity = 16)
-    val uiEffect: SharedFlow<E> = _uiEffect.asSharedFlow()
+	private val _uiEffect = MutableSharedFlow<E>(extraBufferCapacity = 16)
+	val uiEffect: SharedFlow<E> = _uiEffect.asSharedFlow()
 
-    init {
-        viewModelScope.launch {
-            intents.collect { handleIntent(it) }
-        }
-    }
+	init {
+		viewModelScope.launch {
+			intents.collect { handleIntent(it) }
+		}
+	}
 
-    fun dispatch(intent: I) {
-        viewModelScope.launch {
-            intents.emit(intent)
-        }
-    }
+	fun dispatch(intent: I) {
+		viewModelScope.launch {
+			intents.emit(intent)
+		}
+	}
 
-    protected abstract suspend fun handleIntent(intent: I)
+	protected abstract suspend fun handleIntent(intent: I)
 
-    protected fun setState(reducer: S.() -> S) {
-        _uiState.update(reducer)
-    }
+	protected fun setState(reducer: S.() -> S) {
+		_uiState.update(reducer)
+	}
 
-    protected suspend fun sendEffect(effect: E) {
-        _uiEffect.emit(effect)
-    }
+	protected suspend fun sendEffect(effect: E) {
+		_uiEffect.emit(effect)
+	}
 
-    protected suspend fun <T> runResult(
-        onStart: suspend () -> Unit = {},
-        call: suspend () -> Result<T>,
-        onSuccess: suspend (T) -> Unit,
-        onFailure: suspend (Throwable) -> Unit,
-        onFinally: suspend () -> Unit = {}
-    ) {
-        onStart()
-        try {
-            val result = call()
-            if (result.isSuccess) {
-                onSuccess(result.getOrThrow())
-            } else {
-                onFailure(result.exceptionOrNull() ?: IllegalStateException("Unknown error"))
-            }
-        } catch (t: Throwable) {
-            onFailure(t)
-        } finally {
-            onFinally()
-        }
-    }
+	protected suspend fun <T> runResult(
+		onStart: suspend () -> Unit = {},
+		call: suspend () -> Result<T>,
+		onSuccess: suspend (T) -> Unit,
+		onFailure: suspend (Throwable) -> Unit,
+		onFinally: suspend () -> Unit = {}
+	) {
+		onStart()
+		try {
+			val result = call()
+			if (result.isSuccess) {
+				onSuccess(result.getOrThrow())
+			} else {
+				onFailure(result.exceptionOrNull() ?: IllegalStateException("Unknown error"))
+			}
+		} catch (t: Throwable) {
+			onFailure(t)
+		} finally {
+			onFinally()
+		}
+	}
 }

@@ -12,38 +12,38 @@ import com.therouter.router.Route
 @Route(path = RoutePath.IMAGE_PICKER)
 class ImagePickerActivity : AppCompatActivity() {
 
-    private var tag: String? = null
+	private var tag: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_image_picker)
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_image_picker)
 
-        tag = intent.getStringExtra(EXTRA_TAG)
+		tag = intent.getStringExtra(EXTRA_TAG)
 
-        if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(R.id.imagePickerContainer, GalleryFragment.newInstance(tag))
-            }
-        }
-    }
+		if (savedInstanceState == null) {
+			supportFragmentManager.commit {
+				replace(R.id.imagePickerContainer, GalleryFragment.newInstance(tag))
+			}
+		}
+	}
 
-    fun openCrop(uri: Uri, tag: String?) {
-        supportFragmentManager.commit {
-            replace(R.id.imagePickerContainer, ImageCropFragment.newInstance(uri, tag))
-            addToBackStack(null)
-        }
-    }
+	fun openCrop(uri: Uri, tag: String?) {
+		supportFragmentManager.commit {
+			replace(R.id.imagePickerContainer, ImageCropFragment.newInstance(uri, tag))
+			addToBackStack(null)
+		}
+	}
 
-    fun finishWithResult(uri: Uri, tag: String?) {
-        val data = Intent().apply {
-            this.data = uri
-            putExtra(EXTRA_TAG, tag)
-        }
-        setResult(RESULT_OK, data)
-        finish()
-    }
+	fun finishWithResult(uri: Uri, tag: String?) {
+		val data = Intent().apply {
+			this.data = uri
+			putExtra(EXTRA_TAG, tag)
+		}
+		setResult(RESULT_OK, data)
+		finish()
+	}
 
-    companion object {
-        const val EXTRA_TAG = "tag"
-    }
+	companion object {
+		const val EXTRA_TAG = "tag"
+	}
 }

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_home.R
+import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.search.SearchFragment
 import com.example.blue_book.ui.search.AfterSearchFragment
@@ -16,46 +17,46 @@ import dagger.hilt.android.AndroidEntryPoint
 @Route(path = RoutePath.HOME)
 @AndroidEntryPoint
 class HomeActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)
-        if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(R.id.home_container, HomeFragment())
-            }
-        }
-    }
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_home)
+		if (savedInstanceState == null) {
+			supportFragmentManager.commit {
+				replace(R.id.home_container, HomeFragment())
+			}
+		}
+	}
 
-    fun navigateToSearch() {
-        supportFragmentManager.commit {
-            replace(R.id.home_container, SearchFragment())
-            addToBackStack("search")
-        }
-    }
+	fun navigateToSearch() {
+		supportFragmentManager.commit {
+			replace(R.id.home_container, SearchFragment())
+			addToBackStack("search")
+		}
+	}
 
-    fun navigateToSearchResult(keyword: String) {
-        supportFragmentManager.commit {
-            replace(R.id.home_container, AfterSearchFragment().apply {
-                arguments = Bundle().apply { putString("keyword", keyword) }
-            })
-            addToBackStack("search_result")
-        }
-    }
+	fun navigateToSearchResult(keyword: String) {
+		supportFragmentManager.commit {
+			replace(R.id.home_container, AfterSearchFragment().apply {
+				arguments = Bundle().apply { putString(ExtraKeys.EXTRA_KEYWORD, keyword) }
+			})
+			addToBackStack("search_result")
+		}
+	}
 
-    fun navigateToVideoPlayer(item: VideoCardInfo, tag: String? = null, keyword: String? = null) {
-        TheRouter.build(RoutePath.VIDEO)
-            .withParcelable("EXTRA_VIDEO", item)
-            .apply {
-                tag?.let { withString("TAG_SHOW", it) }
-                keyword?.let { withString("keyword", it) }
-            }
-            .navigation(this)
-    }
+	fun navigateToVideoPlayer(item: VideoCardInfo, tag: String? = null, keyword: String? = null) {
+		TheRouter.build(RoutePath.VIDEO)
+			.withParcelable(ExtraKeys.EXTRA_VIDEO, item)
+			.apply {
+				tag?.let { withString(ExtraKeys.EXTRA_TAG, it) }
+				keyword?.let { withString(ExtraKeys.EXTRA_KEYWORD, it) }
+			}
+			.navigation(this)
+	}
 
-    fun navigateToAuthEntry() {
-        TheRouter.build(RoutePath.AUTH)
-            .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-            .navigation(this)
-        finish()
-    }
+	fun navigateToAuthEntry() {
+		TheRouter.build(RoutePath.AUTH)
+			.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+			.navigation(this)
+		finish()
+	}
 }

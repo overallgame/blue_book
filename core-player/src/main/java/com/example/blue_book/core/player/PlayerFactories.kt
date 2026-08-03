@@ -19,52 +19,52 @@ import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import com.example.blue_book.network.VideoOkHttpProvider
 data class PlayerFactories @OptIn(UnstableApi::class) constructor
-    (
-    val renderersFactory: RenderersFactory,
-    val trackSelector: TrackSelector,
-    val loadControl: LoadControl,
-    val mediaSourceFactory: MediaSource.Factory,
-    val analyticsListener: Player.Listener? = null
+	(
+	val renderersFactory: RenderersFactory,
+	val trackSelector: TrackSelector,
+	val loadControl: LoadControl,
+	val mediaSourceFactory: MediaSource.Factory,
+	val analyticsListener: Player.Listener? = null
 )
 
 object PlayerFactoriesProvider {
-    @OptIn(UnstableApi::class)
-    fun default(context: Context): PlayerFactories {
-        val renderersFactory = DefaultRenderersFactory(context)
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
+	@OptIn(UnstableApi::class)
+	fun default(context: Context): PlayerFactories {
+		val renderersFactory = DefaultRenderersFactory(context)
+			.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
 
-        val trackSelector = DefaultTrackSelector(context).apply {
-            setParameters(buildUponParameters().setMaxVideoSizeSd())
-        }
+		val trackSelector = DefaultTrackSelector(context).apply {
+			setParameters(buildUponParameters().setMaxVideoSizeSd())
+		}
 
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1500, 12000, 250, 500)
-            .build()
+		val loadControl = DefaultLoadControl.Builder()
+			.setBufferDurationsMs(1500, 12000, 250, 500)
+			.build()
 
-        val okHttpClient = VideoOkHttpProvider.getInstance(context)
+		val okHttpClient = VideoOkHttpProvider.getInstance(context)
 
-        val upstreamFactory: DataSource.Factory = OkHttpDataSource.Factory(okHttpClient)
+		val upstreamFactory: DataSource.Factory = OkHttpDataSource.Factory(okHttpClient)
 
-        // CacheDataSource（命中缓存优先，失败回源）
-        val cache = MediaCacheProvider.get(context)
-        val cacheDataSourceFactory = CacheDataSource.Factory()
-            .setCache(cache)
-            .setUpstreamDataSourceFactory(upstreamFactory)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+		// CacheDataSource（命中缓存优先，失败回源）
+		val cache = MediaCacheProvider.get(context)
+		val cacheDataSourceFactory = CacheDataSource.Factory()
+			.setCache(cache)
+			.setUpstreamDataSourceFactory(upstreamFactory)
+			.setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
-        val mediaSourceFactory = DefaultMediaSourceFactory(cacheDataSourceFactory)
-            .setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy(3) {})
+		val mediaSourceFactory = DefaultMediaSourceFactory(cacheDataSourceFactory)
+			.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy(3) {})
 
-        val analytics = BasicPlayerAnalytics(defaultAnalyticsLogger())
+		val analytics = BasicPlayerAnalytics(AnalyticsReporter.DEFAULT)
 
-        return PlayerFactories(
-            renderersFactory = renderersFactory,
-            trackSelector = trackSelector,
-            loadControl = loadControl,
-            mediaSourceFactory = mediaSourceFactory,
-            analyticsListener = analytics
-        )
-    }
+		return PlayerFactories(
+			renderersFactory = renderersFactory,
+			trackSelector = trackSelector,
+			loadControl = loadControl,
+			mediaSourceFactory = mediaSourceFactory,
+			analyticsListener = analytics
+		)
+	}
 }
 
 

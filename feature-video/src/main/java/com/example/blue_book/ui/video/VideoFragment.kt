@@ -1,5 +1,6 @@
 package com.example.blue_book.ui.video
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Build
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.data.VideoCardInfo
+import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.feature_video.databinding.VideoPageBinding
 import com.example.blue_book.ui.comment.CommentBottomSheet
 import dagger.hilt.android.AndroidEntryPoint
@@ -44,14 +46,24 @@ class VideoFragment : Fragment() {
 			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
 			onClickCollect = { video -> viewModel.dispatch(VideoIntent.ToggleCollect(video)) },
 			onClickComment = { video ->
-				CommentBottomSheet.newInstance(video.aid, 0)
+				CommentBottomSheet.newInstance(video.aid, video.cid)
 					.show(parentFragmentManager, CommentBottomSheet.TAG)
 			},
 			onClickShare = { video ->
-				// TODO: Handle share
+				val text = "分享视频：${video.description}（来自 ${video.nickname}）"
+				val intent = Intent(Intent.ACTION_SEND).apply {
+					type = "text/plain"
+					putExtra(Intent.EXTRA_TEXT, text)
+				}
+				try {
+					startActivity(Intent.createChooser(intent, "分享到"))
+				} catch (e: android.content.ActivityNotFoundException) {
+					Toast.makeText(requireContext(), "没有可用的分享应用", Toast.LENGTH_SHORT).show()
+				}
 			},
 			onClickAvatar = { video ->
-				// TODO: Navigate to Author profile
+				// 作者主页功能待后续实现（需要服务端用户主页 API）
+				Toast.makeText(requireContext(), "作者主页功能开发中", Toast.LENGTH_SHORT).show()
 			},
 			onPlayerError = { msg ->
 				Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
@@ -73,9 +85,9 @@ class VideoFragment : Fragment() {
 					viewModel.dispatch(VideoIntent.LoadMore)
 				}
 				// 预加载窗口：position+1，position+2；释放 position-2
+				adapter.releaseByPosition(position - 2)
 				adapter.preloadByPosition(position + 1)
 				adapter.preloadByPosition(position + 2)
-				adapter.releaseByPosition(position - 2)
 			}
 
 			override fun onPageScrollStateChanged(state: Int) {
@@ -92,17 +104,17 @@ class VideoFragment : Fragment() {
 	private fun initByArgs() {
 		val firstVideo = arguments?.let { args ->
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				args.getParcelable("EXTRA_VIDEO", VideoCardInfo::class.java)
+				args.getParcelable(ExtraKeys.EXTRA_VIDEO, VideoCardInfo::class.java)
 			} else {
 				@Suppress("DEPRECATION")
-				args.getParcelable("EXTRA_VIDEO")
+				args.getParcelable(ExtraKeys.EXTRA_VIDEO)
 			}
 		}
 		firstVideo?.let { adapter.addFirstVideo(it) }
-		when (arguments?.getString("TAG_SHOW")) {
+		when (arguments?.getString(ExtraKeys.EXTRA_TAG)) {
 			"search" -> viewModel.dispatch(
 				VideoIntent.InitSearch(
-					arguments?.getString("keyword").orEmpty()
+					arguments?.getString(ExtraKeys.EXTRA_KEYWORD).orEmpty()
 				)
 			)
 
@@ -144,14 +156,11 @@ class VideoFragment : Fragment() {
 		adapter.playAtPosition(savedPosition)
 	}
 
-	override fun onStart() {
-		super.onStart()
-		adapter.restore()
-	}
-
 	override fun onStop() {
 		super.onStop()
-		adapter.release()
+		// 不在此处 release()，否则回到前台时 Engine 已销毁，restore() 无法恢复播放。
+		// Engine 在 onDestroyView() 中统一释放。
+		adapter.pauseAll()
 	}
 
 	override fun onDestroyView() {

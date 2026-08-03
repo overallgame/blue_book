@@ -11,39 +11,39 @@ import retrofit2.http.Query
 
 interface VideoApi {
 
-    @GET("/api/v2/feed")
-    suspend fun feed(
-        @Query("cursorId") cursorId: Long? = null,
-        @Query("size") size: Int? = null
-    ): Response<ApiResponse<FeedResponseDto>>
+	@GET("/api/v2/feed")
+	suspend fun feed(
+		@Query("cursorId") cursorId: Long? = null,
+		@Query("size") size: Int? = null
+	): Response<ApiResponse<FeedResponseDto>>
 
-    @GET("/api/v2/videos/search")
-    suspend fun searchVideos(
-        @Query("keyword") keyword: String,
-        @Query("cursorId") cursorId: Long? = null,
-        @Query("size") size: Int? = null
-    ): Response<ApiResponse<FeedResponseDto>>
+	@GET("/api/v2/videos/search")
+	suspend fun searchVideos(
+		@Query("keyword") keyword: String,
+		@Query("cursorId") cursorId: Long? = null,
+		@Query("size") size: Int? = null
+	): Response<ApiResponse<FeedResponseDto>>
 
-    @GET("/api/v2/videos/{videoId}/dto")
-    suspend fun getVideoDto(
-        @Path("videoId") videoId: Long
-    ): Response<ApiResponse<Video2Dto>>
+	@GET("/api/v2/videos/{videoId}/dto")
+	suspend fun getVideoDto(
+		@Path("videoId") videoId: Long
+	): Response<ApiResponse<Video2Dto>>
 
-    @POST("/api/v2/videos/{videoId}/like")
-    suspend fun likeVideo(
-        @Path("videoId") videoId: Long,
-        @Query("liked") liked: Boolean
-    ): Response<ApiResponse<Any>>
+	@POST("/api/v2/videos/{videoId}/like")
+	suspend fun likeVideo(
+		@Path("videoId") videoId: Long,
+		@Query("liked") liked: Boolean
+	): Response<ApiResponse<Any>>
 
-    @POST("/api/v2/videos/{videoId}/collect")
-    suspend fun collectVideo(
-        @Path("videoId") videoId: Long,
-        @Query("collected") collected: Boolean
-    ): Response<ApiResponse<Any>>
+	@POST("/api/v2/videos/{videoId}/collect")
+	suspend fun collectVideo(
+		@Path("videoId") videoId: Long,
+		@Query("collected") collected: Boolean
+	): Response<ApiResponse<Any>>
 
-    @GET("/api/v2/videos/{videoId}/playUrl")
-    suspend fun getPlayUrl(
-        @Path("videoId") videoId: Long,
-        @Query("cid") cid: Long
-    ): Response<ApiResponse<String>>
+	@GET("/api/v2/videos/{videoId}/playUrl")
+	suspend fun getPlayUrl(
+		@Path("videoId") videoId: Long,
+		@Query("cid") cid: Long
+	): Response<ApiResponse<String>>
 }

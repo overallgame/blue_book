@@ -1,4 +1,4 @@
-package com.example.blue_book.ui.home.find
+package com.example.blue_book.widget
 
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
@@ -10,17 +10,15 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.blue_book.feature_home.R
+import com.example.blue_book.lib_base.R
 import com.example.blue_book.data.VideoCardInfo
 
 class PreVideoAdapter(
-    private val onClickLike: (VideoCardInfo) -> Unit,
-    private val onClickItem: (VideoCardInfo) -> Unit = {}
+	private val onClickLike: (VideoCardInfo) -> Unit,
+	private val onClickItem: (VideoCardInfo) -> Unit = {}
 ) : ListAdapter<VideoCardInfo, PreVideoAdapter.VH>(DIFF) {
 
-	init {
-		setHasStableIds(true)
-	}
+	init { setHasStableIds(true) }
 
 	override fun getItemId(position: Int): Long {
 		val item = getItem(position)
@@ -37,10 +35,7 @@ class PreVideoAdapter(
 	}
 
 	override fun onBindViewHolder(holder: VH, position: Int, payloads: MutableList<Any>) {
-		if (payloads.isEmpty()) {
-			onBindViewHolder(holder, position)
-			return
-		}
+		if (payloads.isEmpty()) { onBindViewHolder(holder, position); return }
 		holder.updateItem(getItem(position))
 		val payload = payloads.lastOrNull() as? Payload
 		if (payload is Payload.LikeChanged) {
@@ -50,9 +45,7 @@ class PreVideoAdapter(
 		}
 	}
 
-	fun submitAppend(items: List<VideoCardInfo>) {
-		submitList(items)
-	}
+	fun submitAppend(items: List<VideoCardInfo>) { submitList(items) }
 
 	fun updateVideoList(video: VideoCardInfo) {
 		val idx = currentList.indexOfFirst { it.aid == video.aid && it.cid == video.cid }
@@ -71,7 +64,7 @@ class PreVideoAdapter(
 		private var currentItem: VideoCardInfo? = null
 
 		@SuppressLint("SetTextI18n")
-        fun bind(item: VideoCardInfo, onClickLike: (VideoCardInfo) -> Unit, onClickItem: (VideoCardInfo) -> Unit) {
+		fun bind(item: VideoCardInfo, onClickLike: (VideoCardInfo) -> Unit, onClickItem: (VideoCardInfo) -> Unit) {
 			currentItem = item
 			desc.text = item.description
 			nickname.text = item.nickname
@@ -82,9 +75,7 @@ class PreVideoAdapter(
 			itemView.setOnClickListener { currentItem?.let(onClickItem) }
 		}
 
-		fun updateItem(item: VideoCardInfo) {
-			currentItem = item
-		}
+		fun updateItem(item: VideoCardInfo) { currentItem = item }
 
 		fun bindLike(isLike: Boolean, like: Int) {
 			likeNum.text = like.toString()
@@ -98,20 +89,12 @@ class PreVideoAdapter(
 
 	private companion object {
 		val DIFF = object : DiffUtil.ItemCallback<VideoCardInfo>() {
-			override fun areItemsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo): Boolean {
-				return oldItem.aid == newItem.aid && oldItem.cid == newItem.cid
-			}
-
-			override fun areContentsTheSame(oldItem: VideoCardInfo, newItem: VideoCardInfo): Boolean {
-				return oldItem == newItem
-			}
-
-			override fun getChangePayload(oldItem: VideoCardInfo, newItem: VideoCardInfo): Any? {
-				val likeChanged = oldItem.isLike != newItem.isLike || oldItem.like != newItem.like
-				return if (likeChanged) Payload.LikeChanged(newItem.isLike, newItem.like) else null
+			override fun areItemsTheSame(a: VideoCardInfo, b: VideoCardInfo) = a.aid == b.aid && a.cid == b.cid
+			override fun areContentsTheSame(a: VideoCardInfo, b: VideoCardInfo) = a == b
+			override fun getChangePayload(old: VideoCardInfo, new: VideoCardInfo): Any? {
+				val changed = old.isLike != new.isLike || old.like != new.like
+				return if (changed) Payload.LikeChanged(new.isLike, new.like) else null
 			}
 		}
 	}
 }
-
-

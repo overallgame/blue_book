@@ -14,11 +14,11 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class VideoRepositoryModule {
 
-    @Binds
-    @Singleton
-    abstract fun bindVideoRepository(impl: VideoRepositoryImpl): VideoRepository
+	@Binds
+	@Singleton
+	abstract fun bindVideoRepository(impl: VideoRepositoryImpl): VideoRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindCommentRepository(impl: CommentRepositoryImpl): CommentRepository
+	@Binds
+	@Singleton
+	abstract fun bindCommentRepository(impl: CommentRepositoryImpl): CommentRepository
 }

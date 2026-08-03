@@ -5,10 +5,10 @@ import okhttp3.MultipartBody
 import javax.inject.Inject
 
 class FileRemoteDataSource @Inject constructor(
-    private val apiGateway: ApiGateway
+	private val apiGateway: ApiGateway
 ) {
-    private val api = apiGateway.createApi(FileApi::class.java)
+	private val api = apiGateway.createApi(FileApi::class.java)
 
-    suspend fun uploadImage(part: MultipartBody.Part): Result<String> =
-        apiGateway.commonResult { api.uploadImage(part) }
+	suspend fun uploadImage(part: MultipartBody.Part): Result<String> =
+		apiGateway.commonResult { api.uploadImage(part) }
 }

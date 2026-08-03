@@ -32,7 +32,7 @@ class VideoAdapter(
 ) : ListAdapter<VideoCardInfo, VideoAdapter.ViewHolder>(VideoDiffCallback()) {
 
     private val viewHolderMap = mutableMapOf<Long, ViewHolder>()
-    private val enginePool = PlayerEnginePool(maxSize = 3) { ExoPlayerEngine(context) }
+    private val enginePool = PlayerEnginePool(maxSize = 5) { ExoPlayerEngine(context) }
     private val savedPositions = LinkedHashMap<String, Long>(100, 0.75f, true)
 
     init { setHasStableIds(true) }
@@ -102,10 +102,54 @@ class VideoAdapter(
             binding.videoItemShareBtn.setOnClickListener { currentVideo?.let(onClickShare) }
             binding.videoItemAvatar.setOnClickListener { currentVideo?.let(onClickAvatar) }
 
+            // 双击点赞 + 长按倍速
+            val speedHandler = android.os.Handler(android.os.Looper.getMainLooper())
+            var speedRunnable: Runnable? = null
+            val tapDetector = android.view.GestureDetector(
+                binding.root.context,
+                object : android.view.GestureDetector.SimpleOnGestureListener() {
+						override fun onDown(e: android.view.MotionEvent) = true
+                    override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
+                        val v = currentVideo ?: return false
+                        if (!v.isLike) onClickLike(v)
+                        binding.videoItemHeart.apply {
+                            visibility = View.VISIBLE
+                            alpha = 0f
+                            scaleX = 0.3f
+                            scaleY = 0.3f
+                            animate()
+                                .alpha(1f).scaleX(1f).scaleY(1f).setDuration(300)
+                                .withEndAction {
+                                    animate().alpha(0f).setDuration(200).withEndAction {
+                                        visibility = View.GONE
+                                    }
+                                }
+                        }
+                        return true
+                    }
+                }
+            )
+            binding.root.setOnTouchListener { _, event ->
+                tapDetector.onTouchEvent(event)
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        speedRunnable = Runnable { engine?.setSpeed(2f) }
+                        speedHandler.postDelayed(speedRunnable!!, 300)
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        speedRunnable?.let { speedHandler.removeCallbacks(it) }
+                        engine?.setSpeed(1f)
+                    }
+                }
+                false
+            }
+
             // 进度条 — 只在暂停时可见
             binding.videoItemProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    if (fromUser) engine?.seekTo(progress * engine!!.duration() / 1000L)
+                    if (!fromUser) return
+                    val e = engine ?: return
+                    if (e.duration() > 0) e.seekTo(progress * e.duration() / 1000L)
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar?) { isProgressTracking = true }
                 override fun onStopTrackingTouch(seekBar: SeekBar?) { isProgressTracking = false }

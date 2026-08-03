@@ -6,7 +6,7 @@ import javax.inject.Inject
 
 class LogoutUseCase @Inject constructor() {
 
-    suspend operator fun invoke(): Result<Unit> {
-        return TheRouter.get(IAuthProvider::class.java)!!.logout()
-    }
+	suspend operator fun invoke(): Result<Unit> {
+		return TheRouter.get(IAuthProvider::class.java)!!.logout()
+	}
 }

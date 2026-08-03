@@ -1,9 +1,9 @@
 package com.example.blue_book.event
 
 data class LoginEvent(
-    val phone: String,
-    val nickname: String,
-    val avatar: String
+	val phone: String,
+	val nickname: String,
+	val avatar: String
 )
 
 object LogoutEvent

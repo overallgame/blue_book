@@ -6,9 +6,9 @@ import com.example.blue_book.auth.domain.repository.AuthRepository
 import javax.inject.Inject
 
 class RegisterUseCase @Inject constructor(
-    private val authRepository: AuthRepository
+	private val authRepository: AuthRepository
 ) {
-    suspend operator fun invoke(info: RegisterInfo): Result<UserAccount> {
-        return authRepository.register(info)
-    }
+	suspend operator fun invoke(info: RegisterInfo): Result<UserAccount> {
+		return authRepository.register(info)
+	}
 }

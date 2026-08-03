@@ -16,18 +16,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
-    @Provides
-    @Singleton
-    fun provideDataStore(appDataStore: AppDataStore): IDataStore = appDataStore
+	@Provides
+	@Singleton
+	fun provideDataStore(appDataStore: AppDataStore): IDataStore = appDataStore
 
-    @Provides
-    @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return AppDatabase.getDatabase(context)
-    }
+	@Provides
+	@Singleton
+	fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+		return AppDatabase.getDatabase(context)
+	}
 
-    @Provides
-    fun provideUserDao(appDatabase: AppDatabase): UserDao {
-        return appDatabase.userDao()
-    }
+	@Provides
+	fun provideUserDao(appDatabase: AppDatabase): UserDao {
+		return appDatabase.userDao()
+	}
 }

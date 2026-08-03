@@ -21,144 +21,144 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class CommentBottomSheet : BottomSheetDialogFragment() {
 
-    private var _binding: FragmentCommentBinding? = null
-    private val binding get() = _binding!!
+	private var _binding: FragmentCommentBinding? = null
+	private val binding get() = _binding!!
 
-    private val viewModel: CommentViewModel by viewModels()
+	private val viewModel: CommentViewModel by viewModels()
 
-    private lateinit var commentAdapter: CommentAdapter
+	private lateinit var commentAdapter: CommentAdapter
 
-    private var currentUserId: Long = 0
-    private var videoId: Long = 0
+	private var currentUserId: Long = 0
+	private var videoId: Long = 0
 
-    companion object {
-        private const val ARG_VIDEO_ID = "video_id"
-        private const val ARG_USER_ID = "user_id"
+	companion object {
+		private const val ARG_VIDEO_ID = "video_id"
+		private const val ARG_USER_ID = "user_id"
 
-        const val TAG = "CommentBottomSheet"
+		const val TAG = "CommentBottomSheet"
 
-        fun newInstance(videoId: Long, userId: Long): CommentBottomSheet {
-            return CommentBottomSheet().apply {
-                arguments = Bundle().apply {
-                    putLong(ARG_VIDEO_ID, videoId)
-                    putLong(ARG_USER_ID, userId)
-                }
-            }
-        }
-    }
+		fun newInstance(videoId: Long, userId: Long): CommentBottomSheet {
+			return CommentBottomSheet().apply {
+				arguments = Bundle().apply {
+					putLong(ARG_VIDEO_ID, videoId)
+					putLong(ARG_USER_ID, userId)
+				}
+			}
+		}
+	}
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        videoId = arguments?.getLong(ARG_VIDEO_ID) ?: 0
-        currentUserId = arguments?.getLong(ARG_USER_ID) ?: 0
-    }
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		videoId = arguments?.getLong(ARG_VIDEO_ID) ?: 0
+		currentUserId = arguments?.getLong(ARG_USER_ID) ?: 0
+	}
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentCommentBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+	override fun onCreateView(
+		inflater: LayoutInflater,
+		container: ViewGroup?,
+		savedInstanceState: Bundle?
+	): View {
+		_binding = FragmentCommentBinding.inflate(inflater, container, false)
+		return binding.root
+	}
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupBottomSheet()
-        setupToolbar()
-        setupRecyclerView()
-        setupInput()
-        observeState()
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+		super.onViewCreated(view, savedInstanceState)
+		setupBottomSheet()
+		setupToolbar()
+		setupRecyclerView()
+		setupInput()
+		observeState()
 
-        if (videoId > 0) {
-            viewModel.loadComments(videoId)
-        }
-    }
+		if (videoId > 0) {
+			viewModel.loadComments(videoId)
+		}
+	}
 
-    private fun setupBottomSheet() {
-        (dialog as? BottomSheetDialog)?.behavior?.apply {
-            state = BottomSheetBehavior.STATE_EXPANDED
-            skipCollapsed = true
-            peekHeight = resources.displayMetrics.heightPixels / 2
-        }
-    }
+	private fun setupBottomSheet() {
+		(dialog as? BottomSheetDialog)?.behavior?.apply {
+			state = BottomSheetBehavior.STATE_EXPANDED
+			skipCollapsed = true
+			peekHeight = resources.displayMetrics.heightPixels / 2
+		}
+	}
 
-    private fun setupToolbar() {
-        binding.commentToolbar.setOnClickListener { dismiss() }
-    }
+	private fun setupToolbar() {
+		binding.commentToolbar.setOnClickListener { dismiss() }
+	}
 
-    @SuppressLint("SetTextI18n")
-    private fun setupRecyclerView() {
-        commentAdapter = CommentAdapter(
-            currentUserId = currentUserId,
-            onLikeClick = { comment -> viewModel.likeComment(comment.id) },
-            onReplyClick = { comment ->
-                viewModel.setReplyTo(comment)
-                binding.commentInput.requestFocus()
-                binding.commentReplyHint.visibility = View.VISIBLE
-                binding.commentReplyHint.text = "回复 @${comment.nickname}"
-            },
-            onDeleteClick = { comment ->
-                viewModel.deleteComment(comment.id)
-            },
-            onLoadReplies = { comment ->
-                viewModel.loadReplies(comment.id)
-            }
-        )
+	@SuppressLint("SetTextI18n")
+	private fun setupRecyclerView() {
+		commentAdapter = CommentAdapter(
+			currentUserId = currentUserId,
+			onLikeClick = { comment -> viewModel.likeComment(comment.id) },
+			onReplyClick = { comment ->
+				viewModel.setReplyTo(comment)
+				binding.commentInput.requestFocus()
+				binding.commentReplyHint.visibility = View.VISIBLE
+				binding.commentReplyHint.text = "回复 @${comment.nickname}"
+			},
+			onDeleteClick = { comment ->
+				viewModel.deleteComment(comment.id)
+			},
+			onLoadReplies = { comment ->
+				viewModel.loadReplies(comment.id)
+			}
+		)
 
-        binding.commentRecycler.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = commentAdapter
-        }
+		binding.commentRecycler.apply {
+			layoutManager = LinearLayoutManager(requireContext())
+			adapter = commentAdapter
+		}
 
-        binding.commentSwipeRefresh.setOnRefreshListener {
-            viewModel.loadComments(videoId)
-        }
-    }
+		binding.commentSwipeRefresh.setOnRefreshListener {
+			viewModel.loadComments(videoId)
+		}
+	}
 
-    private fun setupInput() {
-        binding.commentSendBtn.setOnClickListener {
-            val content = binding.commentInput.text.toString()
-            if (viewModel.uiState.value.replyToComment != null) {
-                viewModel.replyComment(content)
-            } else {
-                viewModel.postComment(content)
-            }
-            binding.commentInput.text?.clear()
-            binding.commentReplyHint.visibility = View.GONE
-            viewModel.setReplyTo(null)
-        }
-    }
+	private fun setupInput() {
+		binding.commentSendBtn.setOnClickListener {
+			val content = binding.commentInput.text.toString()
+			if (viewModel.uiState.value.replyToComment != null) {
+				viewModel.replyComment(content)
+			} else {
+				viewModel.postComment(content)
+			}
+			binding.commentInput.text?.clear()
+			binding.commentReplyHint.visibility = View.GONE
+			viewModel.setReplyTo(null)
+		}
+	}
 
-    private fun observeState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.uiState.collect { state ->
-                        binding.commentSwipeRefresh.isRefreshing = false
+	private fun observeState() {
+		viewLifecycleOwner.lifecycleScope.launch {
+			repeatOnLifecycle(Lifecycle.State.STARTED) {
+				launch {
+					viewModel.uiState.collect { state ->
+						binding.commentSwipeRefresh.isRefreshing = false
 
-                        binding.commentLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
-                        binding.commentEmpty.visibility = if (!state.isLoading && state.comments.isEmpty()) View.VISIBLE else View.GONE
+						binding.commentLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+						binding.commentEmpty.visibility = if (!state.isLoading && state.comments.isEmpty()) View.VISIBLE else View.GONE
 
-                        commentAdapter.submitList(state.comments)
+						commentAdapter.submitList(state.comments)
 
-                        state.error?.let { error ->
-                            Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
-                            viewModel.clearError()
-                        }
+						state.error?.let { error ->
+							Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+							viewModel.clearError()
+						}
 
-                        if (state.postSuccess) {
-                            Toast.makeText(requireContext(), "评论成功", Toast.LENGTH_SHORT).show()
-                            viewModel.clearPostSuccess()
-                        }
-                    }
-                }
-            }
-        }
-    }
+						if (state.postSuccess) {
+							Toast.makeText(requireContext(), "评论成功", Toast.LENGTH_SHORT).show()
+							viewModel.clearPostSuccess()
+						}
+					}
+				}
+			}
+		}
+	}
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+	override fun onDestroyView() {
+		super.onDestroyView()
+		_binding = null
+	}
 }

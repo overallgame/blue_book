@@ -1,4 +1,4 @@
-package com.example.blue_book.ui.home.find
+package com.example.blue_book.widget
 
 import android.graphics.Rect
 import android.view.View
@@ -14,5 +14,3 @@ class SpaceItem(private val spaceDp: Int) : RecyclerView.ItemDecoration() {
 		outRect.bottom = spacePx / 2
 	}
 }
-
-

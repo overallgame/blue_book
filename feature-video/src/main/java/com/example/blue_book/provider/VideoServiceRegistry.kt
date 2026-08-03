@@ -10,13 +10,13 @@ import dagger.hilt.components.SingletonComponent
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface VideoServiceEntryPoint {
-    fun videoRepository(): VideoRepository
+	fun videoRepository(): VideoRepository
 }
 
 @ServiceProvider(returnType = IVideoProvider::class)
 fun provideVideoProvider(): IVideoProvider {
-    val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
-        AppContext.application, VideoServiceEntryPoint::class.java
-    )
-    return VideoProviderImpl(entryPoint.videoRepository())
+	val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
+		AppContext.application, VideoServiceEntryPoint::class.java
+	)
+	return VideoProviderImpl(entryPoint.videoRepository())
 }

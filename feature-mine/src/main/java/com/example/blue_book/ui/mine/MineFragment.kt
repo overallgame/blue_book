@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,173 +31,172 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MineFragment : Fragment() {
 
-    private var _binding: MinePageBinding? = null
-    private val binding get() = _binding!!
-    private val viewModel: MineViewModel by viewModels()
-    private lateinit var fragments: List<Fragment>
-    private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
+	private var _binding: MinePageBinding? = null
+	private val binding get() = _binding!!
+	private val viewModel: MineViewModel by viewModels()
+	private lateinit var fragments: List<Fragment>
+	private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = MinePageBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+	override fun onCreateView(
+		inflater: LayoutInflater,
+		container: ViewGroup?,
+		savedInstanceState: Bundle?
+	): View {
+		_binding = MinePageBinding.inflate(inflater, container, false)
+		return binding.root
+	}
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        initActivityResult()
-        initSwipeRefreshLayout()
-        initNavigationView()
-        initRadioGroup()
-        initViewPager()
-        initImagePickers()
-        observeViewModel()
-        viewModel.dispatch(MineIntent.Init)
-    }
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+		super.onViewCreated(view, savedInstanceState)
+		initActivityResult()
+		initSwipeRefreshLayout()
+		initNavigationView()
+		initRadioGroup()
+		initViewPager()
+		initImagePickers()
+		observeViewModel()
+		viewModel.dispatch(MineIntent.Init)
+	}
 
-    private fun initActivityResult() {
-        pickImageLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == AppCompatActivity.RESULT_OK) {
-                val uri = result.data?.data ?: return@registerForActivityResult
-                val tag = result.data?.getStringExtra("tag")
-                when (tag) {
-                    "avatar" -> {
-                        binding.mineAvatar.setImageURI(uri)
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            viewModel.dispatch(MineIntent.UpdateAvatar(uri.toString()))
-                        }
-                    }
-                    "backgroundImage" -> {
-                        binding.mineBackgroundImage.setImageURI(uri)
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            viewModel.dispatch(MineIntent.UpdateBackground(uri.toString()))
-                        }
-                    }
-                }
-            }
-        }
-    }
+	private fun initActivityResult() {
+		pickImageLauncher = registerForActivityResult(
+			ActivityResultContracts.StartActivityForResult()
+		) { result ->
+			if (result.resultCode == AppCompatActivity.RESULT_OK) {
+				val uri = result.data?.data ?: return@registerForActivityResult
+				val tag = result.data?.getStringExtra("tag")
+				when (tag) {
+					"avatar" -> {
+						binding.mineAvatar.setImageURI(uri)
+						viewLifecycleOwner.lifecycleScope.launch {
+							viewModel.dispatch(MineIntent.UpdateAvatar(uri.toString()))
+						}
+					}
+					"backgroundImage" -> {
+						binding.mineBackgroundImage.setImageURI(uri)
+						viewLifecycleOwner.lifecycleScope.launch {
+							viewModel.dispatch(MineIntent.UpdateBackground(uri.toString()))
+						}
+					}
+				}
+			}
+		}
+	}
 
-    private fun initSwipeRefreshLayout() {
-        binding.mineSwipeRefreshLayout.setOnRefreshListener {
-            viewModel.dispatch(MineIntent.Refresh)
-        }
-    }
+	private fun initSwipeRefreshLayout() {
+		binding.mineSwipeRefreshLayout.setOnRefreshListener {
+			viewModel.dispatch(MineIntent.Refresh)
+		}
+	}
 
-    private fun initNavigationView() {
-        binding.mineNavButton.setOnClickListener {
-            binding.layoutMine.openDrawer(GravityCompat.START)
-        }
-        binding.minePagerNavigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_backLogin -> {
-                    viewModel.dispatch(MineIntent.Logout)
-                    true
-                }
+	private fun initNavigationView() {
+		binding.mineNavButton.setOnClickListener {
+			binding.layoutMine.openDrawer(GravityCompat.START)
+		}
+		binding.minePagerNavigationView.setNavigationItemSelectedListener { menuItem ->
+			when (menuItem.itemId) {
+				R.id.menu_backLogin -> {
+					viewModel.dispatch(MineIntent.Logout)
+					true
+				}
 
-                else -> {
-                    binding.layoutMine.closeDrawers()
-                    true
-                }
-            }
-        }
-    }
+				else -> {
+					binding.layoutMine.closeDrawers()
+					true
+				}
+			}
+		}
+	}
 
-    private fun initRadioGroup() {
-        binding.mineNavRadioGroup.setOnCheckedChangeListener { _, checkId ->
-            when (checkId) {
-                binding.mineWork.id -> binding.mineViewPager.currentItem = 0
-                binding.mineCollection.id -> binding.mineViewPager.currentItem = 1
-                binding.mineLove.id -> binding.mineViewPager.currentItem = 2
-            }
-        }
-        binding.mineEditUserProfile.setOnClickListener {
-            (requireActivity() as MineActivity).navigateToProfileEdit()
-        }
-    }
+	private fun initRadioGroup() {
+		binding.mineNavRadioGroup.setOnCheckedChangeListener { _, checkId ->
+			when (checkId) {
+				binding.mineWork.id -> binding.mineViewPager.currentItem = 0
+				binding.mineCollection.id -> binding.mineViewPager.currentItem = 1
+				binding.mineLove.id -> binding.mineViewPager.currentItem = 2
+			}
+		}
+		binding.mineEditUserProfile.setOnClickListener {
+			(requireActivity() as MineActivity).navigateToProfileEdit()
+		}
+	}
 
-    private fun initImagePickers() {
-        binding.mineAvatar.setOnClickListener {
-            openCustomImagePicker("avatar")
-        }
-        binding.mineBackgroundImage.setOnClickListener {
-            openCustomImagePicker("backgroundImage")
-        }
-    }
+	private fun initImagePickers() {
+		binding.mineAvatar.setOnClickListener {
+			openCustomImagePicker("avatar")
+		}
+		binding.mineBackgroundImage.setOnClickListener {
+			openCustomImagePicker("backgroundImage")
+		}
+	}
 
-    private fun openCustomImagePicker(tag: String) {
-        val intent = TheRouter.build(RoutePath.IMAGE_PICKER)
-            .withString("tag", tag)
-            .createIntent(requireContext())
-        pickImageLauncher.launch(intent)
-    }
+	private fun openCustomImagePicker(tag: String) {
+		val intent = TheRouter.build(RoutePath.IMAGE_PICKER)
+			.withString("tag", tag)
+			.createIntent(requireContext())
+		pickImageLauncher.launch(intent)
+	}
 
-    private fun initViewPager() {
-        binding.mineViewPager.run {
-            fragments = listOf(MineWorkFragment(), MineCollectionFragment(), MineLoveFragment())
-            adapter = object : FragmentStateAdapter(childFragmentManager, lifecycle) {
-                override fun getItemCount(): Int = fragments.size
-                override fun createFragment(position: Int): Fragment = fragments[position]
-            }
-            registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(position: Int) {
-                    super.onPageSelected(position)
-                    when (position) {
-                        0 -> binding.mineNavRadioGroup.check(binding.mineWork.id)
-                        1 -> binding.mineNavRadioGroup.check(binding.mineCollection.id)
-                        2 -> binding.mineNavRadioGroup.check(binding.mineLove.id)
-                    }
-                }
-            })
-        }
-    }
+	private fun initViewPager() {
+		binding.mineViewPager.run {
+			fragments = listOf(MineWorkFragment(), MineCollectionFragment(), MineLoveFragment())
+			adapter = object : FragmentStateAdapter(childFragmentManager, lifecycle) {
+				override fun getItemCount(): Int = fragments.size
+				override fun createFragment(position: Int): Fragment = fragments[position]
+			}
+			registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+				override fun onPageSelected(position: Int) {
+					super.onPageSelected(position)
+					when (position) {
+						0 -> binding.mineNavRadioGroup.check(binding.mineWork.id)
+						1 -> binding.mineNavRadioGroup.check(binding.mineCollection.id)
+						2 -> binding.mineNavRadioGroup.check(binding.mineLove.id)
+					}
+				}
+			})
+		}
+	}
 
-    private fun observeViewModel() {
-        lifecycle.addObserver(object : DefaultLifecycleObserver {})
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.uiState.collect { state ->
-                        val user = state.user
-                        if (user != null) {
-                            user.background?.let {
-                                Glide.with(requireContext()).load(it)
-                                    .into(binding.mineBackgroundImage)
-                            }
-                            user.avatar?.let {
-                                Glide.with(requireContext()).load(it).into(binding.mineAvatar)
-                            }
-                            binding.mineNickname.text = user.nickname ?: user.phone
-                            binding.mineIntroduction.text = user.introduction.orEmpty()
-                        }
-                        binding.mineSwipeRefreshLayout.isRefreshing = false
-                    }
-                }
-                launch {
-                    viewModel.uiEffect.collect { effect ->
-                        when (effect) {
-                            is MineEffect.ShowToast -> Toast.makeText(
-                                requireContext(),
-                                effect.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            is MineEffect.NavigateToLogin -> {
-                                (requireActivity() as MineActivity).navigateToAuthEntry()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+	private fun observeViewModel() {
+		viewLifecycleOwner.lifecycleScope.launch {
+			repeatOnLifecycle(Lifecycle.State.STARTED) {
+				launch {
+					viewModel.uiState.collect { state ->
+						val user = state.user
+						if (user != null) {
+							user.background?.let {
+								Glide.with(requireContext()).load(it)
+									.into(binding.mineBackgroundImage)
+							}
+							user.avatar?.let {
+								Glide.with(requireContext()).load(it).into(binding.mineAvatar)
+							}
+							binding.mineNickname.text = user.nickname ?: user.phone
+							binding.mineIntroduction.text = user.introduction.orEmpty()
+						}
+						binding.mineSwipeRefreshLayout.isRefreshing = false
+					}
+				}
+				launch {
+					viewModel.uiEffect.collect { effect ->
+						when (effect) {
+							is MineEffect.ShowToast -> Toast.makeText(
+								requireContext(),
+								effect.message,
+								Toast.LENGTH_SHORT
+							).show()
+							is MineEffect.NavigateToLogin -> {
+								(requireActivity() as MineActivity).navigateToAuthEntry()
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+	override fun onDestroyView() {
+		super.onDestroyView()
+		_binding = null
+	}
 }

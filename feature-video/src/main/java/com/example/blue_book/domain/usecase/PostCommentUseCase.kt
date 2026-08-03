@@ -5,9 +5,9 @@ import com.example.blue_book.domain.repository.CommentRepository
 import javax.inject.Inject
 
 class PostCommentUseCase @Inject constructor(
-    private val repository: CommentRepository
+	private val repository: CommentRepository
 ) {
-    suspend operator fun invoke(videoId: Long, content: String): Result<Comment> {
-        return repository.postComment(videoId, content)
-    }
+	suspend operator fun invoke(videoId: Long, content: String): Result<Comment> {
+		return repository.postComment(videoId, content)
+	}
 }

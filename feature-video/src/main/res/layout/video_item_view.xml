@@ -227,4 +227,16 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+  <!-- 双击点赞心形动画 -->
+    <ImageView
+        android:id="@+id/video_item_heart"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:alpha="0"
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:src="@drawable/like_icon3"
+        android:visibility="gone" />
+
 </FrameLayout>

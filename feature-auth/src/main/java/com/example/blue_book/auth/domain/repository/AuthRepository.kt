@@ -6,13 +6,13 @@ import com.example.blue_book.data.UserAccount
 
 interface AuthRepository {
 
-    suspend fun isLoggedIn(): Boolean
+	suspend fun isLoggedIn(): Boolean
 
-    suspend fun login(credentials: LoginCredentials): Result<UserAccount>
+	suspend fun login(credentials: LoginCredentials): Result<UserAccount>
 
-    suspend fun logout(): Result<Unit>
+	suspend fun logout(): Result<Unit>
 
-    suspend fun register(info: RegisterInfo): Result<UserAccount>
+	suspend fun register(info: RegisterInfo): Result<UserAccount>
 
-    suspend fun sendVerificationCode(phone: String, nickname: String): Result<String>
+	suspend fun sendVerificationCode(phone: String, nickname: String): Result<String>
 }

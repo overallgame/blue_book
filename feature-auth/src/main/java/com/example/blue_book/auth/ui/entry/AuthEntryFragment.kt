@@ -16,46 +16,46 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class AuthEntryFragment : Fragment() {
 
-    private var _binding: OpPageBinding? = null
-    private val binding get() = _binding!!
+	private var _binding: OpPageBinding? = null
+	private val binding get() = _binding!!
 
-    @Inject
-    lateinit var isLoggedInUseCase: IsLoggedInUseCase
+	@Inject
+	lateinit var isLoggedInUseCase: IsLoggedInUseCase
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = OpPageBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+		_binding = OpPageBinding.inflate(inflater, container, false)
+		return binding.root
+	}
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        checkLoginStatus()
-        setupListeners()
-    }
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+		super.onViewCreated(view, savedInstanceState)
+		checkLoginStatus()
+		setupListeners()
+	}
 
-    private fun checkLoginStatus() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                if (isLoggedInUseCase()) {
-                    (requireActivity() as AuthActivity).navigateToHome()
-                }
-            } catch (e: Throwable) {
-                android.util.Log.e("AuthEntry", "检查登录状态失败: ${e.message}", e)
-            }
-        }
-    }
+	private fun checkLoginStatus() {
+		viewLifecycleOwner.lifecycleScope.launch {
+			try {
+				if (isLoggedInUseCase()) {
+					(requireActivity() as AuthActivity).navigateToHome()
+				}
+			} catch (e: Throwable) {
+				android.util.Log.e("AuthEntry", "检查登录状态失败: ${e.message}", e)
+			}
+		}
+	}
 
-    private fun setupListeners() {
-        binding.opLogin.setOnClickListener {
-            (requireActivity() as AuthActivity).navigateToLogin()
-        }
-        binding.opRegister.setOnClickListener {
-            (requireActivity() as AuthActivity).navigateToRegister()
-        }
-    }
+	private fun setupListeners() {
+		binding.opLogin.setOnClickListener {
+			(requireActivity() as AuthActivity).navigateToLogin()
+		}
+		binding.opRegister.setOnClickListener {
+			(requireActivity() as AuthActivity).navigateToRegister()
+		}
+	}
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+	override fun onDestroyView() {
+		super.onDestroyView()
+		_binding = null
+	}
 }

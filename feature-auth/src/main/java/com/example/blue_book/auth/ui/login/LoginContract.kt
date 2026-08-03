@@ -5,22 +5,22 @@ import com.example.blue_book.udf.UiIntent
 import com.example.blue_book.udf.UiState
 
 sealed interface LoginIntent : UiIntent {
-    data class PhoneChanged(val value: String) : LoginIntent
-    data class PasswordChanged(val value: String) : LoginIntent
-    data object Submit : LoginIntent
+	data class PhoneChanged(val value: String) : LoginIntent
+	data class PasswordChanged(val value: String) : LoginIntent
+	data object Submit : LoginIntent
 }
 
 data class LoginUiState(
-    val phone: String = "",
-    val password: String = "",
-    val isLoading: Boolean = false,
-    val message: String? = null
+	val phone: String = "",
+	val password: String = "",
+	val isLoading: Boolean = false,
+	val message: String? = null
 ) : UiState {
-    val isLoginEnabled: Boolean
-        get() = phone.isNotBlank() && password.isNotBlank() && !isLoading
+	val isLoginEnabled: Boolean
+		get() = phone.isNotBlank() && password.isNotBlank() && !isLoading
 }
 
 sealed interface LoginUiEffect : UiEffect {
-    data object NavigateHome : LoginUiEffect
-    data class ShowToast(val message: String) : LoginUiEffect
+	data object NavigateHome : LoginUiEffect
+	data class ShowToast(val message: String) : LoginUiEffect
 }

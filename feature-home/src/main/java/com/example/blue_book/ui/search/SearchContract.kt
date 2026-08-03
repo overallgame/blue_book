@@ -12,10 +12,12 @@ sealed interface SearchIntent : UiIntent {
 }
 
 data class SearchUiState(
-    val items: List<VideoCardInfo> = emptyList(),
-    val isLoading: Boolean = false,
-    val message: String? = null,
-    val keyword: String = ""
+	val items: List<VideoCardInfo> = emptyList(),
+	val isLoading: Boolean = false,
+	val message: String? = null,
+	val keyword: String = "",
+	val cursorId: Long? = null,
+	val hasMore: Boolean = true
 ) : UiState
 
 sealed interface SearchUiEffect : UiEffect {

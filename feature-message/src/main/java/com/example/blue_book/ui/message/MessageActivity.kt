@@ -11,13 +11,13 @@ import dagger.hilt.android.AndroidEntryPoint
 @Route(path = RoutePath.MESSAGE)
 @AndroidEntryPoint
 class MessageActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_message)
-        if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(R.id.message_container, MessageFragment())
-            }
-        }
-    }
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_message)
+		if (savedInstanceState == null) {
+			supportFragmentManager.commit {
+				replace(R.id.message_container, MessageFragment())
+			}
+		}
+	}
 }

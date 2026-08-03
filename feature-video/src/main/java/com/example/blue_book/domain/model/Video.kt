@@ -8,7 +8,12 @@ data class Video(
 	val avatar: String,
 	val collection: Int,
 	val nickname: String,
-	val description: String
+	val description: String,
+	val isLike: Boolean = false,
+	val isCollect: Boolean = false,
+	val playUrl: String = "",
+	val commentCount: Int = 0,
+	val uploaderId: Long = 0
 )
 
 

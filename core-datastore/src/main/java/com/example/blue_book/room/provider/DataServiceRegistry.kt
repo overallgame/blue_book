@@ -10,12 +10,12 @@ import dagger.hilt.components.SingletonComponent
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface StoreProviderEntryPoint {
-    fun userStore(): UserStoreProviderImpl
+	fun userStore(): UserStoreProviderImpl
 }
 
 @ServiceProvider(returnType = IUserStore::class)
 fun provideUserStore(): IUserStore {
-    return dagger.hilt.android.EntryPointAccessors.fromApplication(
-        AppContext.application, StoreProviderEntryPoint::class.java
-    ).userStore()
+	return dagger.hilt.android.EntryPointAccessors.fromApplication(
+		AppContext.application, StoreProviderEntryPoint::class.java
+	).userStore()
 }

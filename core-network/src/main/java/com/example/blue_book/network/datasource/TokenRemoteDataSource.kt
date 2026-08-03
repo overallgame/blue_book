@@ -7,13 +7,13 @@ import com.example.blue_book.network.dto.TokenResponse
 import javax.inject.Inject
 
 class TokenRemoteDataSource @Inject constructor(
-    private val apiGateway: ApiGateway
+	private val apiGateway: ApiGateway
 ) {
-    private val api = apiGateway.createApi(TokenApi::class.java)
+	private val api = apiGateway.createApi(TokenApi::class.java)
 
-    suspend fun refresh(refreshToken: String): Result<TokenResponse> =
-        apiGateway.apiResult { api.refresh(RefreshTokenRequest(refreshToken)) }
+	suspend fun refresh(refreshToken: String): Result<TokenResponse> =
+		apiGateway.apiResult { api.refresh(RefreshTokenRequest(refreshToken)) }
 
-    suspend fun logout(): Result<Unit> =
-        apiGateway.apiUnitResult { api.logout() }
+	suspend fun logout(): Result<Unit> =
+		apiGateway.apiUnitResult { api.logout() }
 }

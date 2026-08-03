@@ -4,9 +4,9 @@ import com.example.blue_book.auth.domain.repository.AuthRepository
 import javax.inject.Inject
 
 class SendVerificationCodeUseCase @Inject constructor(
-    private val authRepository: AuthRepository
+	private val authRepository: AuthRepository
 ) {
-    suspend operator fun invoke(phone: String, nickname: String): Result<String> {
-        return authRepository.sendVerificationCode(phone, nickname)
-    }
+	suspend operator fun invoke(phone: String, nickname: String): Result<String> {
+		return authRepository.sendVerificationCode(phone, nickname)
+	}
 }

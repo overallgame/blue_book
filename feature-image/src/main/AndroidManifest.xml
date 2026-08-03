@@ -3,7 +3,7 @@
 
     <application>
         <activity
-            android:name=".presentation.image.ImagePickerActivity"
+            android:name="com.example.blue_book.ui.image.ImagePickerActivity"
             android:exported="false" />
     </application>
 

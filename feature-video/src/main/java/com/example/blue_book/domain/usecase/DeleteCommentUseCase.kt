@@ -4,9 +4,9 @@ import com.example.blue_book.domain.repository.CommentRepository
 import javax.inject.Inject
 
 class DeleteCommentUseCase @Inject constructor(
-    private val repository: CommentRepository
+	private val repository: CommentRepository
 ) {
-    suspend operator fun invoke(commentId: Long): Result<Unit> {
-        return repository.deleteComment(commentId)
-    }
+	suspend operator fun invoke(commentId: Long): Result<Unit> {
+		return repository.deleteComment(commentId)
+	}
 }

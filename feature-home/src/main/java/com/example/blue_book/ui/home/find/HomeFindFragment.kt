@@ -14,6 +14,8 @@ import com.example.blue_book.ui.home.HomeActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.feature_home.databinding.HomeFindPageBinding
+import com.example.blue_book.widget.PreVideoAdapter
+import com.example.blue_book.widget.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -54,7 +56,6 @@ class HomeFindFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(HomeFindIntent.ToggleLike(v)) },
 			onClickItem = { v ->
-				val args = Bundle().apply { putParcelable("EXTRA_VIDEO", v) }
 				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
 			}
 		)

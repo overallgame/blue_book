@@ -16,34 +16,34 @@ import dagger.hilt.android.AndroidEntryPoint
 @Route(path = RoutePath.AUTH)
 @AndroidEntryPoint
 class AuthActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_auth)
-        if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(R.id.auth_container, AuthEntryFragment())
-            }
-        }
-    }
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_auth)
+		if (savedInstanceState == null) {
+			supportFragmentManager.commit {
+				replace(R.id.auth_container, AuthEntryFragment())
+			}
+		}
+	}
 
-    fun navigateToLogin() {
-        supportFragmentManager.commit {
-            replace(R.id.auth_container, LoginFragment())
-            addToBackStack("login")
-        }
-    }
+	fun navigateToLogin() {
+		supportFragmentManager.commit {
+			replace(R.id.auth_container, LoginFragment())
+			addToBackStack("login")
+		}
+	}
 
-    fun navigateToRegister() {
-        supportFragmentManager.commit {
-            replace(R.id.auth_container, RegisterFragment())
-            addToBackStack("register")
-        }
-    }
+	fun navigateToRegister() {
+		supportFragmentManager.commit {
+			replace(R.id.auth_container, RegisterFragment())
+			addToBackStack("register")
+		}
+	}
 
-    fun navigateToHome() {
-        TheRouter.build(RoutePath.MAIN)
-            .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-            .navigation(this)
-        finish()
-    }
+	fun navigateToHome() {
+		TheRouter.build(RoutePath.MAIN)
+			.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+			.navigation(this)
+		finish()
+	}
 }

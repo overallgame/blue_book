@@ -13,9 +13,9 @@ sealed interface HomeFindIntent : UiIntent {
 }
 
 data class HomeFindUiState(
-    val items: List<VideoCardInfo> = emptyList(),
-    val isLoading: Boolean = false,
-    val message: String? = null
+	val items: List<VideoCardInfo> = emptyList(),
+	val isLoading: Boolean = false,
+	val message: String? = null
 ) : UiState
 
 sealed interface HomeFindEffect : UiEffect {

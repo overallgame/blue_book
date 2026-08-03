@@ -86,7 +86,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("androidx.room:room-runtime:2.6.1")
 
-    kapt("com.github.bumptech.glide:compiler:4.12.0")
+    kapt("com.github.bumptech.glide:compiler:4.13.2")
     implementation("com.github.bumptech.glide:glide:4.13.2")
     // uCrop 与 AGP 8.x 不兼容，暂时注释
     // implementation("com.github.yalantis:ucrop:2.2.8")

@@ -8,9 +8,9 @@ interface VideoRepository {
 
 	suspend fun fetchByKeyword(keyword: String, cursorId: Long?, size: Int?): Result<List<Video>>
 
-    suspend fun fetchPlayUrl(aid: Long, cid: Long): Result<String>
+	suspend fun fetchPlayUrl(aid: Long, cid: Long): Result<String>
 
 	suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit>
 
-    suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit>
+	suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit>
 }

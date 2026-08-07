@@ -1,0 +1,15 @@
+[Unit]
+Description=BlueBook Backend
+After=network.target mysql.service redis.service rabbitmq-server.service
+
+[Service]
+User=bluebook
+WorkingDirectory=/opt/blue-book
+ExecStart=/usr/bin/java -Xmx2g -Xms2g --enable-preview -jar backend.jar
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/blue-book/app.log
+StandardError=append:/var/log/blue-book/error.log
+
+[Install]
+WantedBy=multi-user.target

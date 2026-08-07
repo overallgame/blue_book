@@ -19,6 +19,12 @@ class VideoController(private val videoService: VideoService) {
              @RequestParam(defaultValue = "10") size: Int): ApiResponse<FeedResponseDto> =
         ApiResponse.ok(videoService.feed(cursorId, size, optionalUserId()))
 
+    @GetMapping("/api/v2/videos/search")
+    fun search(@RequestParam keyword: String,
+               @RequestParam(required = false) cursorId: Long?,
+               @RequestParam(defaultValue = "20") size: Int): ApiResponse<FeedResponseDto> =
+        ApiResponse.ok(videoService.search(keyword, cursorId, size, optionalUserId()))
+
     @GetMapping("/api/v2/videos/{id}/dto")
     fun getVideoDto(@PathVariable id: Long): ApiResponse<Video2Dto> =
         ApiResponse.ok(videoService.getVideoDto(id, optionalUserId()))

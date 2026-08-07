@@ -86,6 +86,27 @@ class AuthService(
         return buildLoginResponse(user)
     }
 
+    @Transactional
+    fun refreshTokens(refreshTokenStr: String): TokenResponse {
+        val hash = jwtUtil.hashToken(refreshTokenStr)
+        val rt = refreshTokenRepository.findByTokenHash(hash)
+            .orElseThrow { TokenExpiredException() }
+        if (rt.expiresAt.isBefore(Instant.now())) {
+            refreshTokenRepository.delete(rt)
+            throw TokenExpiredException()
+        }
+        refreshTokenRepository.delete(rt)
+        val user = userRepository.findById(rt.userId).orElseThrow { TokenExpiredException() }
+        val accessToken = jwtUtil.generateAccessToken(user.id, user.phone)
+        val newRefreshToken = jwtUtil.generateRefreshToken()
+        refreshTokenRepository.save(RefreshToken(
+            userId = user.id,
+            tokenHash = jwtUtil.hashToken(newRefreshToken),
+            expiresAt = Instant.now().plusMillis(604800000)
+        ))
+        return TokenResponse(token = accessToken, refreshToken = newRefreshToken)
+    }
+
     fun logout(userId: Long) {
         refreshTokenRepository.deleteAllByUserId(userId)
     }
@@ -112,6 +133,7 @@ class AuthService(
                 avatar = user.avatarUrl, bio = user.bio, gender = user.gender,
                 birthday = user.birthday?.toString(), occupation = user.occupation,
                 region = user.region, school = user.school,
+                background = user.backgroundUrl,
                 followerCount = user.followerCount, followingCount = user.followingCount
             )
         )

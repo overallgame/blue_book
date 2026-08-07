@@ -25,14 +25,16 @@ class CommentService(
         val pageable = PageRequest.of(0, size)
         val comments = commentRepository.findRootComments(videoId, cursorId, pageable)
         val items = comments.map { toDto(it, currentUserId) }
-        return CommentListDto(items = items, nextCursorId = items.lastOrNull()?.id)
+        val hasMore = items.size == size
+        return CommentListDto(items = items, cursorId = items.lastOrNull()?.id, hasMore = hasMore)
     }
 
     fun getReplies(parentId: Long, cursorId: Long?, size: Int, currentUserId: Long?): CommentListDto {
         val pageable = PageRequest.of(0, size)
         val replies = commentRepository.findReplies(parentId, cursorId, pageable)
         val items = replies.map { toDto(it, currentUserId) }
-        return CommentListDto(items = items, nextCursorId = items.lastOrNull()?.id)
+        val hasMore = items.size == size
+        return CommentListDto(items = items, cursorId = items.lastOrNull()?.id, hasMore = hasMore)
     }
 
     @Transactional
@@ -75,7 +77,7 @@ class CommentService(
             videoId = comment.videoId,
             userId = comment.userId,
             nickname = author?.nickname ?: "",
-            avatar = author?.avatarUrl,
+            avatar = author?.avatarUrl ?: "",
             content = comment.content,
             likeCount = comment.likeCount,
             isLiked = false,

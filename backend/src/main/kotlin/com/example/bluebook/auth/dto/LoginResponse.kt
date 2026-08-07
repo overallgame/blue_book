@@ -17,6 +17,10 @@ data class UserProfile(
     val occupation: String?,
     val region: String?,
     val school: String?,
-    val followerCount: Long,
-    val followingCount: Long
+    val background: String? = null,
+    val password: String? = null,
+    val token: String? = null,
+    val refreshToken: String? = null,
+    val followerCount: Long = 0,
+    val followingCount: Long = 0
 )

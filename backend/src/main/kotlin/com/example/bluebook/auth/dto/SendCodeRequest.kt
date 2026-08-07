@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotBlank
 
 data class SendCodeRequest(
     @field:NotBlank val phone: String,
-    @field:NotBlank val nickname: String
+    val nickname: String? = null
 )

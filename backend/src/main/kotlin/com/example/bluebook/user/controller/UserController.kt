@@ -1,6 +1,7 @@
 package com.example.bluebook.user.controller
 
 import com.example.bluebook.common.ApiResponse
+import com.example.bluebook.file.service.FileService
 import com.example.bluebook.user.dto.*
 import com.example.bluebook.user.service.UserService
 import com.example.bluebook.video.dto.Video2Dto
@@ -9,11 +10,13 @@ import com.example.bluebook.video.repository.VideoRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 class UserController(
     private val userService: UserService,
-    private val videoRepository: VideoRepository
+    private val videoRepository: VideoRepository,
+    private val fileService: FileService
 ) {
     private fun currentUserId(): Long =
         SecurityContextHolder.getContext().authentication?.principal as? Long ?: 0
@@ -29,9 +32,9 @@ class UserController(
         ApiResponse.ok(userService.updateMe(currentUserId(), request))
 
     @PostMapping("/api/v2/me/avatar")
-    fun uploadAvatar(): ApiResponse<UserV2AvatarUploadResponseDto> {
-        // File upload handled separately; placeholder for now
-        return ApiResponse.ok(UserV2AvatarUploadResponseDto(""))
+    fun uploadAvatar(@RequestParam("avatar") file: MultipartFile): ApiResponse<UserV2AvatarUploadResponseDto> {
+        val path = fileService.uploadImage(file)
+        return ApiResponse.ok(UserV2AvatarUploadResponseDto(path))
     }
 
     @GetMapping("/api/v2/users/{id}")

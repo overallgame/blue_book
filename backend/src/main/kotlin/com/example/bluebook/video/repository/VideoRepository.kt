@@ -26,4 +26,7 @@ interface VideoRepository : JpaRepository<Video, Long> {
     @Modifying
     @Query("UPDATE Video v SET v.commentCount = v.commentCount + :delta WHERE v.id = :id")
     fun incrementCommentCount(id: Long, delta: Long)
+
+    @Query("SELECT v FROM Video v WHERE v.status = 'PUBLISHED' AND v.transcodeStatus = 'DONE' AND (v.title LIKE %:keyword% OR v.description LIKE %:keyword%) AND (:cursorId IS NULL OR v.id < :cursorId) ORDER BY v.id DESC")
+    fun searchVideos(keyword: String, cursorId: Long?, pageable: Pageable): List<Video>
 }

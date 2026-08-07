@@ -1,6 +1,7 @@
 package com.example.bluebook.file.controller
 
 import com.example.bluebook.common.ApiResponse
+import com.example.bluebook.common.CommonResult
 import com.example.bluebook.file.dto.UploadInitRequest
 import com.example.bluebook.file.dto.UploadInitResponse
 import com.example.bluebook.file.service.ChunkUploadService
@@ -17,6 +18,12 @@ class FileController(
 ) {
     private fun currentUserId(): Long =
         SecurityContextHolder.getContext().authentication?.principal as? Long ?: 0
+
+    @PostMapping("/upload")
+    fun uploadFile(@RequestParam("file") file: MultipartFile): CommonResult<String> {
+        val path = fileService.uploadImage(file)
+        return CommonResult.ok(path)
+    }
 
     @PostMapping("/upload/image")
     fun uploadImage(@RequestParam("file") file: MultipartFile): ApiResponse<String> {

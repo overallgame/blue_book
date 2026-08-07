@@ -27,8 +27,8 @@ class AuthController(
         ApiResponse.ok(authService.sendCode(request))
 
     @PostMapping("/refresh")
-    fun refresh(@Valid @RequestBody request: RefreshRequest): ApiResponse<LoginResponse> =
-        ApiResponse.ok(authService.refresh(request.refreshToken))
+    fun refresh(@Valid @RequestBody request: RefreshRequest): ApiResponse<TokenResponse> =
+        ApiResponse.ok(authService.refreshTokens(request.refreshToken))
 
     @PostMapping("/logout")
     fun logout(@RequestHeader("Authorization") authHeader: String): ApiResponse<Any> {

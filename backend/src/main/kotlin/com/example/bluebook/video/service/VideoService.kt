@@ -31,6 +31,13 @@ class VideoService(
         return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
 
+    fun search(keyword: String, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
+        val pageable = PageRequest.of(0, size)
+        val videos = videoRepository.searchVideos(keyword, cursorId, pageable)
+        val items = videos.map { v -> toDto(v, currentUserId) }
+        return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
+    }
+
     fun getVideoDto(videoId: Long, currentUserId: Long?): Video2Dto {
         val video = videoRepository.findByIdAndStatus(videoId, VideoStatus.PUBLISHED)
             ?: throw VideoNotFoundException()
@@ -97,9 +104,9 @@ class VideoService(
         val isCollect = currentUserId?.let { collectRepository.existsByUserIdAndVideoId(it, video.id) } ?: false
         return Video2Dto(
             videoId = video.id, uploaderId = video.uploaderId,
-            uploaderNickname = uploader?.nickname ?: "", uploaderAvatar = uploader?.avatarUrl,
-            title = video.title, description = video.description, coverUrl = video.coverUrl,
-            videoUrl = video.hlsUrl ?: video.originalUrl,
+            uploaderNickname = uploader?.nickname ?: "", uploaderAvatar = uploader?.avatarUrl ?: "",
+            title = video.title ?: "", description = video.description ?: "", coverUrl = video.coverUrl ?: "",
+            videoUrl = video.hlsUrl ?: video.originalUrl ?: "",
             likeCount = video.likeCount, collectCount = video.collectCount,
             viewCount = video.viewCount, commentCount = video.commentCount,
             isLike = isLike, isCollect = isCollect

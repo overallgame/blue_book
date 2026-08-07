@@ -5,7 +5,7 @@ data class CommentDto(
     val videoId: Long,
     val userId: Long,
     val nickname: String,
-    val avatar: String?,
+    val avatar: String = "",
     val content: String,
     val likeCount: Int,
     val isLiked: Boolean,

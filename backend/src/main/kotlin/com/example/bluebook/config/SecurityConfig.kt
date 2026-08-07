@@ -24,6 +24,7 @@ class SecurityConfig(
                 auth.requestMatchers(
                     "/api/v2/auth/**", "/actuator/health", "/actuator/info",
                     "/api/v2/feed", "/api/v2/videos/search", "/api/v2/videos/*/dto",
+                    "/api/v2/videos/*/playUrl",
                     "/api/v1/comments", "/api/v2/users/*"
                 ).permitAll()
                 auth.anyRequest().authenticated()

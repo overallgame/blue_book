@@ -1,20 +1,18 @@
 package com.example.bluebook.video.dto
 
-import java.time.LocalDateTime
-
-/** Placeholder DTO -- full conversion done in video module. */
 data class Video2Dto(
-    val id: Long,
+    val videoId: Long,
+    val uploaderId: Long,
+    val uploaderNickname: String,
+    val uploaderAvatar: String?,
     val title: String?,
     val description: String?,
     val coverUrl: String?,
-    val hlsUrl: String?,
-    val duration: Int?,
-    val width: Int?,
-    val height: Int?,
+    val videoUrl: String?,
     val likeCount: Long,
     val collectCount: Long,
-    val commentCount: Long,
     val viewCount: Long,
-    val createdAt: LocalDateTime?
+    val commentCount: Long,
+    val isLike: Boolean,
+    val isCollect: Boolean
 )

@@ -25,7 +25,8 @@ class SecurityConfig(
                     "/api/v2/auth/**", "/actuator/health", "/actuator/info",
                     "/api/v2/feed", "/api/v2/videos/search", "/api/v2/videos/*/dto",
                     "/api/v2/videos/*/playUrl",
-                    "/api/v1/comments", "/api/v2/users/*"
+                    "/api/v1/comments", "/api/v2/users/*",
+                    "/api/v2/search/hot"
                 ).permitAll()
                 auth.anyRequest().authenticated()
             }

@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.android") version "1.9.24" apply false
     id("com.google.dagger.hilt.android") version "2.48.1" apply false
     id("cn.therouter") version "1.3.0" apply false
+    id("org.springframework.boot") version "3.3.4" apply false
+    id("io.spring.dependency-management") version "1.1.6" apply false
+    kotlin("plugin.spring") version "1.9.24" apply false
+    kotlin("plugin.jpa") version "1.9.24" apply false
 }
 
 subprojects {

@@ -13,3 +13,11 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+
+# Backend
+backend/build/
+backend/.gradle/
+backend/out/
+upload/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar

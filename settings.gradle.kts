@@ -15,6 +15,7 @@ dependencyResolutionManagement {
         maven { url = uri("https://maven.aliyun.com/repository/central") }
         maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
         maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://maven.aliyun.com/repository/spring") }
         google()
         mavenCentral()
     }
@@ -32,4 +33,4 @@ include(":feature-auth")
 include(":feature-home")
 include(":feature-video")
 include(":feature-mine")
- 
+include(":backend")

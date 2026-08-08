@@ -22,6 +22,35 @@ class UserService(
     }
 
     @Transactional
+    fun updateField(userId: Long, field: String, value: String) {
+        val user = findUser(userId)
+        when (field) {
+            "nickname" -> user.nickname = value
+            "bio" -> user.bio = value
+            "gender" -> user.gender = value
+            "birthday" -> user.birthday = LocalDate.parse(value)
+            "occupation" -> user.occupation = value
+            "region" -> user.region = value
+            "school" -> user.school = value
+        }
+        userRepository.save(user)
+    }
+
+    @Transactional
+    fun updateAvatar(userId: Long, path: String) {
+        val user = findUser(userId)
+        user.avatarUrl = path
+        userRepository.save(user)
+    }
+
+    @Transactional
+    fun updateBackground(userId: Long, path: String) {
+        val user = findUser(userId)
+        user.backgroundUrl = path
+        userRepository.save(user)
+    }
+
+    @Transactional
     fun updateMe(userId: Long, request: UserV2UpdateRequestDto): UserV2MeDto {
         val user = findUser(userId)
         request.nickname?.let { user.nickname = it }

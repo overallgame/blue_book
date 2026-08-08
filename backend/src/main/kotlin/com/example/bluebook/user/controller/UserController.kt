@@ -24,18 +24,80 @@ class UserController(
     private fun optionalUserId(): Long? =
         (SecurityContextHolder.getContext().authentication?.principal as? Long)?.takeIf { it > 0 }
 
+    // ========== 当前用户信息 ==========
+
     @GetMapping("/api/v2/me")
     fun me(): ApiResponse<UserV2MeDto> = ApiResponse.ok(userService.me(currentUserId()))
+
+    // ========== 按字段独立编辑 ==========
+
+    @PutMapping("/api/v2/me/nickname")
+    fun updateNickname(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "nickname", body["nickname"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    @PutMapping("/api/v2/me/bio")
+    fun updateBio(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "bio", body["bio"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    @PutMapping("/api/v2/me/gender")
+    fun updateGender(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "gender", body["gender"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    @PutMapping("/api/v2/me/birthday")
+    fun updateBirthday(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "birthday", body["birthday"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    @PutMapping("/api/v2/me/occupation")
+    fun updateOccupation(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "occupation", body["occupation"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    @PutMapping("/api/v2/me/region")
+    fun updateRegion(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "region", body["region"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    @PutMapping("/api/v2/me/school")
+    fun updateSchool(@RequestBody body: Map<String, String>): ApiResponse<UserV2MeDto> {
+        userService.updateField(currentUserId(), "school", body["school"] ?: "")
+        return ApiResponse.ok(userService.me(currentUserId()))
+    }
+
+    // ========== 头像上传 ==========
+
+    @PostMapping("/api/v2/me/avatar")
+    fun uploadAvatar(@RequestParam("avatar") file: MultipartFile): ApiResponse<UserV2AvatarUploadResponseDto> {
+        val path = fileService.uploadImage(file)
+        userService.updateAvatar(currentUserId(), path)
+        return ApiResponse.ok(UserV2AvatarUploadResponseDto(path))
+    }
+
+    // ========== 背景图上传（与头像上传一致） ==========
+
+    @PostMapping("/api/v2/me/background")
+    fun uploadBackground(@RequestParam("background") file: MultipartFile): ApiResponse<UserV2AvatarUploadResponseDto> {
+        val path = fileService.uploadImage(file)
+        userService.updateBackground(currentUserId(), path)
+        return ApiResponse.ok(UserV2AvatarUploadResponseDto(path))
+    }
+
+    // ========== 批量编辑（保留兼容） ==========
 
     @PutMapping("/api/v2/me")
     fun updateMe(@RequestBody request: UserV2UpdateRequestDto): ApiResponse<UserV2MeDto> =
         ApiResponse.ok(userService.updateMe(currentUserId(), request))
 
-    @PostMapping("/api/v2/me/avatar")
-    fun uploadAvatar(@RequestParam("avatar") file: MultipartFile): ApiResponse<UserV2AvatarUploadResponseDto> {
-        val path = fileService.uploadImage(file)
-        return ApiResponse.ok(UserV2AvatarUploadResponseDto(path))
-    }
+    // ========== 他人主页 ==========
 
     @GetMapping("/api/v2/users/{id}")
     fun profile(@PathVariable id: Long): ApiResponse<UserV2ProfileDto> =
@@ -47,9 +109,10 @@ class UserController(
         @RequestParam(defaultValue = "10") size: Int
     ): ApiResponse<List<Video2Dto>> {
         videoRepository.findByUploaderIdAndStatus(id, VideoStatus.PUBLISHED, PageRequest.of(0, size))
-        // Placeholder: full DTO conversion done in video module
         return ApiResponse.ok(emptyList())
     }
+
+    // ========== 关注 ==========
 
     @PostMapping("/api/v2/users/{id}/follow")
     fun follow(@PathVariable id: Long): ApiResponse<Any> {

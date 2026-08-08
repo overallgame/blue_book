@@ -7,6 +7,7 @@ import com.example.blue_book.auth.domain.model.LoginCredentials
 import com.example.blue_book.auth.domain.model.RegisterInfo
 import com.example.blue_book.auth.domain.repository.AuthRepository
 import com.example.blue_book.data.UserAccount
+import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.network.TokenHolder
 import com.example.blue_book.network.datasource.TokenRemoteDataSource
 import com.example.blue_book.provider.IUserStore
@@ -18,15 +19,20 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
 	private val remoteDataSource: AuthRemoteDataSource,
 	private val authRemote: TokenRemoteDataSource,
-	private val tokenHolder: TokenHolder
+	private val tokenHolder: TokenHolder,
+	private val currentUser: CurrentUser
 ) : AuthRepository {
 
 	private val userStore: IUserStore get() = TheRouter.get(IUserStore::class.java)!!
 
 	override suspend fun isLoggedIn(): Boolean {
+		if (currentUser.isLoggedIn) return true
 		val phone = tokenHolder.phone
 		val token = tokenHolder.authToken
-		return phone != null && !token.isNullOrBlank()
+		if (phone != null && !token.isNullOrBlank()) {
+			userStore.getUserByPhone(phone)?.let { currentUser.restore(it) }
+		}
+		return currentUser.isLoggedIn
 	}
 
 	override suspend fun login(credentials: LoginCredentials): Result<UserAccount> {
@@ -38,6 +44,7 @@ class AuthRepositoryImpl @Inject constructor(
 				val account = dto.profile?.toDomain() ?: defaultAccount(credentials.phone)
 				userStore.saveUser(account)
 				tokenHolder.savePhone(account.phone)
+				currentUser.restore(account)
 				Result.success(account)
 			},
 			onFailure = { Result.failure(it) }
@@ -52,6 +59,7 @@ class AuthRepositoryImpl @Inject constructor(
 				userStore.deleteUserByPhone(phone)
 			}
 			tokenHolder.clear()
+			currentUser.clear()
 			Result.success(Unit)
 		} catch (t: Throwable) {
 			Result.failure(t)
@@ -69,6 +77,7 @@ class AuthRepositoryImpl @Inject constructor(
 				val account = dto.profile?.toDomain() ?: defaultAccount(info.phone, info.nickname)
 				userStore.saveUser(account)
 				tokenHolder.savePhone(account.phone)
+				currentUser.restore(account)
 				Result.success(account)
 			},
 			onFailure = { Result.failure(it) }

@@ -5,6 +5,13 @@ import com.example.blue_book.data.UserAccount
 import com.example.blue_book.data.mapper.toDomain
 import com.example.blue_book.data.remote.file.FileRemoteDataSource
 import com.example.blue_book.data.remote.user.UserRemoteDataSource
+import com.example.blue_book.data.remote.user.dto2.BioUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.BirthdayUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.GenderUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.NicknameUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.OccupationUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.RegionUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.SchoolUpdateRequest
 import com.example.blue_book.data.remote.user.dto2.UserV2UpdateRequestDto
 import com.example.blue_book.domain.repository.UserRepository
 import com.example.blue_book.network.ApiGateway
@@ -60,12 +67,6 @@ class UserRepositoryImpl @Inject constructor(
 			val base = ApiGateway.BASE_URL.trimEnd('/')
 			return if (v.startsWith(base)) v.removePrefix(base) else v
 		}
-		suspend fun uploadPart(uriStr: String, name: String, prefix: String): Result<MultipartBody.Part> {
-			val uri = Uri.parse(uriStr)
-			val file = uriFileResolver.copyToCacheFile(uri, prefix) ?: return Result.failure(IllegalStateException("无法读取图片"))
-			val mime = uriFileResolver.mimeTypeOf(uri) ?: uriFileResolver.guessMimeType(file)
-			return Result.success(MultipartBody.Part.createFormData(name, file.name, file.asRequestBody(mime.toMediaTypeOrNull())))
-		}
 		var bg = account.background
 		if (isLocalUri(account.avatar)) {
 			uploadPart(account.avatar!!, "avatar", "avatar")
@@ -104,4 +105,122 @@ class UserRepositoryImpl @Inject constructor(
 	}
 
 	override suspend fun currentUserPhone(): String? = tokenHolder.phone
+
+	override suspend fun updateNickname(phone: String, nickname: String): Result<Unit> {
+		return userRemote.updateNickname(NicknameUpdateRequest(nickname)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun updateBio(phone: String, bio: String): Result<Unit> {
+		return userRemote.updateBio(BioUpdateRequest(bio)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun updateGender(phone: String, gender: String): Result<Unit> {
+		return userRemote.updateGender(GenderUpdateRequest(gender)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun updateBirthday(phone: String, birthday: String): Result<Unit> {
+		return userRemote.updateBirthday(BirthdayUpdateRequest(birthday)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun updateOccupation(phone: String, occupation: String): Result<Unit> {
+		return userRemote.updateOccupation(OccupationUpdateRequest(occupation)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun updateRegion(phone: String, region: String): Result<Unit> {
+		return userRemote.updateRegion(RegionUpdateRequest(region)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun updateSchool(phone: String, school: String): Result<Unit> {
+		return userRemote.updateSchool(SchoolUpdateRequest(school)).fold(
+			onSuccess = { dto ->
+				val domain = dto.toDomain()
+				val pwd = userStore.getUserByPhone(domain.phone)?.password ?: ""
+				val domainWithPwd = domain.copy(password = pwd)
+				if (userStore.getUserByPhone(domain.phone) == null) userStore.saveUser(domainWithPwd)
+				else userStore.updateUser(domainWithPwd)
+				Result.success(Unit)
+			},
+			onFailure = { Result.failure(it) }
+		)
+	}
+
+	override suspend fun uploadAvatarFile(localUri: String): Result<String> {
+		return uploadPart(localUri, "avatar", "avatar")
+			.mapCatching { part -> userRemote.uploadAvatar(part).getOrThrow().avatarUrl }
+	}
+
+	override suspend fun uploadBackgroundFile(localUri: String): Result<String> {
+		return uploadPart(localUri, "background", "bg")
+			.mapCatching { part -> userRemote.uploadBackground(part).getOrThrow().avatarUrl }
+	}
+
+	private suspend fun uploadPart(uriStr: String, name: String, prefix: String): Result<MultipartBody.Part> {
+		val uri = Uri.parse(uriStr)
+		val file = uriFileResolver.copyToCacheFile(uri, prefix)
+			?: return Result.failure(IllegalStateException("无法读取图片"))
+		val mime = uriFileResolver.mimeTypeOf(uri) ?: uriFileResolver.guessMimeType(file)
+		return Result.success(
+			MultipartBody.Part.createFormData(name, file.name, file.asRequestBody(mime.toMediaTypeOrNull()))
+		)
+	}
 }

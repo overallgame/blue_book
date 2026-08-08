@@ -37,15 +37,49 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/userInfo_avatar"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="20dp"
-                android:src="@drawable/default_avatar" />
+                android:layout_marginTop="20dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/userInfo_avatar"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@drawable/default_avatar" />
+
+                <LinearLayout
+                    android:id="@+id/avatar_preview_overlay"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:gravity="center_vertical"
+                    android:background="#80000000"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/avatar_cancel_btn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="取消"
+                        android:textSize="12sp"
+                        style="@style/Widget.Material3.Button.TextButton" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/avatar_confirm_btn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="确认"
+                        android:textSize="12sp"
+                        style="@style/Widget.Material3.Button.TextButton" />
+                </LinearLayout>
+            </FrameLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_nickname_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -76,16 +110,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_nickname"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -192,6 +231,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_introduction_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -222,16 +262,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_introduction"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -266,6 +311,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_sex_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -296,16 +342,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_sex"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -341,6 +392,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_birthday_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -371,16 +423,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_birthday"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -416,6 +473,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_career_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -446,16 +504,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_career"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -490,6 +553,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_region_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -520,16 +584,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_region"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -565,6 +634,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/userInfo_school_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -595,16 +665,21 @@
                         android:layout_height="50dp"
                         android:layout_weight="16" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/userInfo_school"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:hint="未填"
                         android:textColor="@color/md_theme_onSurfaceVariant"
-                        android:textColorHint="@color/md_theme_outline"
                         android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_edit_arrow"
+                        android:contentDescription="编辑" />
 
                 </LinearLayout>
 
@@ -670,13 +745,46 @@
                         android:layout_height="50dp"
                         android:layout_weight="10" />
 
-                    <ImageView
-                        android:id="@+id/userInfo_backgroundImage"
+                    <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginEnd="10dp"
                         android:layout_weight="1"
-                        android:src="@drawable/ic_launcher_background" />
+                        android:layout_marginEnd="10dp">
+
+                        <ImageView
+                            android:id="@+id/userInfo_backgroundImage"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/ic_launcher_background" />
+
+                        <LinearLayout
+                            android:id="@+id/background_preview_overlay"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:background="#80000000"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/background_cancel_btn"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="取消"
+                                android:textSize="12sp"
+                                style="@style/Widget.Material3.Button.TextButton" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/background_confirm_btn"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="确认"
+                                android:textSize="12sp"
+                                style="@style/Widget.Material3.Button.TextButton" />
+                        </LinearLayout>
+                    </FrameLayout>
 
                 </LinearLayout>
 
@@ -706,37 +814,6 @@
                 <View
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:orientation="horizontal">
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_weight="1" />
-
-                <Button
-                    android:id="@+id/userInfo_modify"
-                    style="@style/NoMaterialButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="12"
-                    android:background="@drawable/shape3"
-                    android:elevation="4dp"
-                    android:gravity="center"
-                    android:text="修改"
-                    android:textColor="@color/md_theme_onBackground"
-                    android:textSize="18sp" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
                     android:layout_weight="1" />
 
             </LinearLayout>

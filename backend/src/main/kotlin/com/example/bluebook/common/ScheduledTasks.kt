@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 @Component
@@ -14,9 +15,7 @@ class ScheduledTasks(
 ) {
     private val log = LoggerFactory.getLogger(ScheduledTasks::class.java)
 
-    /**
-     * Clean expired refresh tokens every hour.
-     */
+    @Transactional
     @Scheduled(fixedRate = 3600000)
     fun cleanExpiredTokens() {
         log.info("清理过期refresh token...")

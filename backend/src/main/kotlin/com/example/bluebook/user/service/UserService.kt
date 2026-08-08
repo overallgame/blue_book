@@ -101,10 +101,9 @@ class UserService(
     }
 
     fun followers(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): UserV2FollowListResponseDto {
-        val allFollows = userRepository.findAll().filter { u ->
-            followRepository.existsByFollowerIdAndFolloweeId(u.id, userId)
-        }
-        val items = allFollows.map { u ->
+        val followerIds = followRepository.findFollowerIdsByFolloweeId(userId)
+        val users = userRepository.findAllById(followerIds)
+        val items = users.map { u ->
             val isFollowed = currentUserId?.let {
                 followRepository.existsByFollowerIdAndFolloweeId(it, u.id)
             } ?: false

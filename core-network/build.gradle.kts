@@ -12,7 +12,7 @@ android {
     defaultConfig {
         minSdk = 31
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8085/\"")
+        buildConfigField("String", "BASE_URL", "\"http://192.168.17.128:8080/\"")
     }
 
     compileOptions {

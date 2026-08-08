@@ -65,8 +65,7 @@ class AuthService(
         if (redisTemplate.opsForValue().get(phoneKey) != null)
             throw SmsRateLimitException()
 
-        // MVP: fixed code "123456" for development; replace with real SMS API in production
-        val code = "123456"
+        val code = "%06d".format((Math.random() * 1000000).toInt())
         redisTemplate.opsForValue().set("sms:${request.phone}", code, Duration.ofMinutes(5))
         redisTemplate.opsForValue().set(phoneKey, "1", Duration.ofSeconds(60))
         return code // Return code in dev mode for testing convenience

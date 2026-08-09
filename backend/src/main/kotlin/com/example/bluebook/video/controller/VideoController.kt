@@ -52,4 +52,14 @@ class VideoController(private val videoService: VideoService) {
         videoService.collectVideo(currentUserId(), id, collected)
         return ApiResponse.ok()
     }
+
+    @GetMapping("/api/v2/me/likes")
+    fun myLikes(@RequestParam(required = false) cursorId: Long?,
+                @RequestParam(defaultValue = "20") size: Int): ApiResponse<FeedResponseDto> =
+        ApiResponse.ok(videoService.getLikedVideos(currentUserId(), cursorId, size, optionalUserId()))
+
+    @GetMapping("/api/v2/me/collections")
+    fun myCollections(@RequestParam(required = false) cursorId: Long?,
+                      @RequestParam(defaultValue = "20") size: Int): ApiResponse<FeedResponseDto> =
+        ApiResponse.ok(videoService.getCollectedVideos(currentUserId(), cursorId, size, optionalUserId()))
 }

@@ -4,10 +4,8 @@ import com.example.bluebook.common.ApiResponse
 import com.example.bluebook.file.service.FileService
 import com.example.bluebook.user.dto.*
 import com.example.bluebook.user.service.UserService
-import com.example.bluebook.video.dto.Video2Dto
-import com.example.bluebook.video.entity.VideoStatus
-import com.example.bluebook.video.repository.VideoRepository
-import org.springframework.data.domain.PageRequest
+import com.example.bluebook.video.dto.FeedResponseDto
+import com.example.bluebook.video.service.VideoService
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -15,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 class UserController(
     private val userService: UserService,
-    private val videoRepository: VideoRepository,
+    private val videoService: VideoService,
     private val fileService: FileService
 ) {
     private fun currentUserId(): Long =
@@ -106,11 +104,10 @@ class UserController(
     @GetMapping("/api/v2/users/{id}/videos")
     fun userVideos(
         @PathVariable id: Long,
-        @RequestParam(defaultValue = "10") size: Int
-    ): ApiResponse<List<Video2Dto>> {
-        videoRepository.findByUploaderIdAndStatus(id, VideoStatus.PUBLISHED, PageRequest.of(0, size))
-        return ApiResponse.ok(emptyList())
-    }
+        @RequestParam(defaultValue = "10") size: Int,
+        @RequestParam(required = false) cursorId: Long?
+    ): ApiResponse<FeedResponseDto> =
+        ApiResponse.ok(videoService.getUserVideos(id, cursorId, size, optionalUserId()))
 
     // ========== 关注 ==========
 

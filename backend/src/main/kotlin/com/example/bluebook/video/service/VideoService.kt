@@ -6,6 +6,8 @@ import com.example.bluebook.common.BusinessException
 import com.example.bluebook.common.VideoNotFoundException
 import com.example.bluebook.interaction.repository.VideoCollectRepository
 import com.example.bluebook.interaction.repository.VideoLikeRepository
+import com.example.bluebook.notification.entity.NotifyType
+import com.example.bluebook.notification.service.NotificationService
 import com.example.bluebook.video.dto.*
 import com.example.bluebook.video.entity.Video
 import com.example.bluebook.video.entity.VideoStatus
@@ -22,7 +24,8 @@ class VideoService(
     private val userRepository: UserRepository,
     private val likeRepository: VideoLikeRepository,
     private val collectRepository: VideoCollectRepository,
-    private val redisTemplate: StringRedisTemplate
+    private val redisTemplate: StringRedisTemplate,
+    private val notificationService: NotificationService
 ) {
     fun feed(cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
@@ -73,6 +76,14 @@ class VideoService(
         if (liked && !exists) {
             likeRepository.save(com.example.bluebook.interaction.entity.VideoLike(userId = userId, videoId = videoId))
             videoRepository.incrementLikeCount(videoId, 1)
+            if (userId != video.uploaderId) {
+                notificationService.create(
+                    receiverId = video.uploaderId, senderId = userId,
+                    type = NotifyType.LIKE,
+                    videoId = videoId,
+                    content = "赞了你的视频"
+                )
+            }
         } else if (!liked && exists) {
             likeRepository.deleteByUserIdAndVideoId(userId, videoId)
             videoRepository.incrementLikeCount(videoId, -1)
@@ -87,6 +98,14 @@ class VideoService(
         if (collected && !exists) {
             collectRepository.save(com.example.bluebook.interaction.entity.VideoCollect(userId = userId, videoId = videoId))
             videoRepository.incrementCollectCount(videoId, 1)
+            if (userId != video.uploaderId) {
+                notificationService.create(
+                    receiverId = video.uploaderId, senderId = userId,
+                    type = NotifyType.LIKE,
+                    videoId = videoId,
+                    content = "收藏了你的视频"
+                )
+            }
         } else if (!collected && exists) {
             collectRepository.deleteByUserIdAndVideoId(userId, videoId)
             videoRepository.incrementCollectCount(videoId, -1)
@@ -96,6 +115,33 @@ class VideoService(
     fun getTranscodeStatus(videoId: Long): String {
         val video = videoRepository.findById(videoId).orElseThrow { VideoNotFoundException() }
         return video.transcodeStatus.name
+    }
+
+    fun getLikedVideos(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
+        val pageable = PageRequest.of(0, size)
+        val likes = likeRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+        val videoIds = likes.map { it.videoId }
+        val videos = videoRepository.findAllById(videoIds)
+            .filter { it.status == VideoStatus.PUBLISHED }
+        val items = videos.map { v -> toDto(v, currentUserId) }
+        return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
+    }
+
+    fun getCollectedVideos(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
+        val pageable = PageRequest.of(0, size)
+        val collects = collectRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+        val videoIds = collects.map { it.videoId }
+        val videos = videoRepository.findAllById(videoIds)
+            .filter { it.status == VideoStatus.PUBLISHED }
+        val items = videos.map { v -> toDto(v, currentUserId) }
+        return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
+    }
+
+    fun getUserVideos(uploaderId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
+        val pageable = PageRequest.of(0, size)
+        val videos = videoRepository.findByUploaderIdAndStatus(uploaderId, VideoStatus.PUBLISHED, pageable)
+        val items = videos.map { v -> toDto(v, currentUserId) }
+        return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
 
     private fun toDto(video: Video, currentUserId: Long?): Video2Dto {

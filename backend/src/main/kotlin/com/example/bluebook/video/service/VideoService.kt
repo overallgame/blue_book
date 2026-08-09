@@ -13,6 +13,7 @@ import com.example.bluebook.video.entity.Video
 import com.example.bluebook.video.entity.VideoStatus
 import com.example.bluebook.video.repository.VideoRepository
 import org.springframework.data.domain.PageRequest
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +26,8 @@ class VideoService(
     private val likeRepository: VideoLikeRepository,
     private val collectRepository: VideoCollectRepository,
     private val redisTemplate: StringRedisTemplate,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val rabbitTemplate: RabbitTemplate? = null
 ) {
     fun feed(cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
@@ -63,8 +65,9 @@ class VideoService(
             transcodeStatus = com.example.bluebook.video.entity.TranscodeStatus.PENDING
         )
         videoRepository.save(video)
-        // In production: send RabbitMQ message for transcoding
-        // rabbitTemplate.convertAndSend("video.transcode", "", video.id)
+        if (rabbitTemplate != null) {
+            rabbitTemplate.convertAndSend("video.transcode", video.id)
+        }
         return toDto(video, uploaderId)
     }
 

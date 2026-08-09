@@ -13,4 +13,10 @@ interface VideoRepository {
 	suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit>
 
 	suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit>
+
+	suspend fun fetchLikedVideos(cursorId: Long?, size: Int?): Result<List<Video>>
+
+	suspend fun fetchCollectedVideos(cursorId: Long?, size: Int?): Result<List<Video>>
+
+	suspend fun fetchUserVideos(userId: Long, cursorId: Long?, size: Int?): Result<List<Video>>
 }

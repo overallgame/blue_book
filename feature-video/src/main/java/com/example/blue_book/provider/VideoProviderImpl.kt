@@ -24,6 +24,18 @@ class VideoProviderImpl(
 		return repository.collectVideo(aid, collected)
 	}
 
+	override suspend fun fetchLikedVideos(cursorId: Long?, size: Int?): Result<List<VideoCardInfo>> {
+		return repository.fetchLikedVideos(cursorId, size).map { list -> list.map { it.toCardInfo() } }
+	}
+
+	override suspend fun fetchCollectedVideos(cursorId: Long?, size: Int?): Result<List<VideoCardInfo>> {
+		return repository.fetchCollectedVideos(cursorId, size).map { list -> list.map { it.toCardInfo() } }
+	}
+
+	override suspend fun fetchUserVideos(userId: Long, cursorId: Long?, size: Int?): Result<List<VideoCardInfo>> {
+		return repository.fetchUserVideos(userId, cursorId, size).map { list -> list.map { it.toCardInfo() } }
+	}
+
 	private fun Video.toCardInfo() = VideoCardInfo(
 		aid = aid,
 		cid = cid,

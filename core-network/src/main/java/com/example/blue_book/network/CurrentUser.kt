@@ -21,6 +21,7 @@ class CurrentUser @Inject constructor() {
     val phone: String? get() = account?.phone
     val nickname: String? get() = account?.nickname
     val avatar: String? get() = account?.avatar
+    val userId: Long? get() = account?.id
 
     fun restore(account: UserAccount) {
         this.account = account

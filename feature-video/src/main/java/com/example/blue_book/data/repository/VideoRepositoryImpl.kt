@@ -33,4 +33,19 @@ class VideoRepositoryImpl @Inject constructor(
 	override suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit> {
 		return remote.collectVideo(aid, collected)
 	}
+
+	override suspend fun fetchLikedVideos(cursorId: Long?, size: Int?): Result<List<Video>> {
+		val result = remote.myLikes(cursorId, size)
+		return result.map { it.items.toDomainVideos() }
+	}
+
+	override suspend fun fetchCollectedVideos(cursorId: Long?, size: Int?): Result<List<Video>> {
+		val result = remote.myCollections(cursorId, size)
+		return result.map { it.items.toDomainVideos() }
+	}
+
+	override suspend fun fetchUserVideos(userId: Long, cursorId: Long?, size: Int?): Result<List<Video>> {
+		val result = remote.userVideos(userId, cursorId, size)
+		return result.map { it.items.toDomainVideos() }
+	}
 }

@@ -46,4 +46,23 @@ interface VideoApi {
 		@Path("videoId") videoId: Long,
 		@Query("cid") cid: Long
 	): Response<ApiResponse<String>>
+
+	@GET("/api/v2/me/likes")
+	suspend fun myLikes(
+		@Query("cursorId") cursorId: Long? = null,
+		@Query("size") size: Int? = null
+	): Response<ApiResponse<FeedResponseDto>>
+
+	@GET("/api/v2/me/collections")
+	suspend fun myCollections(
+		@Query("cursorId") cursorId: Long? = null,
+		@Query("size") size: Int? = null
+	): Response<ApiResponse<FeedResponseDto>>
+
+	@GET("/api/v2/users/{userId}/videos")
+	suspend fun userVideos(
+		@Path("userId") userId: Long,
+		@Query("cursorId") cursorId: Long? = null,
+		@Query("size") size: Int? = null
+	): Response<ApiResponse<FeedResponseDto>>
 }

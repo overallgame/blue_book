@@ -5,6 +5,7 @@ import com.example.blue_book.data.UserAccount
 
 fun UserProfile.toDomain(): UserAccount {
 	return UserAccount(
+		id = id ?: 0,
 		phone = phone.orEmpty(),
 		avatar = avatar,
 		nickname = nickname,

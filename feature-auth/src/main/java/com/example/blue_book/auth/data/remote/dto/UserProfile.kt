@@ -1,6 +1,7 @@
 package com.example.blue_book.auth.data.remote.dto
 
 data class UserProfile(
+	val id: Long? = null,
 	val phone: String?,
 	val avatar: String?,
 	val nickname: String?,

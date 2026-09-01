@@ -19,7 +19,11 @@ class UserProfileViewModel @Inject constructor(
 		when (intent) {
 			UserProfileIntent.Init -> init()
 			UserProfileIntent.Refresh -> refresh()
-			is UserProfileIntent.SubmitUpdate -> submitUpdate(intent)
+			is UserProfileIntent.SubmitUpdate -> submitUpdate(intent, closeOnSuccess = true)
+			is UserProfileIntent.UpdateImages -> submitUpdate(
+				UserProfileIntent.SubmitUpdate(avatar = intent.avatar, background = intent.background),
+				closeOnSuccess = false
+			)
 		}
 	}
 
@@ -37,28 +41,33 @@ class UserProfileViewModel @Inject constructor(
 		init()
 	}
 
-	private suspend fun submitUpdate(i: UserProfileIntent.SubmitUpdate) {
+	private suspend fun submitUpdate(i: UserProfileIntent.SubmitUpdate, closeOnSuccess: Boolean) {
 		val phone = getCurrentPhone() ?: return sendEffect(UserProfileEffect.ShowToast("未登录"))
+		val origin = uiState.value.user
+		if (origin == null) {
+			sendEffect(UserProfileEffect.ShowToast("用户信息未加载，请稍后重试"))
+			return
+		}
 		val account = UserAccount(
 			phone = phone,
-			avatar = i.avatar,
-			nickname = i.nickname,
-			password = null,
-			introduction = i.introduction,
-			sex = i.sex,
-			birthday = i.birthday,
-			career = i.career,
-			region = i.region,
-			school = i.school,
-			background = i.background
+			avatar = i.avatar ?: origin.avatar,
+			nickname = i.nickname ?: origin.nickname,
+			password = origin.password,
+			introduction = i.introduction ?: origin.introduction,
+			sex = i.sex ?: origin.sex,
+			birthday = i.birthday ?: origin.birthday,
+			career = i.career ?: origin.career,
+			region = i.region ?: origin.region,
+			school = i.school ?: origin.school,
+			background = i.background ?: origin.background
 		)
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
 			call = { updateUserProfile(account) },
 			onSuccess = {
-				setState { copy(isLoading = false) }
-				sendEffect(UserProfileEffect.ShowToast("修改信息成功"))
-				sendEffect(UserProfileEffect.ClosePage)
+				setState { copy(isLoading = false, user = account) }
+				sendEffect(UserProfileEffect.ShowToast(successMessage(i, closeOnSuccess)))
+				if (closeOnSuccess) sendEffect(UserProfileEffect.ClosePage)
 			},
 			onFailure = { e ->
 				setState { copy(isLoading = false, message = e.message ?: "修改失败") }
@@ -66,6 +75,14 @@ class UserProfileViewModel @Inject constructor(
 			}
 		)
 	}
+
+	private fun successMessage(i: UserProfileIntent.SubmitUpdate, closeOnSuccess: Boolean): String {
+		if (!closeOnSuccess) {
+			return when {
+				i.avatar != null -> "头像更新成功"
+				else -> "背景图更新成功"
+			}
+		}
+		return "修改信息成功"
+	}
 }
-
-

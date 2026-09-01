@@ -5,17 +5,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
+import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.UserProfilePageBinding
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.ui.mine.MineActivity
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -28,9 +33,6 @@ class UserProfileEditFragment : Fragment() {
 	private val viewModel: UserProfileViewModel by viewModels()
 	private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
 
-	private var avatarUrl: String? = null
-	private var backgroundUrl: String? = null
-
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		_binding = UserProfilePageBinding.inflate(inflater, container, false)
 		return binding.root
@@ -41,9 +43,14 @@ class UserProfileEditFragment : Fragment() {
 		initActivityResult()
 		initToolbar()
 		initImagePickers()
-		initFieldPickers()
+		initFieldNavigation()
 		observeViewModel()
-		viewModel.dispatch(UserProfileIntent.Init)
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 从字段编辑页返回后刷新展示值
+		viewModel.dispatch(UserProfileIntent.Refresh)
 	}
 
 	private fun initActivityResult() {
@@ -52,15 +59,14 @@ class UserProfileEditFragment : Fragment() {
 		) { result ->
 			if (result.resultCode != AppCompatActivity.RESULT_OK) return@registerForActivityResult
 			val uri = result.data?.data ?: return@registerForActivityResult
-			val tag = result.data?.getStringExtra("tag")
-			when (tag) {
+			when (result.data?.getStringExtra("tag")) {
 				"avatar" -> {
-					avatarUrl = uri.toString()
 					binding.userInfoAvatar.setImageURI(uri)
+					viewModel.dispatch(UserProfileIntent.UpdateImages(avatar = uri.toString()))
 				}
 				"backgroundImage" -> {
-					backgroundUrl = uri.toString()
 					binding.userInfoBackgroundImage.setImageURI(uri)
+					viewModel.dispatch(UserProfileIntent.UpdateImages(background = uri.toString()))
 				}
 			}
 		}
@@ -68,73 +74,43 @@ class UserProfileEditFragment : Fragment() {
 
 	private fun initToolbar() {
 		binding.userInfoToolbar.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
-		binding.userInfoModify.setOnClickListener {
-			viewModel.dispatch(
-				UserProfileIntent.SubmitUpdate(
-					nickname = binding.userInfoNickname.text?.toString().orEmpty(),
-					introduction = binding.userInfoIntroduction.text?.toString(),
-					sex = binding.userInfoSex.text?.toString(),
-					birthday = binding.userInfoBirthday.text?.toString(),
-					career = binding.userInfoCareer.text?.toString(),
-					region = binding.userInfoRegion.text?.toString(),
-					school = binding.userInfoSchool.text?.toString(),
-					avatar = avatarUrl,
-					background = backgroundUrl
-				)
-			)
-		}
 	}
 
 	private fun initImagePickers() {
+		// 头像与背景图沿用原有图片选择器逻辑，选择后即时保存
 		binding.userInfoAvatar.setOnClickListener { openCustomImagePicker("avatar") }
-		binding.userInfoBackgroundImage.setOnClickListener { openCustomImagePicker("backgroundImage") }
+		binding.userInfoRowBackground.setOnClickListener { openCustomImagePicker("backgroundImage") }
 	}
 
-	private fun initFieldPickers() {
-		// 性别选择器
-		binding.userInfoSex.setOnClickListener {
-			val options = arrayOf("男", "女", "其他")
-			val current = options.indexOfFirst { it == binding.userInfoSex.text.toString() }
-			android.app.AlertDialog.Builder(requireContext())
-				.setTitle("选择性别")
-				.setSingleChoiceItems(options, if (current >= 0) current else -1) { dialog, which ->
-					binding.userInfoSex.setText(options[which])
-					dialog.dismiss()
-				}
-				.show()
+	private fun initFieldNavigation() {
+		binding.userInfoRowNickname.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_NICKNAME)
 		}
-		// 生日选择器
-		binding.userInfoBirthday.setOnClickListener {
-			val cal = java.util.Calendar.getInstance()
-			try {
-				binding.userInfoBirthday.text?.toString()?.takeIf { it.isNotBlank() }?.let {
-					val parts = it.split("-")
-					if (parts.size == 3) {
-						cal.set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
-					}
-				}
-			} catch (_: Exception) {}
-			android.app.DatePickerDialog(
-				requireContext(),
-				{ _, year, month, day ->
-					binding.userInfoBirthday.setText("%d-%02d-%02d".format(year, month + 1, day))
-				},
-				cal.get(java.util.Calendar.YEAR),
-				cal.get(java.util.Calendar.MONTH),
-				cal.get(java.util.Calendar.DAY_OF_MONTH)
-			).show()
+		binding.userInfoRowIntroduction.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_INTRODUCTION)
 		}
-		// 地区选择器
-		binding.userInfoRegion.setOnClickListener {
-			val regions = arrayOf("北京", "上海", "广州", "深圳", "杭州", "成都", "南京", "武汉", "重庆", "其他")
-			android.app.AlertDialog.Builder(requireContext())
-				.setTitle("选择地区")
-				.setItems(regions) { dialog, which ->
-					binding.userInfoRegion.setText(regions[which])
-					dialog.dismiss()
-				}
-				.show()
+		binding.userInfoRowSex.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_SEX)
 		}
+		binding.userInfoRowBirthday.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_BIRTHDAY)
+		}
+		binding.userInfoRowRegion.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_REGION)
+		}
+		binding.userInfoRowCareer.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_CAREER)
+		}
+		binding.userInfoRowSchool.setOnClickListener {
+			navigateToField(ProfileFieldEditFragment.FIELD_SCHOOL)
+		}
+		binding.userInfoRowXhsId.setOnClickListener {
+			Toast.makeText(requireContext(), "小红书号暂不支持修改", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	private fun navigateToField(field: String) {
+		(requireActivity() as MineActivity).navigateToProfileFieldEdit(field)
 	}
 
 	private fun openCustomImagePicker(tag: String) {
@@ -150,16 +126,14 @@ class UserProfileEditFragment : Fragment() {
 				launch {
 					viewModel.uiState.collect { state ->
 						state.user?.let { u ->
-							avatarUrl = u.avatar
-							backgroundUrl = u.background
-							binding.userInfoNickname.setText(u.nickname ?: "")
 							binding.userInfoPhone.text = u.phone
-							binding.userInfoIntroduction.setText(u.introduction ?: "")
-							binding.userInfoSex.setText(u.sex ?: "点击选择")
-							binding.userInfoBirthday.setText(u.birthday ?: "点击选择")
-							binding.userInfoCareer.setText(u.career ?: "")
-							binding.userInfoRegion.setText(u.region ?: "")
-							binding.userInfoSchool.setText(u.school ?: "")
+							bindValue(binding.userInfoNickname, u.nickname, "未填")
+							bindValue(binding.userInfoIntroduction, u.introduction, "未填")
+							bindValue(binding.userInfoSex, u.sex, "选择性别")
+							bindValue(binding.userInfoBirthday, u.birthday, "选择生日")
+							bindValue(binding.userInfoRegion, u.region, "选择所在的地区")
+							bindValue(binding.userInfoCareer, u.career, "选择职业")
+							bindValue(binding.userInfoSchool, u.school, "选择学校")
 							u.avatar?.let { Glide.with(requireContext()).load(it).into(binding.userInfoAvatar) }
 							u.background?.let { Glide.with(requireContext()).load(it).into(binding.userInfoBackgroundImage) }
 						}
@@ -168,16 +142,27 @@ class UserProfileEditFragment : Fragment() {
 				launch {
 					viewModel.uiEffect.collect { effect ->
 						when (effect) {
-							is UserProfileEffect.ShowToast -> android.widget.Toast.makeText(
+							is UserProfileEffect.ShowToast -> Toast.makeText(
 								requireContext(),
 								effect.message,
-								android.widget.Toast.LENGTH_SHORT
+								Toast.LENGTH_SHORT
 							).show()
 							UserProfileEffect.ClosePage -> requireActivity().onBackPressedDispatcher.onBackPressed()
 						}
 					}
 				}
 			}
+		}
+	}
+
+	/** 有值显示正常色，空值显示灰色占位文案 */
+	private fun bindValue(view: TextView, value: String?, placeholder: String) {
+		if (value.isNullOrBlank()) {
+			view.text = placeholder
+			view.setTextColor(ContextCompat.getColor(requireContext(), R.color.profile_text_placeholder))
+		} else {
+			view.text = value
+			view.setTextColor(ContextCompat.getColor(requireContext(), R.color.profile_text_value))
 		}
 	}
 

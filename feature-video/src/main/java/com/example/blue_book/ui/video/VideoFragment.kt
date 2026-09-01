@@ -43,23 +43,20 @@ class VideoFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		adapter = VideoAdapter(
 			requireContext(),
+			onClickBack = { requireActivity().onBackPressedDispatcher.onBackPressed() },
 			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
 			onClickCollect = { video -> viewModel.dispatch(VideoIntent.ToggleCollect(video)) },
 			onClickComment = { video ->
 				CommentBottomSheet.newInstance(video.aid, video.cid)
 					.show(parentFragmentManager, CommentBottomSheet.TAG)
 			},
-			onClickShare = { video ->
-				val text = "分享视频：${video.description}（来自 ${video.nickname}）"
-				val intent = Intent(Intent.ACTION_SEND).apply {
-					type = "text/plain"
-					putExtra(Intent.EXTRA_TEXT, text)
-				}
-				try {
-					startActivity(Intent.createChooser(intent, "分享到"))
-				} catch (e: android.content.ActivityNotFoundException) {
-					Toast.makeText(requireContext(), "没有可用的分享应用", Toast.LENGTH_SHORT).show()
-				}
+			onClickShare = { video -> shareVideo(video) },
+			onClickFollow = { _ ->
+				// 关注功能待后续实现（需要服务端关注 API）
+				Toast.makeText(requireContext(), "关注功能开发中", Toast.LENGTH_SHORT).show()
+			},
+			onClickFullscreen = {
+				Toast.makeText(requireContext(), "全屏播放开发中", Toast.LENGTH_SHORT).show()
 			},
 			onClickAvatar = { video ->
 				// 作者主页功能待后续实现（需要服务端用户主页 API）
@@ -99,6 +96,19 @@ class VideoFragment : Fragment() {
 
 		observeViewModel()
 		initByArgs()
+	}
+
+	private fun shareVideo(video: VideoCardInfo) {
+		val text = "分享视频：${video.description}（来自 ${video.nickname}）"
+		val intent = Intent(Intent.ACTION_SEND).apply {
+			type = "text/plain"
+			putExtra(Intent.EXTRA_TEXT, text)
+		}
+		try {
+			startActivity(Intent.createChooser(intent, "分享到"))
+		} catch (e: android.content.ActivityNotFoundException) {
+			Toast.makeText(requireContext(), "没有可用的分享应用", Toast.LENGTH_SHORT).show()
+		}
 	}
 
 	private fun initByArgs() {

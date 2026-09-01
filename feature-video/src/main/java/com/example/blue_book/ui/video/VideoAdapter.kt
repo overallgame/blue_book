@@ -22,10 +22,13 @@ import com.example.blue_book.core.player.PlayerEvents
 @UnstableApi
 class VideoAdapter(
     context: Context,
+    private val onClickBack: () -> Unit,
     private val onClickLike: (VideoCardInfo) -> Unit,
     private val onClickCollect: (VideoCardInfo) -> Unit,
     private val onClickComment: (VideoCardInfo) -> Unit,
     private val onClickShare: (VideoCardInfo) -> Unit,
+    private val onClickFollow: (VideoCardInfo) -> Unit,
+    private val onClickFullscreen: () -> Unit,
     private val onClickAvatar: (VideoCardInfo) -> Unit,
     private val onPlayerError: (String) -> Unit,
     private val onRequestPlayUrl: (VideoCardInfo) -> Unit
@@ -75,8 +78,19 @@ class VideoAdapter(
             }
             currentUrl = url
 
+            // 标题与话题标签：description 中的 #标签 解析到标签行，剩余文本作标题
+            val tokens = videoInfo.description.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+            val tags = tokens.filter { it.startsWith("#") }
+            val titleText = tokens.filterNot { it.startsWith("#") }.joinToString(" ")
+            binding.videoItemDescription.text = titleText.ifEmpty { videoInfo.description }
+            if (tags.isEmpty()) {
+                binding.videoItemTags.visibility = View.GONE
+            } else {
+                binding.videoItemTags.visibility = View.VISIBLE
+                binding.videoItemTags.text = tags.joinToString(" ")
+            }
+
             binding.videoItemNickname.text = videoInfo.nickname
-            binding.videoItemDescription.text = videoInfo.description
             binding.videoItemLikeCount.text = formatCount(videoInfo.like)
             binding.videoItemCollectCount.text = formatCount(videoInfo.collection)
             binding.videoItemCommentCount.text = formatCount(videoInfo.commentCount)
@@ -88,19 +102,23 @@ class VideoAdapter(
                 .into(binding.videoItemAvatar)
 
             binding.videoItemLikeBtn.setImageResource(
-                if (videoInfo.isLike) R.drawable.like_icon3 else R.drawable.like_icon2
+                if (videoInfo.isLike) R.drawable.icon_love_selected else R.drawable.icon_love
             )
 
             // 收藏按钮视觉切换
             binding.videoItemCollectBtn.setImageResource(
-                if (videoInfo.isCollect) R.drawable.collection_icon1 else R.drawable.collection_icon
+                if (videoInfo.isCollect) R.drawable.icon_collect_selected else R.drawable.icon_collect
             )
 
             binding.videoItemLikeBtn.setOnClickListener { currentVideo?.let(onClickLike) }
             binding.videoItemCollectBtn.setOnClickListener { currentVideo?.let(onClickCollect) }
             binding.videoItemCommentBtn.setOnClickListener { currentVideo?.let(onClickComment) }
-            binding.videoItemShareBtn.setOnClickListener { currentVideo?.let(onClickShare) }
+            binding.videoItemCommentInput.setOnClickListener { currentVideo?.let(onClickComment) }
+            binding.videoItemFollowBtn.setOnClickListener { currentVideo?.let(onClickFollow) }
+            binding.videoItemFullscreen.setOnClickListener { onClickFullscreen() }
             binding.videoItemAvatar.setOnClickListener { currentVideo?.let(onClickAvatar) }
+            binding.videoItemBack.setOnClickListener { onClickBack() }
+            binding.videoItemShare.setOnClickListener { currentVideo?.let(onClickShare) }
 
             // 双击点赞 + 长按倍速
             val speedHandler = android.os.Handler(android.os.Looper.getMainLooper())

@@ -63,7 +63,7 @@ class CommentAdapter(
 			time.text = formatTime(comment.createTime)
 			content.text = comment.content
 			likeCount.text = formatCount(comment.likeCount)
-			likeBtn.setImageResource(if (comment.isLiked) R.drawable.like_icon3 else R.drawable.like_icon2)
+			likeBtn.setImageResource(if (comment.isLiked) R.drawable.icon_love_selected else R.drawable.icon_love)
 
 			deleteBtn.visibility = if (comment.userId == currentUserId) View.VISIBLE else View.GONE
 

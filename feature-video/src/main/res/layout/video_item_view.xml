@@ -6,237 +6,296 @@
     android:layout_height="match_parent"
     android:background="@color/video_background">
 
+    <!-- 底层：视频区（顶边接返回按钮行 84dp，底边接底部互动栏 56dp），
+         竖屏近似铺满该区域、横屏 fit 模式黑边居中 -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/video_item_VideoPlayer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_marginTop="84dp"
+        android:layout_marginBottom="56dp"
+        android:background="@android:color/black" />
 
-    <!-- 播放进度条 — 暂停时可见 -->
-    <SeekBar
-        android:id="@+id/video_item_progress"
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:layout_gravity="bottom"
-        android:max="1000"
-        android:paddingStart="0dp"
-        android:paddingEnd="0dp"
-        android:progressDrawable="@drawable/video_progress_track"
-        android:thumb="@drawable/video_progress_thumb"
-        android:splitTrack="false"
-        android:visibility="gone" />
-
+    <!-- 上层：浮动的页面 UI，互不与播放器抢约束 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp"
-        android:paddingBottom="24dp">
+        android:layout_height="match_parent">
 
-        <LinearLayout
-            android:id="@+id/video_item_right_actions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|center_vertical"
+        <!-- 顶栏：返回 / 分享 -->
+        <ImageView
+            android:id="@+id/video_item_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="20dp"
+            android:contentDescription="返回"
+            android:padding="10dp"
+            android:src="@drawable/_chevron_left"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/video_item_share"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="8dp"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@id/video_item_bottom_info"
+            android:contentDescription="分享"
+            android:padding="10dp"
+            android:src="@drawable/icon_share"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.6">
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 全屏观看：悬浮在作者信息组上方 -->
+        <LinearLayout
+            android:id="@+id/video_item_fullscreen"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/shape_video_pill"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            app:layout_constraintBottom_toTopOf="@id/video_item_author_row"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="@null"
+                android:src="@drawable/_ic_expand" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="全屏观看"
+                android:textColor="@color/video_on_surface"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 作者行：头像 + 昵称 + 关注 -->
+        <LinearLayout
+            android:id="@+id/video_item_author_row"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toTopOf="@id/video_item_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/video_item_avatar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:scaleType="centerCrop"
                 app:shapeAppearanceOverlay="@style/CircleImageStyle"
                 tools:src="@drawable/ic_launcher_background" />
 
-            <ImageView
-                android:id="@+id/video_item_avatar_plus"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginTop="-10dp"
-                android:src="@drawable/ic_launcher_foreground"
-                android:visibility="gone" />
+            <TextView
+                android:id="@+id/video_item_nickname"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/video_on_surface"
+                android:textSize="16sp"
+                tools:text="nickname" />
 
-            <!-- 点赞 -->
-            <LinearLayout
+            <TextView
+                android:id="@+id/video_item_follow_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/video_item_like_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="点赞"
-                    android:src="@drawable/like_icon2" />
-
-                <TextView
-                    android:id="@+id/video_item_like_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/video_on_surface"
-                    android:textSize="12sp"
-                    tools:text="1.2w" />
-            </LinearLayout>
-
-            <!-- 收藏 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/video_item_collect_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="收藏"
-                    android:src="@drawable/collection_icon" />
-
-                <TextView
-                    android:id="@+id/video_item_collect_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/video_on_surface"
-                    android:textSize="12sp"
-                    tools:text="2.3w" />
-            </LinearLayout>
-
-            <!-- 评论 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/video_item_comment_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="评论"
-                    android:src="@drawable/comment_section_icon" />
-
-                <TextView
-                    android:id="@+id/video_item_comment_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/video_on_surface"
-                    android:textSize="12sp"
-                    tools:text="456" />
-            </LinearLayout>
-
-            <!-- 分享 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/video_item_share_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="分享"
-                    android:src="@drawable/share_icon" />
-
-                <TextView
-                    android:id="@+id/video_item_share_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/video_on_surface"
-                    android:textSize="12sp"
-                    tools:text="分享" />
-            </LinearLayout>
+                android:layout_marginStart="12dp"
+                android:background="@drawable/shape_follow_btn"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="7dp"
+                android:text="关注"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- 底部信息区 -->
-        <LinearLayout
-            android:id="@+id/video_item_bottom_info"
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/video_item_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="60dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/video_on_surface"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toTopOf="@id/video_item_tags"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="这是视频标题内容，最多显示2行" />
+
+        <!-- 话题标签：从标题解析出的 #标签，无标签时隐藏；距底栏 10dp -->
+        <TextView
+            android:id="@+id/video_item_tags"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="10dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/video_on_surface_variant"
+            android:textSize="14sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/video_item_bottom_bar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="#标签一 #标签二"
+            tools:visibility="visible" />
+
+        <!-- 底部互动栏：说点什么 / 点赞 / 收藏 / 评论 -->
+        <LinearLayout
+            android:id="@+id/video_item_bottom_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
             android:layout_marginBottom="16dp"
-            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
             <TextView
-                android:id="@+id/video_item_nickname"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/video_on_surface"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                tools:text="nickname" />
-
-            <TextView
-                android:id="@+id/video_item_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:maxLines="3"
-                android:textColor="@color/video_on_surface_variant"
-                android:textSize="14sp"
-                tools:text="这是视频描述内容，最多显示3行，超过后省略显示..." />
+                android:id="@+id/video_item_comment_input"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_comment_input"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="14dp"
+                android:text="说点什么..."
+                android:textColor="@color/video_text_secondary"
+                android:textSize="14sp" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginStart="12dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/music_note"
-                    android:visibility="gone" />
+                <ImageButton
+                    android:id="@+id/video_item_like_btn"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="点赞"
+                    android:src="@drawable/icon_love" />
 
                 <TextView
-                    android:id="@+id/video_item_music"
+                    android:id="@+id/video_item_like_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:ellipsize="marquee"
-                    android:marqueeRepeatLimit="marquee_forever"
-                    android:singleLine="true"
-                    android:textColor="@color/video_on_surface_variant"
-                    android:textSize="12sp"
-                    android:visibility="gone"
-                    tools:text="背景音乐名称 - 歌手" />
+                    android:minWidth="32dp"
+                    android:textColor="@color/video_on_surface"
+                    android:textSize="14sp"
+                    tools:text="158" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/video_item_collect_btn"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="收藏"
+                    android:src="@drawable/icon_collect" />
+
+                <TextView
+                    android:id="@+id/video_item_collect_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:minWidth="32dp"
+                    android:textColor="@color/video_on_surface"
+                    android:textSize="14sp"
+                    tools:text="57" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/video_item_comment_btn"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="评论"
+                    android:src="@drawable/icon_comment" />
+
+                <TextView
+                    android:id="@+id/video_item_comment_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:minWidth="32dp"
+                    android:textColor="@color/video_on_surface"
+                    android:textSize="14sp"
+                    tools:text="13" />
             </LinearLayout>
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- 播放进度条 — 暂停时可见，贴底栏上方 -->
+        <SeekBar
+            android:id="@+id/video_item_progress"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="2dp"
+            android:layout_marginBottom="6dp"
+            android:max="1000"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:progressDrawable="@drawable/video_progress_track"
+            android:splitTrack="false"
+            android:thumb="@drawable/video_progress_thumb"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/video_item_bottom_bar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-  <!-- 双击点赞心形动画 -->
-    <ImageView
-        android:id="@+id/video_item_heart"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:alpha="0"
-        android:scaleX="0.5"
-        android:scaleY="0.5"
-        android:src="@drawable/like_icon3"
-        android:visibility="gone" />
+        <!-- 双击点赞心形动画 -->
+        <ImageView
+            android:id="@+id/video_item_heart"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:alpha="0"
+            android:scaleX="0.5"
+            android:scaleY="0.5"
+            android:src="@drawable/icon_love_selected"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

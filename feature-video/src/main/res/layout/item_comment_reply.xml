@@ -62,7 +62,7 @@
             android:layout_height="28dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="点赞"
-            android:src="@drawable/like_icon3" />
+            android:src="@drawable/icon_love_selected" />
 
         <TextView
             android:id="@+id/reply_like_count"

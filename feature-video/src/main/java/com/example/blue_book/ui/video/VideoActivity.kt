@@ -8,7 +8,6 @@ import androidx.media3.common.util.UnstableApi
 import com.example.blue_book.feature_video.R
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
-import com.example.blue_book.ui.main.VideoTabFragment
 import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,11 +19,9 @@ class VideoActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_video)
 		if (savedInstanceState == null) {
-			val hasVideo = intent.hasExtra(ExtraKeys.EXTRA_VIDEO)
-			val fragment = if (hasVideo) {
-				VideoFragment().apply { arguments = intent.extras }
-			} else {
-				VideoTabFragment()
+			val fragment = VideoFragment().apply {
+				// 从首页带视频进入时携带参数定位首个视频；否则走随机视频流
+				if (intent.hasExtra(ExtraKeys.EXTRA_VIDEO)) arguments = intent.extras
 			}
 			supportFragmentManager.commit {
 				replace(R.id.video_container, fragment)

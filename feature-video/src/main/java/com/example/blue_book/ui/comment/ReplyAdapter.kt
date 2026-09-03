@@ -47,7 +47,7 @@ class ReplyAdapter(
 			time.text = formatTime(comment.createTime)
 			content.text = comment.content
 			likeCount.text = formatCount(comment.likeCount)
-			likeBtn.setImageResource(if (comment.isLiked) R.drawable.like_icon3 else R.drawable.like_icon2)
+			likeBtn.setImageResource(if (comment.isLiked) R.drawable.icon_love_selected else R.drawable.icon_love)
 
 			likeBtn.setOnClickListener { onLikeClick(comment) }
 			replyBtn.setOnClickListener { onReplyClick(comment) }

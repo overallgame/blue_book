@@ -1,5 +1,8 @@
 package com.example.blue_book.ui.mine
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -51,6 +54,7 @@ class MineFragment : Fragment() {
 		initActivityResult()
 		initSwipeRefreshLayout()
 		initNavigationView()
+		initTopBarActions()
 		initRadioGroup()
 		initViewPager()
 		initImagePickers()
@@ -106,6 +110,23 @@ class MineFragment : Fragment() {
 				}
 			}
 		}
+	}
+
+	private fun initTopBarActions() {
+		binding.mineScan.setOnClickListener {
+			Toast.makeText(requireContext(), "扫一扫即将上线", Toast.LENGTH_SHORT).show()
+		}
+		binding.mineShare.setOnClickListener {
+			Toast.makeText(requireContext(), "分享即将上线", Toast.LENGTH_SHORT).show()
+		}
+		binding.mineCopyId.setOnClickListener { copyXhsId() }
+	}
+
+	private fun copyXhsId() {
+		val phone = viewModel.uiState.value.user?.phone ?: return
+		val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+		clipboard.setPrimaryClip(ClipData.newPlainText("xhs_id", phone))
+		Toast.makeText(requireContext(), "已复制小红书号", Toast.LENGTH_SHORT).show()
 	}
 
 	private fun initRadioGroup() {
@@ -172,6 +193,7 @@ class MineFragment : Fragment() {
 								Glide.with(requireContext()).load(it).into(binding.mineAvatar)
 							}
 							binding.mineNickname.text = user.nickname ?: user.phone
+							binding.mineXhsId.text = "小红书号：${user.phone}"
 							binding.mineIntroduction.text = user.introduction.orEmpty()
 						}
 						binding.mineSwipeRefreshLayout.isRefreshing = false

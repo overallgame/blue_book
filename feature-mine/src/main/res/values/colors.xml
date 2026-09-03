@@ -1,4 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- ==================== Material 主题色板（全局引用，勿随意改动） ==================== -->
     <color name="md_theme_onBackground">#1C1B1C</color>
     <color name="md_theme_onPrimaryContainer">#524F55</color>
     <color name="md_theme_onSurface">#1C1B1C</color>
@@ -9,4 +12,30 @@
     <color name="md_theme_surface">#FDF8F8</color>
     <color name="md_theme_surfaceContainer">#F1EDED</color>
     <color name="md_theme_surfaceContainerLow">#F7F3F3</color>
+
+    <!-- ==================== 个人主页（mine_page，深色 UI） ==================== -->
+    <!-- 页面背景 -->
+    <color name="mine_page_background">#333232</color>
+    <!-- 文本层级：主（昵称/统计数字/简介）、次（统计标签）、三级（小红书号） -->
+    <color name="mine_text_primary">#FFFFFF</color>
+    <color name="mine_text_secondary">#C8CBCC</color>
+    <color name="mine_text_tertiary">#B3FFFFFF</color>
+    <!-- 图标：顶栏白色图标、复制图标 -->
+    <color name="mine_icon_primary">#FFFFFF</color>
+    <color name="mine_icon_secondary">#B3FFFFFF</color>
+    <!-- 头像描边 -->
+    <color name="mine_avatar_border">#59FFFFFF</color>
+    <!-- "编辑主页"药丸背景与描边 -->
+    <color name="mine_pill_background">#20FFFFFF</color>
+    <color name="mine_pill_stroke">#C8CBCC</color>
+
+    <!-- ==================== 资料编辑页（user_profile / profile_field） ==================== -->
+    <color name="profile_card_background">#FFFFFF</color>
+    <color name="profile_divider">#14000000</color>
+    <color name="profile_badge_background">#99000000</color>
+    <color name="profile_badge_icon">#FFFFFF</color>
+    <!-- 文本语义层：有值/占位，引用主题色板 -->
+    <color name="profile_text_value">@color/md_theme_onSurface</color>
+    <color name="profile_text_placeholder">@color/md_theme_outline</color>
+
 </resources>

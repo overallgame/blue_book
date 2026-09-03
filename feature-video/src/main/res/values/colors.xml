@@ -2,7 +2,6 @@
 <resources>
     <!-- MD3 Dark Surface -->
     <color name="video_background">#FF000000</color>
-    <color name="video_surface">#FF1C1B1F</color>
     <color name="video_surface_high">#FF28262C</color>
     <color name="video_surface_container">#FF211F26</color>
 
@@ -13,7 +12,6 @@
     <color name="video_text_tertiary">#FF757575</color>
 
     <!-- MD3 Dark Outline / Divider -->
-    <color name="video_outline">#FF938F99</color>
     <color name="video_divider">#33FFFFFF</color>
 
     <!-- MD3 Primary (Accent) -->
@@ -23,18 +21,17 @@
     <!-- Bottom Sheet -->
     <color name="video_bottom_sheet">#FF1C1B1F</color>
     <color name="video_input_bg">#FF28262C</color>
-    <color name="video_send_btn">#FFD0BCFF</color>
+
+    <!-- 播放页（小红书风格） -->
+    <color name="video_follow_red">#FFFE2C55</color>
+    <color name="video_pill_background">#26FFFFFF</color>
 
     <!-- Progress Bar -->
     <color name="video_progress_track_bg">#33FFFFFF</color>
-    <color name="video_progress_active">#FFFFFFFF</color>
 
 
     <color name="md_theme_onPrimary">#FFFFFF</color>
-    <color name="md_theme_onSurface">#1C1B1C</color>
-    <color name="md_theme_onSurfaceVariant">#48464B</color>
     <color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
-    <color name="md_theme_outline">#79767B</color>
     <color name="md_theme_surfaceContainer">#F1EDED</color>
 
 </resources>

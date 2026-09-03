@@ -1,4 +1,10 @@
 <resources>
+
+    <style name="ShapeAppearance.Profile.Thumb">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
     <style name="NoMaterialButtonStyle" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@null</item>
     </style>

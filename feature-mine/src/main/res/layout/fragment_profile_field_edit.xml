@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/md_theme_surfaceContainer"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/profileField_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:minHeight="?attr/actionBarSize"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:navigationIcon="@drawable/_chevron_left1"
+            app:navigationIconTint="@color/md_theme_onSurface"
+            app:titleTextColor="@color/md_theme_onSurface">
+
+            <TextView
+                android:id="@+id/profileField_save"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:padding="8dp"
+                android:text="完成"
+                android:textColor="@color/md_theme_onSurface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 文本类字段：名字 / 简介 / 职业 / 学校 -->
+        <LinearLayout
+            android:id="@+id/profileField_inputCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/shape_profile_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/profileField_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:textColor="@color/md_theme_onSurface"
+                android:textColorHint="@color/md_theme_outline"
+                android:textCursorDrawable="@null"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/profileField_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="end"
+                android:textColor="@color/md_theme_outline"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 性别选择 -->
+        <RadioGroup
+            android:id="@+id/profileField_genderCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/shape_profile_card"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:visibility="gone">
+
+            <RadioButton
+                android:id="@+id/profileField_gender_male"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@null"
+                android:button="@null"
+                android:drawableEnd="@drawable/_ic_check_selector"
+                android:text="男"
+                android:textColor="@color/md_theme_onSurface"
+                android:textSize="16sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/profile_divider" />
+
+            <RadioButton
+                android:id="@+id/profileField_gender_female"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@null"
+                android:button="@null"
+                android:drawableEnd="@drawable/_ic_check_selector"
+                android:text="女"
+                android:textColor="@color/md_theme_onSurface"
+                android:textSize="16sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/profile_divider" />
+
+            <RadioButton
+                android:id="@+id/profileField_gender_other"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@null"
+                android:button="@null"
+                android:drawableEnd="@drawable/_ic_check_selector"
+                android:text="其他"
+                android:textColor="@color/md_theme_onSurface"
+                android:textSize="16sp" />
+        </RadioGroup>
+
+        <!-- 地区选择 -->
+        <LinearLayout
+            android:id="@+id/profileField_regionCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/shape_profile_card"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ListView
+                android:id="@+id/profileField_regionList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@color/profile_divider"
+                android:dividerHeight="1dp" />
+        </LinearLayout>
+
+        <!-- 生日选择：进入页面即弹出日历 -->
+        <TextView
+            android:id="@+id/profileField_birthdayHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:text="请在弹出的日历中选择生日"
+            android:textColor="@color/md_theme_outline"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+</LinearLayout>

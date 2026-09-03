@@ -84,7 +84,7 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 	}
 
 	private fun setupToolbar() {
-		binding.commentToolbar.setOnClickListener { dismiss() }
+		binding.commentDragHandle.setOnClickListener { dismiss() }
 	}
 
 	@SuppressLint("SetTextI18n")

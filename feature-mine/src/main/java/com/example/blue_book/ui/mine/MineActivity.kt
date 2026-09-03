@@ -8,6 +8,7 @@ import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.ui.profile.ProfileFieldEditFragment
 import com.example.blue_book.ui.profile.UserProfileEditFragment
 import com.therouter.TheRouter
 import com.therouter.router.Route
@@ -30,6 +31,16 @@ class MineActivity : AppCompatActivity() {
 		supportFragmentManager.commit {
 			replace(R.id.mine_container, UserProfileEditFragment())
 			addToBackStack("profile_edit")
+		}
+	}
+
+	/** 跳转单字段编辑页（名字/简介/性别/生日/地区/职业/学校） */
+	fun navigateToProfileFieldEdit(field: String) {
+		supportFragmentManager.commit {
+			replace(R.id.mine_container, ProfileFieldEditFragment().apply {
+				arguments = Bundle().apply { putString(ProfileFieldEditFragment.ARG_FIELD, field) }
+			})
+			addToBackStack("profile_field_edit")
 		}
 	}
 

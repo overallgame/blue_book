@@ -93,7 +93,17 @@ class RegisterFragment : Fragment() {
 					Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
 				}
 			}
+			is RegisterUiEffect.ShowVerificationCode -> {
+				showCodeDialog(effect.code)
+			}
 		}
+	}
+
+	private fun showCodeDialog(code: String) {
+		androidx.appcompat.app.AlertDialog.Builder(requireContext())
+			.setMessage("验证码：$code")
+			.setPositiveButton("确定") { dialog, _ -> dialog.dismiss() }
+			.show()
 	}
 
 	private fun update(editText: EditText, value: String) {

@@ -17,6 +17,7 @@ fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
 		return if (v.startsWith("/")) "$base$v" else "$base/$v"
 	}
 	return UserAccount(
+		id = id,
 		phone = phone,
 		avatar = abs(avatar),
 		nickname = n(nickname),
@@ -43,6 +44,7 @@ fun UserV2MeDto.toDomain(): UserAccount {
 		return if (v.startsWith("/")) "$base$v" else "$base/$v"
 	}
 	return UserAccount(
+		id = id,
 		phone = phone,
 		avatar = abs(avatar),
 		nickname = n(nickname),

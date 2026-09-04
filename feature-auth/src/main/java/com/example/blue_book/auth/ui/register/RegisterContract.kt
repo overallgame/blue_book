@@ -36,4 +36,5 @@ data class RegisterUiState(
 sealed interface RegisterUiEffect : UiEffect {
 	data object NavigateHome : RegisterUiEffect
 	data class ShowToast(val message: String) : RegisterUiEffect
+	data class ShowVerificationCode(val code: String) : RegisterUiEffect
 }

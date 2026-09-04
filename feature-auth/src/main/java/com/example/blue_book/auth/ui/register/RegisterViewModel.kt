@@ -48,14 +48,14 @@ class RegisterViewModel @Inject constructor(
 			return
 		}
 
-		runResult(
-			onStart = {
-				setState { copy(isLoading = true, message = null, countdownSeconds = VERIFICATION_COUNTDOWN) }
-				startCountdown()
-			},
-			call = { sendVerificationCodeUseCase(state.phone, state.nickname) },
-			onSuccess = {
-				setState { copy(isLoading = false, message = "验证码已发送，请查收短信") }
+		setState { copy(isLoading = true, message = null, countdownSeconds = VERIFICATION_COUNTDOWN) }
+		startCountdown()
+
+		val result = sendVerificationCodeUseCase(state.phone, state.nickname)
+		result.fold(
+			onSuccess = { code ->
+				setState { copy(isLoading = false) }
+				sendEffect(RegisterUiEffect.ShowVerificationCode(code))
 			},
 			onFailure = { throwable ->
 				val errorMessage = throwable.message ?: "验证码发送失败，请稍后重试"

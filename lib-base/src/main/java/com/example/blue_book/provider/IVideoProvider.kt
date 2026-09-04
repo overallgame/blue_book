@@ -14,4 +14,10 @@ interface IVideoProvider {
 	suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit>
 
 	suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit>
+
+	suspend fun fetchLikedVideos(cursorId: Long? = null, size: Int? = 20): Result<List<VideoCardInfo>>
+
+	suspend fun fetchCollectedVideos(cursorId: Long? = null, size: Int? = 20): Result<List<VideoCardInfo>>
+
+	suspend fun fetchUserVideos(userId: Long, cursorId: Long? = null, size: Int? = 20): Result<List<VideoCardInfo>>
 }

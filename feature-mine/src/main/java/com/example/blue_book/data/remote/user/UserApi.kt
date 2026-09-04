@@ -1,6 +1,13 @@
 package com.example.blue_book.data.remote.user
 
 import com.example.blue_book.network.data.ApiResponse
+import com.example.blue_book.data.remote.user.dto2.BioUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.BirthdayUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.GenderUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.NicknameUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.OccupationUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.RegionUpdateRequest
+import com.example.blue_book.data.remote.user.dto2.SchoolUpdateRequest
 import com.example.blue_book.data.remote.user.dto2.UserV2AvatarUploadResponseDto
 import com.example.blue_book.data.remote.user.dto2.UserV2FollowListResponseDto
 import com.example.blue_book.data.remote.user.dto2.UserV2MeDto
@@ -62,4 +69,29 @@ interface UserApi {
 		@Query("cursorId") cursorId: Long? = null,
 		@Query("size") size: Int? = null
 	): Response<ApiResponse<UserV2FollowListResponseDto>>
+
+	@PUT("/api/v2/me/nickname")
+	suspend fun updateNickname(@Body body: NicknameUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@PUT("/api/v2/me/bio")
+	suspend fun updateBio(@Body body: BioUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@PUT("/api/v2/me/gender")
+	suspend fun updateGender(@Body body: GenderUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@PUT("/api/v2/me/birthday")
+	suspend fun updateBirthday(@Body body: BirthdayUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@PUT("/api/v2/me/occupation")
+	suspend fun updateOccupation(@Body body: OccupationUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@PUT("/api/v2/me/region")
+	suspend fun updateRegion(@Body body: RegionUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@PUT("/api/v2/me/school")
+	suspend fun updateSchool(@Body body: SchoolUpdateRequest): Response<ApiResponse<UserV2MeDto>>
+
+	@Multipart
+	@POST("/api/v2/me/background")
+	suspend fun uploadBackground(@Part background: MultipartBody.Part): Response<ApiResponse<UserV2AvatarUploadResponseDto>>
 }

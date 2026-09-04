@@ -14,6 +14,9 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -62,6 +65,7 @@ class ProfileFieldEditFragment : Fragment() {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		binding.profileFieldToolbar.setNavigationOnClickListener { back() }
+		initWindowInsets()
 		when (field) {
 			FIELD_NICKNAME -> setupTextInput("修改名字", NICKNAME_MAX_LENGTH, singleLine = true, hint = "好名字可以让人更容易记住你")
 			FIELD_INTRODUCTION -> setupTextInput("修改简介", INTRODUCTION_MAX_LENGTH, singleLine = false, hint = "介绍一下自己吧")
@@ -74,6 +78,18 @@ class ProfileFieldEditFragment : Fragment() {
 		}
 		observeViewModel()
 		viewModel.dispatch(UserProfileIntent.Init)
+	}
+
+	/** 背景色延展到状态栏后方；工具栏避让状态栏，内容避让导航栏 */
+	private fun initWindowInsets() {
+		ViewCompat.setOnApplyWindowInsetsListener(binding.profileFieldToolbar) { v, insets ->
+			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top)
+			insets
+		}
+		ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+			v.updatePadding(bottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom)
+			insets
+		}
 	}
 
 	private fun setupTextInput(title: String, maxLength: Int, singleLine: Boolean, hint: String) {

@@ -6,6 +6,9 @@ import java.util.LinkedHashMap
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -50,6 +53,15 @@ class VideoAdapter(
         private var eventBridge: PlayerEvents? = null
         private var currentVideo: VideoCardInfo? = null
         private var isProgressTracking = false
+
+        init {
+            // 全面屏：黑色背景延展到系统栏后方，页面内容避让状态栏/导航栏
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.updatePadding(top = bars.top, bottom = bars.bottom)
+                insets
+            }
+        }
 
         private fun releaseEngineToPool() {
             val url = currentUrl

@@ -9,6 +9,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -53,8 +57,9 @@ class MineFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		initActivityResult()
 		initSwipeRefreshLayout()
+		initWindowInsets()
 		initNavigationView()
-		initTopBarActions()
+		initTopActions()
 		initRadioGroup()
 		initViewPager()
 		initImagePickers()
@@ -112,7 +117,20 @@ class MineFragment : Fragment() {
 		}
 	}
 
-	private fun initTopBarActions() {
+	/** 全面屏：顶栏下移避让状态栏，底部内容避让导航栏；背景图自然延展到状态栏后方 */
+	private fun initWindowInsets() {
+		val initialTopMargin = (binding.mineNavButton.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+		ViewCompat.setOnApplyWindowInsetsListener(binding.mineContent) { _, insets ->
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			binding.mineNavButton.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+				topMargin = initialTopMargin + bars.top
+			}
+			binding.mineContent.updatePadding(bottom = bars.bottom)
+			insets
+		}
+	}
+
+	private fun initTopActions() {
 		binding.mineScan.setOnClickListener {
 			Toast.makeText(requireContext(), "扫一扫即将上线", Toast.LENGTH_SHORT).show()
 		}

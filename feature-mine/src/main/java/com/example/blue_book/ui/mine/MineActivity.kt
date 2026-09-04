@@ -1,8 +1,11 @@
 package com.example.blue_book.ui.mine
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.commit
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_mine.R
@@ -20,11 +23,19 @@ class MineActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_mine)
+		setupEdgeToEdge()
 		if (savedInstanceState == null) {
 			supportFragmentManager.commit {
 				replace(R.id.mine_container, MineFragment())
 			}
 		}
+	}
+
+	/** 背景图延展到状态栏后方；状态栏图标使用白天模式（深色） */
+	private fun setupEdgeToEdge() {
+		WindowCompat.setDecorFitsSystemWindows(window, false)
+		window.statusBarColor = Color.TRANSPARENT
+		WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
 	}
 
 	fun navigateToProfileEdit() {

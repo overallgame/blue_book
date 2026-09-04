@@ -11,6 +11,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -42,6 +45,7 @@ class UserProfileEditFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		initActivityResult()
 		initToolbar()
+		initWindowInsets()
 		initImagePickers()
 		initFieldNavigation()
 		observeViewModel()
@@ -74,6 +78,18 @@ class UserProfileEditFragment : Fragment() {
 
 	private fun initToolbar() {
 		binding.userInfoToolbar.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+	}
+
+	/** 背景色延展到状态栏后方；工具栏避让状态栏，列表内容避让导航栏 */
+	private fun initWindowInsets() {
+		ViewCompat.setOnApplyWindowInsetsListener(binding.userInfoToolbar) { v, insets ->
+			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top)
+			insets
+		}
+		ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+			v.updatePadding(bottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom)
+			insets
+		}
 	}
 
 	private fun initImagePickers() {

@@ -37,8 +37,28 @@ class MineLoveFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		initSwipeRefresh()
 		initRecyclerView()
+		initEmptyState()
 		observeViewModel()
 		viewModel.dispatch(MineLoveIntent.Init)
+	}
+
+	private var firstResume = true
+
+	/** 从播放页返回时刷新（首帧由 Init 承担，跳过避免双请求） */
+	/** 空态重试：重新触发下拉刷新逻辑 */
+	private fun initEmptyState() {
+		binding.mineLoveEmptyRetry.setOnClickListener {
+			viewModel.dispatch(MineLoveIntent.Refresh)
+		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		if (firstResume) {
+			firstResume = false
+		} else {
+			viewModel.dispatch(MineLoveIntent.Refresh)
+		}
 	}
 
 	private fun initSwipeRefresh() {
@@ -51,7 +71,7 @@ class MineLoveFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(MineLoveIntent.ToggleLike(v)) },
 			onClickItem = { v ->
-				(requireActivity() as MineActivity).navigateToVideoPlayer(v)
+				(requireActivity() as MineActivity).navigateToVideoPlayer(v, source = "liked")
 			}
 		)
 		binding.mineLoveRecycleView.run {
@@ -80,6 +100,13 @@ class MineLoveFragment : Fragment() {
 						adapter.submitAppend(state.items)
 						isLoading = state.isLoading
 						binding.mineLovePagerSwipeRefreshLayout.isRefreshing = false
+						// 空态：无数据且不在加载中（加载失败/无内容）时展示，优先显示错误信息
+						if (state.items.isEmpty() && !state.isLoading) {
+							binding.mineLoveEmpty.visibility = View.VISIBLE
+							binding.mineLoveEmptyText.text = state.message ?: "暂无内容"
+						} else {
+							binding.mineLoveEmpty.visibility = View.GONE
+						}
 					}
 				}
 				launch {

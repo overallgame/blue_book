@@ -10,6 +10,7 @@ sealed interface MineWorkIntent : UiIntent {
 	data object Refresh : MineWorkIntent
 	data object LoadMore : MineWorkIntent
 	data class ToggleLike(val item: VideoCardInfo) : MineWorkIntent
+	data class DeleteItem(val item: VideoCardInfo) : MineWorkIntent
 }
 
 data class MineWorkUiState(

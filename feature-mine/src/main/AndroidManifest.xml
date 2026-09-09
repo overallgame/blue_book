@@ -5,5 +5,13 @@
             android:name="com.example.blue_book.ui.mine.MineActivity"
             android:launchMode="singleTask"
             android:exported="false" />
+
+        <activity
+            android:name="com.example.blue_book.ui.author.AuthorProfileActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.blue_book.ui.followlist.FollowListActivity"
+            android:exported="false" />
     </application>
 </manifest>

@@ -120,10 +120,10 @@ class ProfileFieldEditFragment : Fragment() {
 				return@setOnClickListener
 			}
 			val intent = when (field) {
-				FIELD_NICKNAME -> UserProfileIntent.SubmitUpdate(nickname = text)
-				FIELD_INTRODUCTION -> UserProfileIntent.SubmitUpdate(introduction = text)
-				FIELD_CAREER -> UserProfileIntent.SubmitUpdate(career = text)
-				FIELD_SCHOOL -> UserProfileIntent.SubmitUpdate(school = text)
+				FIELD_NICKNAME -> UserProfileIntent.UpdateNickname(text)
+				FIELD_INTRODUCTION -> UserProfileIntent.UpdateBio(text)
+				FIELD_CAREER -> UserProfileIntent.UpdateOccupation(text)
+				FIELD_SCHOOL -> UserProfileIntent.UpdateSchool(text)
 				else -> null
 			}
 			intent?.let(viewModel::dispatch)
@@ -143,7 +143,7 @@ class ProfileFieldEditFragment : Fragment() {
 			if (value == null) {
 				Toast.makeText(requireContext(), "请选择性别", Toast.LENGTH_SHORT).show()
 			} else {
-				viewModel.dispatch(UserProfileIntent.SubmitUpdate(sex = value))
+				viewModel.dispatch(UserProfileIntent.UpdateGender(value))
 			}
 		}
 	}
@@ -154,7 +154,7 @@ class ProfileFieldEditFragment : Fragment() {
 		binding.profileFieldSave.visibility = View.GONE
 		binding.profileFieldRegionList.adapter = ArrayAdapter(requireContext(), R.layout.item_profile_region, REGION_OPTIONS)
 		binding.profileFieldRegionList.setOnItemClickListener { _, _, position, _ ->
-			viewModel.dispatch(UserProfileIntent.SubmitUpdate(region = REGION_OPTIONS[position]))
+			viewModel.dispatch(UserProfileIntent.UpdateRegion(REGION_OPTIONS[position]))
 		}
 	}
 
@@ -175,17 +175,19 @@ class ProfileFieldEditFragment : Fragment() {
 				}
 			}
 		}
-		DatePickerDialog(
+		val dialog = DatePickerDialog(
 			requireContext(),
 			{ _, year, month, day ->
-				viewModel.dispatch(UserProfileIntent.SubmitUpdate(birthday = "%d-%02d-%02d".format(year, month + 1, day)))
+				viewModel.dispatch(UserProfileIntent.UpdateBirthday("%d-%02d-%02d".format(year, month + 1, day)))
 			},
 			cal.get(Calendar.YEAR),
 			cal.get(Calendar.MONTH),
 			cal.get(Calendar.DAY_OF_MONTH)
-		).apply {
-			setOnCancelListener { back() }
-		}.show()
+		)
+		// 生日不允许选今天之后
+		dialog.datePicker.maxDate = System.currentTimeMillis()
+		dialog.setOnCancelListener { back() }
+		dialog.show()
 	}
 
 	private fun observeViewModel() {
@@ -219,6 +221,7 @@ class ProfileFieldEditFragment : Fragment() {
 								Toast.LENGTH_SHORT
 							).show()
 							UserProfileEffect.ClosePage -> back()
+							UserProfileEffect.FieldUpdated -> back()
 						}
 					}
 				}

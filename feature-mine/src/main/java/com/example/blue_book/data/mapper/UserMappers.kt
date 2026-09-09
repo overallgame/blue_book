@@ -28,7 +28,10 @@ fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
 		career = n(occupation),
 		region = n(region),
 		school = n(school),
-		background = abs(backgroundImage)
+		background = abs(backgroundImage),
+		isFollowed = isFollowed,
+		followerCount = followerCount,
+		followingCount = followingCount
 	)
 }
 
@@ -55,6 +58,8 @@ fun UserV2MeDto.toDomain(): UserAccount {
 		career = n(occupation),
 		region = n(region),
 		school = n(school),
-		background = abs(backgroundImage)
+		background = abs(backgroundImage),
+		followerCount = followerCount,
+		followingCount = followingCount
 	)
 }

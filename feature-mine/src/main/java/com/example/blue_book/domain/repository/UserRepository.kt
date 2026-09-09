@@ -1,6 +1,7 @@
 package com.example.blue_book.domain.repository
 
 import com.example.blue_book.data.UserAccount
+import com.example.blue_book.domain.model.FollowListPage
 
 interface UserRepository {
 
@@ -27,4 +28,17 @@ interface UserRepository {
 	suspend fun uploadAvatarFile(localUri: String): Result<String>
 
 	suspend fun uploadBackgroundFile(localUri: String): Result<String>
+
+	/** 他人主页信息（含 isFollowed 关注态） */
+	suspend fun fetchUserProfile(userId: Long): Result<UserAccount>
+
+	/** 关注 / 取关 */
+	suspend fun followUser(userId: Long): Result<Unit>
+
+	suspend fun unfollowUser(userId: Long): Result<Unit>
+
+	/** 关注/粉丝列表（游标分页） */
+	suspend fun fetchFollowing(userId: Long, cursorId: Long?, size: Int): Result<FollowListPage>
+
+	suspend fun fetchFollowers(userId: Long, cursorId: Long?, size: Int): Result<FollowListPage>
 }

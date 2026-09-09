@@ -27,12 +27,15 @@ import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.MinePageBinding
+import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.mine.page.MineCollectionFragment
 import com.example.blue_book.ui.mine.page.MineLoveFragment
 import com.example.blue_book.ui.mine.page.MineWorkFragment
 import com.therouter.TheRouter
+import com.example.blue_book.network.CurrentUser
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -43,6 +46,10 @@ class MineFragment : Fragment() {
 	private val viewModel: MineViewModel by viewModels()
 	private lateinit var fragments: List<Fragment>
 	private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
+
+	/** 当前登录用户（关注/粉丝列表入口使用） */
+	@Inject
+	lateinit var currentUser: CurrentUser
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -65,6 +72,18 @@ class MineFragment : Fragment() {
 		initImagePickers()
 		observeViewModel()
 		viewModel.dispatch(MineIntent.Init)
+	}
+
+	private var firstResume = true
+
+	/** 从资料编辑/播放页返回时刷新（首次由 Init 承担，跳过避免双请求） */
+	override fun onResume() {
+		super.onResume()
+		if (firstResume) {
+			firstResume = false
+		} else {
+			viewModel.dispatch(MineIntent.Refresh)
+		}
 	}
 
 	private fun initActivityResult() {
@@ -138,6 +157,43 @@ class MineFragment : Fragment() {
 			Toast.makeText(requireContext(), "分享即将上线", Toast.LENGTH_SHORT).show()
 		}
 		binding.mineCopyId.setOnClickListener { copyXhsId() }
+		// 关注/粉丝列表入口：点击用户列表项进入作者主页
+		binding.mineFocus.setOnClickListener { navigateFollowList("following") }
+		binding.mineFan.setOnClickListener { navigateFollowList("followers") }
+	}
+
+	private fun navigateFollowList(type: String) {
+		val myId = currentUser.userId ?: run {
+			Toast.makeText(requireContext(), "请先登录", Toast.LENGTH_SHORT).show()
+			return
+		}
+		TheRouter.build(RoutePath.FOLLOW_LIST)
+			.withString(ExtraKeys.EXTRA_FOLLOW_TYPE, type)
+			.withLong(ExtraKeys.EXTRA_USER_ID, myId)
+			.navigation(requireContext())
+	}
+
+	/** 上传失败回滚：重新绑定服务端原图（无原图时恢复占位） */
+	private fun restoreImage(tag: String) {
+		val user = viewModel.uiState.value.user
+		when (tag) {
+			"avatar" -> {
+				val url = user?.avatar
+				if (url != null) {
+					Glide.with(requireContext()).load(url).into(binding.mineAvatar)
+				} else {
+					binding.mineAvatar.setImageResource(R.drawable.default_avatar)
+				}
+			}
+			"background" -> {
+				val url = user?.background
+				if (url != null) {
+					Glide.with(requireContext()).load(url).into(binding.mineBackgroundImage)
+				} else {
+					binding.mineBackgroundImage.setImageDrawable(null)
+				}
+			}
+		}
 	}
 
 	private fun copyXhsId() {
@@ -213,6 +269,10 @@ class MineFragment : Fragment() {
 							binding.mineNickname.text = user.nickname ?: user.phone
 							binding.mineXhsId.text = "小红书号：${user.phone}"
 							binding.mineIntroduction.text = user.introduction.orEmpty()
+							binding.mineFocusNumber.text = user.followingCount.toString()
+							binding.mineFanNumber.text = user.followerCount.toString()
+							// TODO(获赞与收藏): 后端暂无按 uploader 聚合的获赞/收藏计数接口，待提供后替换
+							binding.mineRevLoveNumber.text = "0"
 						}
 						binding.mineSwipeRefreshLayout.isRefreshing = false
 					}
@@ -228,6 +288,7 @@ class MineFragment : Fragment() {
 							is MineEffect.NavigateToLogin -> {
 								(requireActivity() as MineActivity).navigateToAuthEntry()
 							}
+							is MineEffect.ImageUploadFailed -> restoreImage(effect.tag)
 						}
 					}
 				}

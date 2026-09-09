@@ -43,11 +43,15 @@ class HomeActivity : AppCompatActivity() {
 		}
 	}
 
-	fun navigateToVideoPlayer(item: VideoCardInfo, tag: String? = null, keyword: String? = null) {
+	fun navigateToVideoPlayer(
+		item: VideoCardInfo,
+		source: String? = null,
+		keyword: String? = null
+	) {
 		TheRouter.build(RoutePath.VIDEO)
 			.withParcelable(ExtraKeys.EXTRA_VIDEO, item)
 			.apply {
-				tag?.let { withString(ExtraKeys.EXTRA_TAG, it) }
+				source?.let { withString(ExtraKeys.EXTRA_SOURCE, it) }
 				keyword?.let { withString(ExtraKeys.EXTRA_KEYWORD, it) }
 			}
 			.navigation(this)

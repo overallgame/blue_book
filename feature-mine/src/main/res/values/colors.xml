@@ -28,6 +28,8 @@
     <!-- "编辑主页"药丸背景与描边 -->
     <color name="mine_pill_background">#20FFFFFF</color>
     <color name="mine_pill_stroke">#C8CBCC</color>
+    <!-- 作者主页"关注"胶囊主色（小红书红） -->
+    <color name="mine_follow_red">#FFFE2C55</color>
 
     <!-- ==================== 资料编辑页（user_profile / profile_field） ==================== -->
     <color name="profile_card_background">#FFFFFF</color>

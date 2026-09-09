@@ -66,11 +66,11 @@ class UserProfileEditFragment : Fragment() {
 			when (result.data?.getStringExtra("tag")) {
 				"avatar" -> {
 					binding.userInfoAvatar.setImageURI(uri)
-					viewModel.dispatch(UserProfileIntent.UpdateImages(avatar = uri.toString()))
+					viewModel.dispatch(UserProfileIntent.UploadAvatar(uri.toString()))
 				}
 				"backgroundImage" -> {
 					binding.userInfoBackgroundImage.setImageURI(uri)
-					viewModel.dispatch(UserProfileIntent.UpdateImages(background = uri.toString()))
+					viewModel.dispatch(UserProfileIntent.UploadBackground(uri.toString()))
 				}
 			}
 		}
@@ -150,8 +150,11 @@ class UserProfileEditFragment : Fragment() {
 							bindValue(binding.userInfoRegion, u.region, "选择所在的地区")
 							bindValue(binding.userInfoCareer, u.career, "选择职业")
 							bindValue(binding.userInfoSchool, u.school, "选择学校")
-							u.avatar?.let { Glide.with(requireContext()).load(it).into(binding.userInfoAvatar) }
-							u.background?.let { Glide.with(requireContext()).load(it).into(binding.userInfoBackgroundImage) }
+							// 上传期间优先显示预览 URI，成功后由重拉的服务端地址接管
+							val avatarSrc = state.avatarPreviewUri ?: u.avatar
+							avatarSrc?.let { Glide.with(requireContext()).load(it).into(binding.userInfoAvatar) }
+							val backgroundSrc = state.backgroundPreviewUri ?: u.background
+							backgroundSrc?.let { Glide.with(requireContext()).load(it).into(binding.userInfoBackgroundImage) }
 						}
 					}
 				}
@@ -164,6 +167,7 @@ class UserProfileEditFragment : Fragment() {
 								Toast.LENGTH_SHORT
 							).show()
 							UserProfileEffect.ClosePage -> requireActivity().onBackPressedDispatcher.onBackPressed()
+							UserProfileEffect.FieldUpdated -> viewModel.dispatch(UserProfileIntent.Refresh)
 						}
 					}
 				}

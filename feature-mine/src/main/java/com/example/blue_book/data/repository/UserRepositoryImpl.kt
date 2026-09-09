@@ -13,6 +13,7 @@ import com.example.blue_book.data.remote.user.dto2.OccupationUpdateRequest
 import com.example.blue_book.data.remote.user.dto2.RegionUpdateRequest
 import com.example.blue_book.data.remote.user.dto2.SchoolUpdateRequest
 import com.example.blue_book.data.remote.user.dto2.UserV2UpdateRequestDto
+import com.example.blue_book.domain.model.FollowListPage
 import com.example.blue_book.domain.repository.UserRepository
 import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.network.CurrentUser
@@ -187,5 +188,33 @@ class UserRepositoryImpl @Inject constructor(
 		return Result.success(
 			MultipartBody.Part.createFormData(name, file.name, file.asRequestBody(mime.toMediaTypeOrNull()))
 		)
+	}
+
+	override suspend fun fetchUserProfile(userId: Long): Result<UserAccount> {
+		return userRemote.profile(userId).mapCatching { it.toDomain() }
+	}
+
+	override suspend fun followUser(userId: Long): Result<Unit> = userRemote.follow(userId)
+
+	override suspend fun unfollowUser(userId: Long): Result<Unit> = userRemote.unfollow(userId)
+
+	override suspend fun fetchFollowing(userId: Long, cursorId: Long?, size: Int): Result<FollowListPage> {
+		return userRemote.following(userId, cursorId, size).mapCatching { dto ->
+			FollowListPage(
+				users = dto.items.map { it.toDomain() },
+				nextCursorId = dto.nextCursorId,
+				hasMore = dto.hasMore
+			)
+		}
+	}
+
+	override suspend fun fetchFollowers(userId: Long, cursorId: Long?, size: Int): Result<FollowListPage> {
+		return userRemote.followers(userId, cursorId, size).mapCatching { dto ->
+			FollowListPage(
+				users = dto.items.map { it.toDomain() },
+				nextCursorId = dto.nextCursorId,
+				hasMore = dto.hasMore
+			)
+		}
 	}
 }

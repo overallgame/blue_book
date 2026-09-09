@@ -22,7 +22,25 @@ class MineWorkViewModel @Inject constructor(
 			MineWorkIntent.Refresh -> refresh()
 			MineWorkIntent.LoadMore -> loadMore()
 			is MineWorkIntent.ToggleLike -> toggleLike(intent.item)
+			is MineWorkIntent.DeleteItem -> deleteItem(intent.item)
 		}
+	}
+
+	private val deletingAids = mutableSetOf<Long>()
+
+	/** 删除自己的作品（软删 + 服务端清理点赞/收藏记录），成功后从列表移除 */
+	private suspend fun deleteItem(item: VideoCardInfo) {
+		if (item.aid in deletingAids) return
+		deletingAids.add(item.aid)
+		val result = videoProvider.deleteVideo(item.aid)
+		result.onSuccess {
+			setState { copy(items = items.filter { it.aid != item.aid }) }
+			sendEffect(MineWorkEffect.ShowToast("已删除"))
+		}
+		result.onFailure { e ->
+			sendEffect(MineWorkEffect.ShowToast(e.message ?: "删除失败"))
+		}
+		deletingAids.remove(item.aid)
 	}
 
 	private suspend fun initLoad() {

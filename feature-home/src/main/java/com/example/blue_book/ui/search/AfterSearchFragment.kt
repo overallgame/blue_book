@@ -60,7 +60,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { video -> toggleLike(video) },
 			onClickItem = { v ->
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, "search", keyword)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, source = "search", keyword = keyword)
 			}
 		)
 	binding.afterSearchRecycleView.run {
@@ -109,7 +109,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> toggleLike(v) },
 			onClickItem = { v ->
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, "search", keyword)
+				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, source = "search", keyword = keyword)
 			}
 		)
 		binding.afterSearchRecycleView.adapter = adapter

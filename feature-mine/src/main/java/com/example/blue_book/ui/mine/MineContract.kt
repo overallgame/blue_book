@@ -22,6 +22,9 @@ data class MineUiState(
 sealed interface MineEffect : UiEffect {
 	data class ShowToast(val message: String) : MineEffect
 	data object NavigateToLogin : MineEffect
+
+	/** 头像/背景上传失败，需恢复服务端原图 */
+	data class ImageUploadFailed(val tag: String) : MineEffect
 }
 
 

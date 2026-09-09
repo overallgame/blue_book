@@ -62,9 +62,16 @@ class MineActivity : AppCompatActivity() {
 		finish()
 	}
 
-	fun navigateToVideoPlayer(item: VideoCardInfo) {
+	/**
+	 * 进入播放页并按来源列表续播（首条为点击的视频，后续由播放页按来源游标续拉同源内容）
+	 * @param source 列表来源标记（liked/collected/user_videos）
+	 * @param userId 作品列表所属用户 id（仅 user_videos）
+	 */
+	fun navigateToVideoPlayer(item: VideoCardInfo, source: String, userId: Long = 0L) {
 		TheRouter.build(RoutePath.VIDEO)
 			.withParcelable(ExtraKeys.EXTRA_VIDEO, item)
+			.withString(ExtraKeys.EXTRA_SOURCE, source)
+			.withLong(ExtraKeys.EXTRA_SOURCE_USER_ID, userId)
 			.navigation(this)
 	}
 }

@@ -4,12 +4,48 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/mine_collection_recycleView"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/md_theme_surfaceContainer"
-        android:clipToPadding="false"
-        android:padding="4dp" />
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/mine_collection_recycleView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/md_theme_surfaceContainer"
+            android:clipToPadding="false"
+            android:padding="4dp" />
+
+        <!-- 空态：无数据 / 加载失败 -->
+        <LinearLayout
+            android:id="@+id/mine_collection_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/mine_collection_empty_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="暂无内容"
+                android:textColor="@color/md_theme_outline"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/mine_collection_empty_retry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="8dp"
+                android:text="重新加载"
+                android:textColor="@color/md_theme_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

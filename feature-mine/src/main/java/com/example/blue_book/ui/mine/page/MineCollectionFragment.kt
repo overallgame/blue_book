@@ -37,8 +37,28 @@ class MineCollectionFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		initSwipeRefresh()
 		initRecyclerView()
+		initEmptyState()
 		observeViewModel()
 		viewModel.dispatch(MineCollectionIntent.Init)
+	}
+
+	private var firstResume = true
+
+	/** 从播放页返回时刷新（首帧由 Init 承担，跳过避免双请求） */
+	/** 空态重试：重新触发下拉刷新逻辑 */
+	private fun initEmptyState() {
+		binding.mineCollectionEmptyRetry.setOnClickListener {
+			viewModel.dispatch(MineCollectionIntent.Refresh)
+		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		if (firstResume) {
+			firstResume = false
+		} else {
+			viewModel.dispatch(MineCollectionIntent.Refresh)
+		}
 	}
 
 	private fun initSwipeRefresh() {
@@ -51,7 +71,7 @@ class MineCollectionFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(MineCollectionIntent.ToggleCollect(v)) },
 			onClickItem = { v ->
-				(requireActivity() as MineActivity).navigateToVideoPlayer(v)
+				(requireActivity() as MineActivity).navigateToVideoPlayer(v, source = "collected")
 			}
 		)
 		binding.mineCollectionRecycleView.run {
@@ -80,6 +100,13 @@ class MineCollectionFragment : Fragment() {
 						adapter.submitAppend(state.items)
 						isLoading = state.isLoading
 						binding.mineCollectionPagerSwipeRefreshLayout.isRefreshing = false
+						// 空态：无数据且不在加载中（加载失败/无内容）时展示，优先显示错误信息
+						if (state.items.isEmpty() && !state.isLoading) {
+							binding.mineCollectionEmpty.visibility = View.VISIBLE
+							binding.mineCollectionEmptyText.text = state.message ?: "暂无内容"
+						} else {
+							binding.mineCollectionEmpty.visibility = View.GONE
+						}
 					}
 				}
 				launch {

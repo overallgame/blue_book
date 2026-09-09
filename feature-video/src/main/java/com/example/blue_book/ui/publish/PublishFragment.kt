@@ -81,12 +81,12 @@ class PublishFragment : Fragment() {
 						val uri = state.mediaUri
 						if (uri != null) {
 							binding.publishMediaThumb.visibility = View.VISIBLE
-							binding.publishMediaHint.visibility = View.GONE
+							binding.publishMediaPlaceholder.visibility = View.GONE
 							Glide.with(requireContext()).load(uri).centerCrop()
 								.into(binding.publishMediaThumb)
 						} else {
 							binding.publishMediaThumb.visibility = View.GONE
-							binding.publishMediaHint.visibility = View.VISIBLE
+							binding.publishMediaPlaceholder.visibility = View.VISIBLE
 						}
 
 						val uploading = state.phase == PublishPhase.UPLOADING

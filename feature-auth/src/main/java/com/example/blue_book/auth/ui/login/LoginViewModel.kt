@@ -30,6 +30,11 @@ class LoginViewModel @Inject constructor(
 		if (!currentState.isLoginEnabled || currentState.isLoading) {
 			return
 		}
+		// 前端预校验（与注册页一致）：手机号 11 位
+		if (currentState.phone.length != 11) {
+			setState { copy(message = "请输入正确的手机号") }
+			return
+		}
 
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },

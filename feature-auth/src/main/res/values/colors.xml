@@ -1,4 +1,8 @@
 <resources>
+    <!-- 品牌蓝（小蓝书） -->
+    <color name="auth_primary_blue">#2A6AF2</color>
+    <color name="auth_on_primary">#FFFFFF</color>
+
     <color name="md_theme_onBackground">#1C1B1C</color>
     <color name="md_theme_onSurface">#1C1B1C</color>
     <color name="md_theme_onSurfaceVariant">#48464B</color>

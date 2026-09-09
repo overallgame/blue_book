@@ -33,32 +33,30 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/op_login"
+        style="@style/NoMaterialButtonStyle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="52dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginStart="60dp"
         android:layout_marginEnd="60dp"
-        android:background="@drawable/shape3"
+        android:background="@drawable/shape_auth_primary_btn"
         android:text="登录"
-        android:textColor="@color/md_theme_onBackground"
-        android:textSize="18sp"
-        android:elevation="4dp"
-        style="@style/NoMaterialButtonStyle"/>
+        android:textColor="@color/auth_on_primary"
+        android:textSize="17sp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/op_register"
+        style="@style/NoMaterialButtonStyle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="52dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginStart="60dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="14dp"
         android:layout_marginEnd="60dp"
         android:layout_marginBottom="60dp"
-        android:background="@drawable/shape2"
+        android:background="@drawable/shape_auth_outline_btn"
         android:text="注册"
-        android:textColor="@color/md_theme_onBackground"
-        android:textSize="18sp"
-        android:elevation="4dp"
-        style="@style/NoMaterialButtonStyle"/>
+        android:textColor="@color/auth_primary_blue"
+        android:textSize="17sp" />
 
 </LinearLayout>

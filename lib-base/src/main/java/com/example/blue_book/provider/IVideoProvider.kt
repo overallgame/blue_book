@@ -20,4 +20,7 @@ interface IVideoProvider {
 	suspend fun fetchCollectedVideos(cursorId: Long? = null, size: Int? = 20): Result<List<VideoCardInfo>>
 
 	suspend fun fetchUserVideos(userId: Long, cursorId: Long? = null, size: Int? = 20): Result<List<VideoCardInfo>>
+
+	/** 删除视频（仅发布者本人）：成功退出后列表端需移除对应项 */
+	suspend fun deleteVideo(videoId: Long): Result<Unit>
 }

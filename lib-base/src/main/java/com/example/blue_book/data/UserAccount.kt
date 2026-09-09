@@ -13,6 +13,9 @@ data class UserAccount(
 	val region: String?,
 	val school: String?,
 	val background: String?,
-	val isFollowed: Boolean = false
+	val isFollowed: Boolean = false,
+	/** 粉丝数 / 关注数（我的页统计展示） */
+	val followerCount: Long = 0,
+	val followingCount: Long = 0
 )
 

@@ -87,18 +87,39 @@
         app:layout_constraintTop_toBottomOf="@id/reply_time"
         tools:text="这是一条回复内容" />
 
-    <TextView
+    <LinearLayout
         android:id="@+id/reply_action_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="4dp"
-        android:text="回复"
-        android:textColor="@color/video_text_secondary"
-        android:textSize="12sp"
+        android:orientation="horizontal"
         app:layout_constraintStart_toEndOf="@id/reply_avatar"
-        app:layout_constraintTop_toBottomOf="@id/reply_content" />
+        app:layout_constraintTop_toBottomOf="@id/reply_content">
+
+        <TextView
+            android:id="@+id/reply_reply_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:text="回复"
+            android:textColor="@color/video_text_secondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/reply_delete_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:text="删除"
+            android:textColor="@color/video_error"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

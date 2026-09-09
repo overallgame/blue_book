@@ -24,6 +24,7 @@ fun List<Video2Dto>.toDomainVideos(): List<Video> {
 			description = v.title.ifBlank { v.description },
 			isLike = v.isLike,
 			isCollect = v.isCollect,
+			isFollowed = v.isFollowed,
 			playUrl = abs(v.videoUrl),
 			commentCount = v.commentCount.toInt(),
 			uploaderId = v.uploaderId

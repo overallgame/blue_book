@@ -36,6 +36,10 @@ class VideoProviderImpl(
 		return repository.fetchUserVideos(userId, cursorId, size).map { list -> list.map { it.toCardInfo() } }
 	}
 
+	override suspend fun deleteVideo(videoId: Long): Result<Unit> {
+		return repository.deleteVideo(videoId)
+	}
+
 	private fun Video.toCardInfo() = VideoCardInfo(
 		aid = aid,
 		cid = cid,
@@ -49,6 +53,7 @@ class VideoProviderImpl(
 		isLike = isLike,
 		isCollect = isCollect,
 		commentCount = commentCount,
-		uploaderId = uploaderId
+		uploaderId = uploaderId,
+		isFollowed = isFollowed
 	)
 }

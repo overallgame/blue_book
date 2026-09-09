@@ -17,7 +17,9 @@ data class VideoCardInfo(
 	var isLike: Boolean,
 	var isCollect: Boolean,
 	var commentCount: Int = 0,
-	val uploaderId: Long = 0
+	val uploaderId: Long = 0,
+	/** 当前用户是否已关注该作者（进入播放页前由服务端下发） */
+	var isFollowed: Boolean = false
 ): Parcelable
 
 

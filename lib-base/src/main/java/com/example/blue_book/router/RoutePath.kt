@@ -20,6 +20,12 @@ object RoutePath {
 	/** 我的页 */
 	const val MINE = "/mine/main"
 
+	/** 作者主页（他人用户主页） */
+	const val USER_PROFILE = "/mine/user_profile"
+
+	/** 关注/粉丝列表页 */
+	const val FOLLOW_LIST = "/mine/follow_list"
+
 	/** 登录/注册入口 */
 	const val AUTH = "/auth/entry"
 
@@ -40,4 +46,16 @@ object ExtraKeys {
 	const val EXTRA_VIDEO = "EXTRA_VIDEO"
 	const val EXTRA_TAG = "TAG_SHOW"
 	const val EXTRA_KEYWORD = "keyword"
+
+	/** 播放页来源标记：search=搜索结果，liked=点赞列表，collected=收藏列表，user_videos=作品列表 */
+	const val EXTRA_SOURCE = "EXTRA_SOURCE"
+
+	/** 作品列表对应的用户 id（user_videos 来源模式使用） */
+	const val EXTRA_SOURCE_USER_ID = "EXTRA_SOURCE_USER_ID"
+
+	/** 作者主页的用户 id */
+	const val EXTRA_USER_ID = "EXTRA_USER_ID"
+
+	/** 关注列表类型：following=我关注的，followers=我的粉丝 */
+	const val EXTRA_FOLLOW_TYPE = "EXTRA_FOLLOW_TYPE"
 }

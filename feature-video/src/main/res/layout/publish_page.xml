@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/video_background"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/publish_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:minHeight="?attr/actionBarSize"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:navigationIcon="@drawable/_chevron_left"
+            app:navigationIconTint="@color/video_on_surface"
+            app:title="发布视频"
+            app:titleCentered="true"
+            app:titleTextColor="@color/video_on_surface">
+
+            <TextView
+                android:id="@+id/publish_submit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:background="@drawable/shape_follow_btn"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="7dp"
+                android:text="发布"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="16dp">
+
+        <!-- 已选视频预览 / 选择入口 -->
+        <FrameLayout
+            android:id="@+id/publish_media_container"
+            android:layout_width="140dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/video_surface_container">
+
+            <ImageView
+                android:id="@+id/publish_media_thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/publish_media_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="点击选择视频"
+                android:textColor="@color/video_text_secondary"
+                android:textSize="14sp" />
+        </FrameLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:hint="标题"
+            app:counterEnabled="true"
+            app:counterMaxLength="30">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/publish_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textColor="@color/video_on_surface"
+                android:textColorHint="@color/video_text_secondary" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="说点什么...（可加 #话题）"
+            app:counterEnabled="true"
+            app:counterMaxLength="200">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/publish_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:minLines="3"
+                android:maxLines="6"
+                android:textColor="@color/video_on_surface"
+                android:textColorHint="@color/video_text_secondary" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 上传进度 -->
+        <LinearLayout
+            android:id="@+id/publish_progress_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/publish_progress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:indicatorColor="@color/video_follow_red"
+                app:trackColor="@color/video_surface_container" />
+
+            <TextView
+                android:id="@+id/publish_progress_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:minWidth="40dp"
+                android:gravity="end"
+                android:text="0%"
+                android:textColor="@color/video_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="发布后视频将进入转码队列，转码完成后对所有用户可见"
+            android:textColor="@color/video_text_tertiary"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+</LinearLayout>

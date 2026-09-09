@@ -2,8 +2,11 @@ package com.example.blue_book.data.remote.video
 
 import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.data.remote.video.dto2.FeedResponseDto
+import com.example.blue_book.data.remote.video.dto2.PublishRequestDto
 import com.example.blue_book.data.remote.video.dto2.Video2Dto
 import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -65,4 +68,29 @@ interface VideoApi {
 		@Query("cursorId") cursorId: Long? = null,
 		@Query("size") size: Int? = null
 	): Response<ApiResponse<FeedResponseDto>>
+
+	@GET("/api/v2/videos/{videoId}/status")
+	suspend fun transcodeStatus(
+		@Path("videoId") videoId: Long
+	): Response<ApiResponse<String>>
+
+	@POST("/api/v2/videos/publish")
+	suspend fun publish(
+		@Body body: PublishRequestDto
+	): Response<ApiResponse<Video2Dto>>
+
+	@POST("/api/v2/users/{userId}/follow")
+	suspend fun followUser(
+		@Path("userId") userId: Long
+	): Response<ApiResponse<Any>>
+
+	@DELETE("/api/v2/users/{userId}/follow")
+	suspend fun unfollowUser(
+		@Path("userId") userId: Long
+	): Response<ApiResponse<Any>>
+
+	@DELETE("/api/v2/videos/{videoId}")
+	suspend fun deleteVideo(
+		@Path("videoId") videoId: Long
+	): Response<ApiResponse<Any>>
 }

@@ -15,10 +15,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.data.VideoCardInfo
+import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.router.ExtraKeys
+import com.example.blue_book.router.RoutePath
 import com.example.blue_book.feature_video.databinding.VideoPageBinding
 import com.example.blue_book.ui.comment.CommentBottomSheet
+import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -28,6 +32,11 @@ class VideoFragment : Fragment() {
 	private var _binding: VideoPageBinding? = null
 	private val binding get() = _binding!!
 	private val viewModel: VideoViewModel by viewModels()
+
+	/** 当前登录用户，用于评论区的"我的评论"判定 */
+	@Inject
+	lateinit var currentUser: CurrentUser
+
 	private lateinit var adapter: VideoAdapter
 
 	override fun onCreateView(
@@ -43,32 +52,41 @@ class VideoFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		adapter = VideoAdapter(
 			requireContext(),
+			currentUserId = currentUser.userId ?: 0L,
 			onClickBack = { requireActivity().onBackPressedDispatcher.onBackPressed() },
 			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
 			onClickCollect = { video -> viewModel.dispatch(VideoIntent.ToggleCollect(video)) },
 			onClickComment = { video ->
-				CommentBottomSheet.newInstance(video.aid, video.cid)
+				CommentBottomSheet.newInstance(video.aid, currentUser.userId ?: 0L)
 					.show(parentFragmentManager, CommentBottomSheet.TAG)
 			},
 			onClickShare = { video -> shareVideo(video) },
-			onClickFollow = { _ ->
-				// 关注功能待后续实现（需要服务端关注 API）
-				Toast.makeText(requireContext(), "关注功能开发中", Toast.LENGTH_SHORT).show()
-			},
+			onClickFollow = { video -> viewModel.dispatch(VideoIntent.ToggleFollow(video)) },
+			// TODO(fullscreen): 横屏全屏播放待实现（需旋转 + 隐藏系统栏 + 调整 PlayerView resizeMode）
 			onClickFullscreen = {
 				Toast.makeText(requireContext(), "全屏播放开发中", Toast.LENGTH_SHORT).show()
 			},
+			// 头像点击 → 作者主页（后端 /api/v2/users/{id} 提供资料与作品）
 			onClickAvatar = { video ->
-				// 作者主页功能待后续实现（需要服务端用户主页 API）
-				Toast.makeText(requireContext(), "作者主页功能开发中", Toast.LENGTH_SHORT).show()
+				if (video.uploaderId > 0) {
+					TheRouter.build(RoutePath.USER_PROFILE)
+						.withLong(ExtraKeys.EXTRA_USER_ID, video.uploaderId)
+						.navigation(requireContext())
+				} else {
+					Toast.makeText(requireContext(), "作者信息缺失", Toast.LENGTH_SHORT).show()
+				}
 			},
-			onPlayerError = { msg ->
-				Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+			// 播放错误由 item 内错误视图（文案+重试按钮）承载；Toast 仅在转码未完成时提示
+			onPlayerError = { aid, message ->
+				if (aid > 0) viewModel.dispatch(VideoIntent.CheckTranscode(aid, message))
 			},
 			onRequestPlayUrl = { v -> viewModel.dispatch(VideoIntent.RequestPlayUrl(v.aid, v.cid)) }
 		)
 
 		binding.videoViewPager.adapter = adapter
+		binding.videoPublish.setOnClickListener {
+			(requireActivity() as VideoActivity).navigateToPublish()
+		}
 		binding.videoViewPager.offscreenPageLimit = 1
 		binding.videoViewPager.orientation = ViewPager2.ORIENTATION_VERTICAL
 		binding.videoViewPager.registerOnPageChangeCallback(object :
@@ -95,7 +113,25 @@ class VideoFragment : Fragment() {
 		})
 
 		observeViewModel()
+		initEmptyState()
+		observeCommentDelta()
 		initByArgs()
+	}
+
+	/** 空列表态：显示提示 + 重试入口（重新加载走退出重进语义，直接刷新当前模式数据） */
+	private fun initEmptyState() {
+		binding.videoEmptyRetry.setOnClickListener { viewModel.retryInit() }
+	}
+
+	/** 评论弹层关闭后回传评论数增量 → 交 ViewModel 同步 state 与列表（防旧值回退） */
+	private fun observeCommentDelta() {
+		parentFragmentManager.setFragmentResultListener(CommentBottomSheet.RESULT_COMMENT_DELTA, this) { _, bundle ->
+			val videoId = bundle.getLong(CommentBottomSheet.KEY_VIDEO_ID, -1L)
+			val delta = bundle.getInt(CommentBottomSheet.KEY_DELTA, 0)
+			if (videoId != -1L && delta != 0) {
+				viewModel.dispatch(VideoIntent.AdjustCommentCount(videoId, delta))
+			}
+		}
 	}
 
 	private fun shareVideo(video: VideoCardInfo) {
@@ -106,36 +142,72 @@ class VideoFragment : Fragment() {
 		}
 		try {
 			startActivity(Intent.createChooser(intent, "分享到"))
-		} catch (e: android.content.ActivityNotFoundException) {
+		} catch (_: android.content.ActivityNotFoundException) {
 			Toast.makeText(requireContext(), "没有可用的分享应用", Toast.LENGTH_SHORT).show()
 		}
 	}
 
 	private fun initByArgs() {
-		val firstVideo = arguments?.let { args ->
+		val args = arguments
+		val firstVideo = args?.let {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				args.getParcelable(ExtraKeys.EXTRA_VIDEO, VideoCardInfo::class.java)
+				it.getParcelable(ExtraKeys.EXTRA_VIDEO, VideoCardInfo::class.java)
 			} else {
 				@Suppress("DEPRECATION")
-				args.getParcelable(ExtraKeys.EXTRA_VIDEO)
+				it.getParcelable(ExtraKeys.EXTRA_VIDEO)
 			}
 		}
-		firstVideo?.let { adapter.addFirstVideo(it) }
-		when (arguments?.getString(ExtraKeys.EXTRA_TAG)) {
-			"search" -> viewModel.dispatch(
-				VideoIntent.InitSearch(
-					arguments?.getString(ExtraKeys.EXTRA_KEYWORD).orEmpty()
-				)
+		when (args?.getString(ExtraKeys.EXTRA_SOURCE)) {
+			"search" -> dispatchFromSource(firstVideo, VideoUiState.Mode.Search, keyword = args.getString(ExtraKeys.EXTRA_KEYWORD).orEmpty())
+			"liked" -> dispatchFromSource(firstVideo, VideoUiState.Mode.Liked)
+			"collected" -> dispatchFromSource(firstVideo, VideoUiState.Mode.Collected)
+			"user_videos" -> dispatchFromSource(
+				firstVideo,
+				VideoUiState.Mode.UserVideos,
+				userId = args.getLong(ExtraKeys.EXTRA_SOURCE_USER_ID, 0L)
 			)
 
-			else -> viewModel.dispatch(VideoIntent.InitRandom)
+			else -> {
+				firstVideo?.let { adapter.addFirstVideo(it) }
+				viewModel.dispatch(VideoIntent.InitRandom)
+			}
 		}
+	}
+
+	/** 来源列表进入：首条为点击项，后续由 ViewModel 按模式用游标续拉（方案 B：不跨页传列表） */
+	private fun dispatchFromSource(
+		firstVideo: VideoCardInfo?,
+		mode: VideoUiState.Mode,
+		keyword: String = "",
+		userId: Long = 0L
+	) {
+		if (firstVideo == null) {
+			// 无点击项时退化为全量模式
+			when (mode) {
+				VideoUiState.Mode.Search -> viewModel.dispatch(VideoIntent.InitSearch(keyword))
+				else -> viewModel.dispatch(VideoIntent.InitRandom)
+			}
+			return
+		}
+		adapter.addFirstVideo(firstVideo)
+		viewModel.dispatch(VideoIntent.InitFromSource(mode, firstVideo, keyword, userId))
 	}
 
 	private fun observeViewModel() {
 		viewLifecycleOwner.lifecycleScope.launch {
 			repeatOnLifecycle(Lifecycle.State.STARTED) {
-				launch { viewModel.uiState.collect { state -> adapter.submitAppend(state.items) } }
+				launch {
+					viewModel.uiState.collect { state ->
+						adapter.submitAppend(state.items)
+						// 列表为空且不在加载中：展示空态（搜索无结果 / 加载失败），有错误信息时优先展示
+						if (state.items.isEmpty() && !state.isLoading) {
+							binding.videoEmpty.visibility = View.VISIBLE
+							binding.videoEmptyText.text = state.message ?: "暂无相关视频"
+						} else {
+							binding.videoEmpty.visibility = View.GONE
+						}
+					}
+				}
 				launch {
 					viewModel.uiEffect.collect {
 						when (it) {

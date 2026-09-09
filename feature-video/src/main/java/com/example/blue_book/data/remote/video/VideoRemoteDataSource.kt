@@ -19,6 +19,10 @@ class VideoRemoteDataSource @Inject constructor(
 	suspend fun getVideoDto(videoId: Long): Result<Video2Dto> =
 		apiGateway.apiResult { api.getVideoDto(videoId) }
 
+	/** 转码状态：COMPLETED / PROCESSING 等，用于播放失败时的用户提示 */
+	suspend fun transcodeStatus(videoId: Long): Result<String> =
+		apiGateway.apiResult { api.transcodeStatus(videoId) }
+
 	suspend fun likeVideo(videoId: Long, liked: Boolean): Result<Unit> =
 		apiGateway.apiUnitResult { api.likeVideo(videoId, liked) }
 
@@ -36,4 +40,14 @@ class VideoRemoteDataSource @Inject constructor(
 
 	suspend fun userVideos(userId: Long, cursorId: Long?, size: Int?): Result<FeedResponseDto> =
 		apiGateway.apiResult { api.userVideos(userId, cursorId, size) }
+
+	suspend fun followUser(targetUserId: Long): Result<Unit> =
+		apiGateway.apiUnitResult { api.followUser(targetUserId) }
+
+	suspend fun unfollowUser(targetUserId: Long): Result<Unit> =
+		apiGateway.apiUnitResult { api.unfollowUser(targetUserId) }
+
+	/** 删除视频（含 FAILED 清理）：仅发布者本人可调用 */
+	suspend fun deleteVideo(videoId: Long): Result<Unit> =
+		apiGateway.apiUnitResult { api.deleteVideo(videoId) }
 }

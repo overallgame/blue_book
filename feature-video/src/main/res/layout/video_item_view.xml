@@ -6,15 +6,58 @@
     android:layout_height="match_parent"
     android:background="@color/video_background">
 
-    <!-- 底层：视频区（顶边接返回按钮行 84dp，底边接底部互动栏 56dp），
+    <!-- 底层：视频区（顶边接返回按钮行，底边接底部互动栏），
          竖屏近似铺满该区域、横屏 fit 模式黑边居中 -->
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/video_item_VideoPlayer"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="84dp"
-        android:layout_marginBottom="56dp"
-        android:background="@android:color/black" />
+        android:layout_marginBottom="56dp">
+
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/video_item_VideoPlayer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/black" />
+
+        <!-- 首帧封面：播放器起播前显示，首帧渲染后淡出 -->
+        <ImageView
+            android:id="@+id/video_item_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <!-- 播放失败错误态：错误文案 + 重试按钮 -->
+        <LinearLayout
+            android:id="@+id/video_item_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/video_item_error_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="播放失败"
+                android:textColor="@color/video_on_surface"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/video_item_error_retry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/shape_video_pill"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="8dp"
+                android:text="点击重试"
+                android:textColor="@color/video_on_surface"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- 上层：浮动的页面 UI，互不与播放器抢约束 -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -290,6 +333,23 @@
             android:scaleX="0.5"
             android:scaleY="0.5"
             android:src="@drawable/icon_love_selected"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 长按倍速提示浮层 -->
+        <TextView
+            android:id="@+id/video_item_speed_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/shape_video_pill"
+            android:paddingHorizontal="18dp"
+            android:paddingVertical="8dp"
+            android:text="2倍速播放中"
+            android:textColor="@color/video_on_surface"
+            android:textSize="13sp"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

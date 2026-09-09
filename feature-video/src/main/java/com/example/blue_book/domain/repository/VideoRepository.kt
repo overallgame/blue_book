@@ -19,4 +19,10 @@ interface VideoRepository {
 	suspend fun fetchCollectedVideos(cursorId: Long?, size: Int?): Result<List<Video>>
 
 	suspend fun fetchUserVideos(userId: Long, cursorId: Long?, size: Int?): Result<List<Video>>
+
+	suspend fun followUser(targetUserId: Long): Result<Unit>
+
+	suspend fun unfollowUser(targetUserId: Long): Result<Unit>
+
+	suspend fun deleteVideo(videoId: Long): Result<Unit>
 }

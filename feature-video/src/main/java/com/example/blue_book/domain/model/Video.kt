@@ -11,6 +11,7 @@ data class Video(
 	val description: String,
 	val isLike: Boolean = false,
 	val isCollect: Boolean = false,
+	val isFollowed: Boolean = false,
 	val playUrl: String = "",
 	val commentCount: Int = 0,
 	val uploaderId: Long = 0

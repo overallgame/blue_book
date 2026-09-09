@@ -1,16 +1,19 @@
 package com.example.blue_book.ui.comment
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.blue_book.feature_video.databinding.FragmentCommentBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -31,11 +34,22 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 	private var currentUserId: Long = 0
 	private var videoId: Long = 0
 
+	/** 弹层期间的评论数增量：发表 +1，删除 -1（回复也计入总评论数） */
+	private var commentDelta = 0
+
+	/** "没有更多了"提示只弹一次（触底无更多数据时） */
+	private var noMoreToasted = false
+
 	companion object {
 		private const val ARG_VIDEO_ID = "video_id"
 		private const val ARG_USER_ID = "user_id"
 
 		const val TAG = "CommentBottomSheet"
+
+		/** 关闭评论弹层后，向播放页回传评论数增量的 Result Key */
+		const val RESULT_COMMENT_DELTA = "result_comment_delta"
+		const val KEY_VIDEO_ID = "key_video_id"
+		const val KEY_DELTA = "key_delta"
 
 		fun newInstance(videoId: Long, userId: Long): CommentBottomSheet {
 			return CommentBottomSheet().apply {
@@ -99,6 +113,8 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 				binding.commentReplyHint.text = "回复 @${comment.nickname}"
 			},
 			onDeleteClick = { comment ->
+				// 对齐后端：删除仅软删单条并 incrementCommentCount(-1)，回复不级联计数
+				commentDelta -= 1
 				viewModel.deleteComment(comment.id)
 			},
 			onLoadReplies = { comment ->
@@ -109,10 +125,25 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 		binding.commentRecycler.apply {
 			layoutManager = LinearLayoutManager(requireContext())
 			adapter = commentAdapter
+			// 触底加载下一页评论（根评论游标分页）
+			addOnScrollListener(object : RecyclerView.OnScrollListener() {
+				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+					val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+					val lastVisible = layoutManager.findLastVisibleItemPosition()
+					val state = viewModel.uiState.value
+					if (state.hasMore && !state.isLoadingMore && lastVisible >= commentAdapter.itemCount - 3) {
+						viewModel.loadMore()
+					} else if (!state.hasMore && !state.isLoadingMore && state.comments.isNotEmpty() && !noMoreToasted) {
+						noMoreToasted = true
+						Toast.makeText(requireContext(), "没有更多了", Toast.LENGTH_SHORT).show()
+					}
+				}
+			})
 		}
 
 		binding.commentSwipeRefresh.setOnRefreshListener {
-			viewModel.loadComments(videoId)
+			noMoreToasted = false
+			viewModel.loadComments(videoId, refresh = true)
 		}
 	}
 
@@ -149,6 +180,7 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 
 						if (state.postSuccess) {
 							Toast.makeText(requireContext(), "评论成功", Toast.LENGTH_SHORT).show()
+							commentDelta += 1
 							viewModel.clearPostSuccess()
 						}
 					}
@@ -160,5 +192,19 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 	override fun onDestroyView() {
 		super.onDestroyView()
 		_binding = null
+	}
+
+	/** 关闭弹层时把评论数增量回传给播放页（data层为 aid→Long 的简单封装） */
+	override fun onDismiss(dialog: DialogInterface) {
+		super.onDismiss(dialog)
+		if (commentDelta != 0 && isAdded) {
+			setFragmentResult(
+				RESULT_COMMENT_DELTA,
+				Bundle().apply {
+					putLong(KEY_VIDEO_ID, videoId)
+					putInt(KEY_DELTA, commentDelta)
+				}
+			)
+		}
 	}
 }

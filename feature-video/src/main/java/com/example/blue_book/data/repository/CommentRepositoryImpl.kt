@@ -4,6 +4,7 @@ import com.example.blue_book.data.mapper.toDomainComment
 import com.example.blue_book.data.mapper.toDomainComments
 import com.example.blue_book.data.remote.comment.CommentRemoteDataSource
 import com.example.blue_book.domain.model.Comment
+import com.example.blue_book.domain.model.CommentPage
 import com.example.blue_book.domain.repository.CommentRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,18 +18,30 @@ class CommentRepositoryImpl @Inject constructor(
 		videoId: Long,
 		cursorId: Long?,
 		size: Int
-	): Result<List<Comment>> {
+	): Result<CommentPage> {
 		val result = remote.getComments(videoId, cursorId, size)
-		return result.map { it.items.toDomainComments() }
+		return result.map { dto ->
+			CommentPage(
+				comments = dto.items.toDomainComments(),
+				cursorId = dto.cursorId,
+				hasMore = dto.hasMore
+			)
+		}
 	}
 
 	override suspend fun fetchReplies(
 		parentId: Long,
 		cursorId: Long?,
 		size: Int
-	): Result<List<Comment>> {
+	): Result<CommentPage> {
 		val result = remote.getReplies(parentId, cursorId, size)
-		return result.map { it.items.toDomainComments() }
+		return result.map { dto ->
+			CommentPage(
+				comments = dto.items.toDomainComments(),
+				cursorId = dto.cursorId,
+				hasMore = dto.hasMore
+			)
+		}
 	}
 
 	override suspend fun postComment(videoId: Long, content: String): Result<Comment> {

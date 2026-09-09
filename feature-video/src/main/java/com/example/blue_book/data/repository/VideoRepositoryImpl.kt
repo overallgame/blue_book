@@ -48,4 +48,13 @@ class VideoRepositoryImpl @Inject constructor(
 		val result = remote.userVideos(userId, cursorId, size)
 		return result.map { it.items.toDomainVideos() }
 	}
+
+	override suspend fun followUser(targetUserId: Long): Result<Unit> =
+		remote.followUser(targetUserId)
+
+	override suspend fun unfollowUser(targetUserId: Long): Result<Unit> =
+		remote.unfollowUser(targetUserId)
+
+	override suspend fun deleteVideo(videoId: Long): Result<Unit> =
+		remote.deleteVideo(videoId)
 }

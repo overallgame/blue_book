@@ -49,6 +49,7 @@ class CommentAdapter(
 		private val viewRepliesBtn: TextView = itemView.findViewById(R.id.comment_view_replies_btn)
 
 		private var repliesAdapter: ReplyAdapter? = null
+		private var repliesExpanded = true
 
 		fun bind(
 			comment: Comment,
@@ -71,37 +72,61 @@ class CommentAdapter(
 			replyBtn.setOnClickListener { onReplyClick(comment) }
 			deleteBtn.setOnClickListener { onDeleteClick(comment) }
 
-			val hasReplies = comment.replies.isNotEmpty()
+			bindReplies(comment, currentUserId, onLikeClick, onReplyClick, onDeleteClick, onLoadReplies)
+		}
 
-			if (hasReplies) {
-				repliesRecycler.visibility = View.VISIBLE
+		/**
+		 * 回复区三种状态：
+		 * 1. 已加载回复（replies 非空）：默认展开，按钮在 收起/展开 间切换
+		 * 2. 尚未加载（replies 空但 replyCount > 0）：显示"查看 N 条回复"，点击触发加载
+		 * 3. 确实没有回复：整块隐藏
+		 */
+		private fun bindReplies(
+			comment: Comment,
+			currentUserId: Long,
+			onLikeClick: (Comment) -> Unit,
+			onReplyClick: (Comment) -> Unit,
+			onDeleteClick: (Comment) -> Unit,
+			onLoadReplies: (Comment) -> Unit
+		) {
+			val loadedReplies = comment.replies
+
+			if (loadedReplies.isNotEmpty()) {
 				viewRepliesBtn.visibility = View.VISIBLE
-
-				viewRepliesBtn.text = "收起回复"
-				setupReplies(comment.replies, onLikeClick, onReplyClick)
+				setupReplies(comment, currentUserId, onLikeClick, onReplyClick, onDeleteClick)
 
 				viewRepliesBtn.setOnClickListener {
-					if (repliesRecycler.visibility == View.VISIBLE) {
-						repliesRecycler.visibility = View.GONE
-						viewRepliesBtn.text = "展开回复"
-					} else {
-						repliesRecycler.visibility = View.VISIBLE
-						viewRepliesBtn.text = "收起回复"
-					}
+					repliesExpanded = !repliesExpanded
+					repliesRecycler.visibility = if (repliesExpanded) View.VISIBLE else View.GONE
+					viewRepliesBtn.text = if (repliesExpanded) "收起回复" else "展开回复"
 				}
+				repliesExpanded = true
+				repliesRecycler.visibility = View.VISIBLE
+				viewRepliesBtn.text = "收起回复"
+			} else if (comment.replyCount > 0) {
+				repliesRecycler.visibility = View.GONE
+				viewRepliesBtn.visibility = View.VISIBLE
+				viewRepliesBtn.text = "查看 ${comment.replyCount} 条回复"
+				viewRepliesBtn.setOnClickListener { onLoadReplies(comment) }
 			} else {
 				repliesRecycler.visibility = View.GONE
 				viewRepliesBtn.visibility = View.GONE
 			}
 		}
 
-		private fun setupReplies(replies: List<Comment>, onLikeClick: (Comment) -> Unit, onReplyClick: (Comment) -> Unit) {
+		private fun setupReplies(
+			comment: Comment,
+			currentUserId: Long,
+			onLikeClick: (Comment) -> Unit,
+			onReplyClick: (Comment) -> Unit,
+			onDeleteClick: (Comment) -> Unit
+		) {
 			if (repliesAdapter == null) {
-				repliesAdapter = ReplyAdapter(onLikeClick, onReplyClick)
+				repliesAdapter = ReplyAdapter(currentUserId, onLikeClick, onReplyClick, onDeleteClick)
 				repliesRecycler.layoutManager = LinearLayoutManager(itemView.context)
 				repliesRecycler.adapter = repliesAdapter
 			}
-			repliesAdapter?.submitList(replies)
+			repliesAdapter?.submitList(comment.replies)
 		}
 
 		private fun formatTime(timestamp: Long): String {

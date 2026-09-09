@@ -14,7 +14,8 @@ data class CommentDto(
 	@SerializedName("createTime") val createTime: Long = 0,
 	@SerializedName("parentId") val parentId: Long? = null,
 	@SerializedName("replyToUserId") val replyToUserId: Long? = null,
-	@SerializedName("replyToNickname") val replyToNickname: String? = null
+	@SerializedName("replyToNickname") val replyToNickname: String? = null,
+	@SerializedName("replyCount") val replyCount: Int = 0
 )
 
 data class CommentListDto(

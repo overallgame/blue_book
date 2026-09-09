@@ -27,6 +27,7 @@ private fun CommentDto.toDomain(): Comment {
 		parentId = parentId,
 		replyToUserId = replyToUserId,
 		replyToNickname = replyToNickname,
+		replyCount = replyCount,
 		replies = emptyList()
 	)
 }

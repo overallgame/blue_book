@@ -15,7 +15,8 @@ import com.example.blue_book.data.VideoCardInfo
 
 class PreVideoAdapter(
 	private val onClickLike: (VideoCardInfo) -> Unit,
-	private val onClickItem: (VideoCardInfo) -> Unit = {}
+	private val onClickItem: (VideoCardInfo) -> Unit = {},
+	private val onLongClickItem: (VideoCardInfo) -> Unit = {}
 ) : ListAdapter<VideoCardInfo, PreVideoAdapter.VH>(DIFF) {
 
 	init { setHasStableIds(true) }
@@ -31,7 +32,7 @@ class PreVideoAdapter(
 	}
 
 	override fun onBindViewHolder(holder: VH, position: Int) {
-		holder.bind(getItem(position), onClickLike, onClickItem)
+		holder.bind(getItem(position), onClickLike, onClickItem, onLongClickItem)
 	}
 
 	override fun onBindViewHolder(holder: VH, position: Int, payloads: MutableList<Any>) {
@@ -64,7 +65,12 @@ class PreVideoAdapter(
 		private var currentItem: VideoCardInfo? = null
 
 		@SuppressLint("SetTextI18n")
-		fun bind(item: VideoCardInfo, onClickLike: (VideoCardInfo) -> Unit, onClickItem: (VideoCardInfo) -> Unit) {
+		fun bind(
+			item: VideoCardInfo,
+			onClickLike: (VideoCardInfo) -> Unit,
+			onClickItem: (VideoCardInfo) -> Unit,
+			onLongClickItem: (VideoCardInfo) -> Unit = {}
+		) {
 			currentItem = item
 			desc.text = item.description
 			nickname.text = item.nickname
@@ -73,13 +79,25 @@ class PreVideoAdapter(
 			Glide.with(itemView).load(item.avatar).placeholder(R.drawable.ic_launcher_background).into(avatar)
 			likeIcon.setOnClickListener { currentItem?.let(onClickLike) }
 			itemView.setOnClickListener { currentItem?.let(onClickItem) }
+			itemView.setOnLongClickListener { cv ->
+				cv.performClick()
+				currentItem?.let(onLongClickItem)
+				true
+			}
 		}
 
 		fun updateItem(item: VideoCardInfo) { currentItem = item }
 
 		fun bindLike(isLike: Boolean, like: Int) {
-			likeNum.text = like.toString()
+			likeNum.text = formatCount(like)
 			likeIcon.setImageResource(if (isLike) R.drawable.like_icon3 else R.drawable.like_icon2)
+		}
+
+		/** 计数格式化：1.2k / 3.4w（与播放页互动区一致） */
+		private fun formatCount(v: Int): String = when {
+			v >= 10000 -> "%.1fw".format(v / 10000.0)
+			v >= 1000 -> "%.1fk".format(v / 1000.0)
+			else -> v.toString()
 		}
 	}
 

@@ -25,6 +25,7 @@ import com.example.blue_book.core.player.PlayerEvents
 @UnstableApi
 class VideoAdapter(
     context: Context,
+    private val currentUserId: Long,
     private val onClickBack: () -> Unit,
     private val onClickLike: (VideoCardInfo) -> Unit,
     private val onClickCollect: (VideoCardInfo) -> Unit,
@@ -33,7 +34,7 @@ class VideoAdapter(
     private val onClickFollow: (VideoCardInfo) -> Unit,
     private val onClickFullscreen: () -> Unit,
     private val onClickAvatar: (VideoCardInfo) -> Unit,
-    private val onPlayerError: (String) -> Unit,
+    private val onPlayerError: (Long, String) -> Unit,
     private val onRequestPlayUrl: (VideoCardInfo) -> Unit
 ) : ListAdapter<VideoCardInfo, VideoAdapter.ViewHolder>(VideoDiffCallback()) {
 
@@ -113,6 +114,26 @@ class VideoAdapter(
                 .circleCrop()
                 .into(binding.videoItemAvatar)
 
+            // 首帧封面：新视频起播前显示封面图，首帧渲染(onReady)后淡出；复用引擎已有画面则不盖封面
+            if ((isNewUrl || engine == null) && videoInfo.image.isNotBlank()) {
+                binding.videoItemCover.visibility = View.VISIBLE
+                binding.videoItemCover.alpha = 1f
+                Glide.with(binding.root.context).load(videoInfo.image).centerCrop()
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .into(binding.videoItemCover)
+            } else {
+                binding.videoItemCover.visibility = View.GONE
+            }
+
+            // 播放错误态复位 + 重试（重新 prepare 当前地址）
+            binding.videoItemError.visibility = View.GONE
+            binding.videoItemErrorRetry.setOnClickListener {
+                binding.videoItemError.visibility = View.GONE
+                val url = currentUrl ?: return@setOnClickListener
+                engine?.prepare(url)
+                engine?.play()
+            }
+
             binding.videoItemLikeBtn.setImageResource(
                 if (videoInfo.isLike) R.drawable.icon_love_selected else R.drawable.icon_love
             )
@@ -126,6 +147,18 @@ class VideoAdapter(
             binding.videoItemCollectBtn.setOnClickListener { currentVideo?.let(onClickCollect) }
             binding.videoItemCommentBtn.setOnClickListener { currentVideo?.let(onClickComment) }
             binding.videoItemCommentInput.setOnClickListener { currentVideo?.let(onClickComment) }
+            // 关注按钮：自己的视频不显示；按 isFollowed 切换"关注/已关注"样式
+            val isSelf = videoInfo.uploaderId != 0L && videoInfo.uploaderId == currentUserId
+            binding.videoItemFollowBtn.visibility = if (isSelf) View.GONE else View.VISIBLE
+            binding.videoItemFollowBtn.text = if (videoInfo.isFollowed) "已关注" else "关注"
+            binding.videoItemFollowBtn.setTextColor(
+                binding.root.context.getColor(
+                    if (videoInfo.isFollowed) R.color.video_text_secondary else R.color.md_theme_onPrimary
+                )
+            )
+            binding.videoItemFollowBtn.setBackgroundResource(
+                if (videoInfo.isFollowed) R.drawable.shape_video_pill else R.drawable.shape_follow_btn
+            )
             binding.videoItemFollowBtn.setOnClickListener { currentVideo?.let(onClickFollow) }
             binding.videoItemFullscreen.setOnClickListener { onClickFullscreen() }
             binding.videoItemAvatar.setOnClickListener { currentVideo?.let(onClickAvatar) }
@@ -159,20 +192,24 @@ class VideoAdapter(
                     }
                 }
             )
-            binding.root.setOnTouchListener { _, event ->
-                tapDetector.onTouchEvent(event)
-                when (event.action) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        speedRunnable = Runnable { engine?.setSpeed(2f) }
-                        speedHandler.postDelayed(speedRunnable!!, 300)
-                    }
-                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                        speedRunnable?.let { speedHandler.removeCallbacks(it) }
-                        engine?.setSpeed(1f)
-                    }
-                }
-                false
-            }
+			binding.root.setOnTouchListener { _, event ->
+				tapDetector.onTouchEvent(event)
+				when (event.action) {
+					android.view.MotionEvent.ACTION_DOWN -> {
+						speedRunnable = Runnable {
+							engine?.setSpeed(2f)
+							binding.videoItemSpeedHint.visibility = View.VISIBLE
+						}
+						speedHandler.postDelayed(speedRunnable!!, 300)
+					}
+					android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+						speedRunnable?.let { speedHandler.removeCallbacks(it) }
+						engine?.setSpeed(1f)
+						binding.videoItemSpeedHint.visibility = View.GONE
+					}
+				}
+				false
+			}
 
             // 进度条 — 只在暂停时可见
             binding.videoItemProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -200,6 +237,28 @@ class VideoAdapter(
             }
         }
 
+        /** payload 局部刷新：只更新互动区图标与计数，不重新 bind 播放器 */
+        fun bindLikeChange(videoInfo: VideoCardInfo, like: Int, isLike: Boolean) {
+            currentVideo = videoInfo
+            binding.videoItemLikeBtn.setImageResource(
+                if (isLike) R.drawable.icon_love_selected else R.drawable.icon_love
+            )
+            binding.videoItemLikeCount.text = formatCount(like)
+        }
+
+        fun bindCollectChange(videoInfo: VideoCardInfo, collect: Int, isCollect: Boolean) {
+            currentVideo = videoInfo
+            binding.videoItemCollectBtn.setImageResource(
+                if (isCollect) R.drawable.icon_collect_selected else R.drawable.icon_collect
+            )
+            binding.videoItemCollectCount.text = formatCount(collect)
+        }
+
+        fun bindCommentCountChange(videoInfo: VideoCardInfo, commentCount: Int) {
+            currentVideo = videoInfo
+            binding.videoItemCommentCount.text = formatCount(commentCount)
+        }
+
         fun play() {
             engine?.play()
             binding.videoItemProgress.visibility = View.GONE
@@ -218,8 +277,17 @@ class VideoAdapter(
 
         private fun attachEvents(playerEngine: PlayerEngine) {
             eventBridge = object : PlayerEvents {
+                override fun onReady() {
+                    // 首帧已渲染，淡出封面
+                    binding.videoItemCover.animate().alpha(0f).setDuration(250).withEndAction {
+                        binding.videoItemCover.visibility = View.GONE
+                    }
+                }
+
                 override fun onError(message: String, errorCode: Int) {
-                    onPlayerError(message.ifEmpty { "播放失败" })
+                    onPlayerError(currentVideo?.aid ?: 0L, message.ifEmpty { "播放失败" })
+                    binding.videoItemErrorText.text = message.ifBlank { "播放失败" }
+                    binding.videoItemError.visibility = View.VISIBLE
                 }
             }
             playerEngine.addListener(eventBridge!!)
@@ -233,6 +301,22 @@ class VideoAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = VideoItemViewBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
+        val video = getItem(position)
+        // payload 局部刷新：只更新点赞/收藏/评论的图标与计数，不重新 bind 播放器，避免打断播放
+        if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position)
+            return
+        }
+        for (p in payloads.filterIsInstance<VideoPayload>()) {
+            when (p) {
+                is VideoPayload.LikeChanged -> holder.bindLikeChange(video, p.like, p.isLike)
+                is VideoPayload.CollectChanged -> holder.bindCollectChange(video, p.collect, p.isCollect)
+                is VideoPayload.CommentCountChanged -> holder.bindCommentCountChange(video, p.commentCount)
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -276,7 +360,6 @@ class VideoAdapter(
     }
 
     fun pauseAll() { viewHolderMap.values.forEach { it.pause() } }
-    fun restore() {}
     fun release() { enginePool.releaseAll(); savedPositions.clear() }
 
     fun preloadByPosition(pos: Int) {
@@ -301,7 +384,7 @@ class VideoAdapter(
 
     private sealed interface VideoPayload {
         data class LikeChanged(val like: Int, val isLike: Boolean) : VideoPayload
-        data class CollectChanged(val collect: Int) : VideoPayload
+        data class CollectChanged(val collect: Int, val isCollect: Boolean) : VideoPayload
         data class CommentCountChanged(val commentCount: Int) : VideoPayload
     }
 
@@ -313,7 +396,7 @@ class VideoAdapter(
             if (oldItem.isLike != newItem.isLike || oldItem.like != newItem.like)
                 payloads.add(VideoPayload.LikeChanged(newItem.like, newItem.isLike))
             if (oldItem.collection != newItem.collection)
-                payloads.add(VideoPayload.CollectChanged(newItem.collection))
+                payloads.add(VideoPayload.CollectChanged(newItem.collection, newItem.isCollect))
             if (oldItem.commentCount != newItem.commentCount)
                 payloads.add(VideoPayload.CommentCountChanged(newItem.commentCount))
             return payloads.ifEmpty { null }

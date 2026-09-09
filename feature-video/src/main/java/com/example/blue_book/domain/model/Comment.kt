@@ -13,9 +13,9 @@ data class Comment(
 	val parentId: Long? = null,
 	val replyToUserId: Long? = null,
 	val replyToNickname: String? = null,
+	val replyCount: Int = 0,
 	val replies: List<Comment> = emptyList()
 ) {
 	val isRoot: Boolean get() = parentId == null
 	val isReply: Boolean get() = parentId != null
-	val replyCount: Int get() = replies.size
 }

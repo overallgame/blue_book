@@ -42,4 +42,12 @@ class VideoActivity : AppCompatActivity() {
 		controller.isAppearanceLightStatusBars = false
 		controller.isAppearanceLightNavigationBars = false
 	}
+
+	/** 进入发布页（分块上传 + 元数据提交） */
+	fun navigateToPublish() {
+		supportFragmentManager.commit {
+			replace(R.id.video_container, com.example.blue_book.ui.publish.PublishFragment())
+			addToBackStack("publish")
+		}
+	}
 }

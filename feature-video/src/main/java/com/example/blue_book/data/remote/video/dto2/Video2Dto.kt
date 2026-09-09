@@ -14,5 +14,6 @@ data class Video2Dto(
 	val viewCount: Long,
 	val commentCount: Long,
 	val isLike: Boolean,
-	val isCollect: Boolean
+	val isCollect: Boolean,
+	val isFollowed: Boolean = false
 )

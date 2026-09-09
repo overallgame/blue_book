@@ -13,8 +13,10 @@ import com.example.blue_book.feature_video.R
 import com.example.blue_book.domain.model.Comment
 
 class ReplyAdapter(
+	private val currentUserId: Long,
 	private val onLikeClick: (Comment) -> Unit,
-	private val onReplyClick: (Comment) -> Unit
+	private val onReplyClick: (Comment) -> Unit,
+	private val onDeleteClick: (Comment) -> Unit
 ) : ListAdapter<Comment, ReplyAdapter.ReplyViewHolder>(ReplyDiffCallback()) {
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReplyViewHolder {
@@ -23,7 +25,7 @@ class ReplyAdapter(
 	}
 
 	override fun onBindViewHolder(holder: ReplyViewHolder, position: Int) {
-		holder.bind(getItem(position), onLikeClick, onReplyClick)
+		holder.bind(getItem(position), currentUserId, onLikeClick, onReplyClick, onDeleteClick)
 	}
 
 	class ReplyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -33,9 +35,16 @@ class ReplyAdapter(
 		private val content: TextView = itemView.findViewById(R.id.reply_content)
 		private val likeBtn: ImageButton = itemView.findViewById(R.id.reply_like_btn)
 		private val likeCount: TextView = itemView.findViewById(R.id.reply_like_count)
-		private val replyBtn: TextView = itemView.findViewById(R.id.reply_action_layout)
+		private val replyBtn: TextView = itemView.findViewById(R.id.reply_reply_btn)
+		private val deleteBtn: TextView = itemView.findViewById(R.id.reply_delete_btn)
 
-		fun bind(comment: Comment, onLikeClick: (Comment) -> Unit, onReplyClick: (Comment) -> Unit) {
+		fun bind(
+			comment: Comment,
+			currentUserId: Long,
+			onLikeClick: (Comment) -> Unit,
+			onReplyClick: (Comment) -> Unit,
+			onDeleteClick: (Comment) -> Unit
+		) {
 			val displayName = if (comment.replyToNickname != null) {
 				"${comment.nickname} 回复 @${comment.replyToNickname}"
 			} else {
@@ -49,8 +58,11 @@ class ReplyAdapter(
 			likeCount.text = formatCount(comment.likeCount)
 			likeBtn.setImageResource(if (comment.isLiked) R.drawable.icon_love_selected else R.drawable.icon_love)
 
+			deleteBtn.visibility = if (comment.userId == currentUserId) View.VISIBLE else View.GONE
+
 			likeBtn.setOnClickListener { onLikeClick(comment) }
 			replyBtn.setOnClickListener { onReplyClick(comment) }
+			deleteBtn.setOnClickListener { onDeleteClick(comment) }
 		}
 
 		private fun formatTime(timestamp: Long): String {

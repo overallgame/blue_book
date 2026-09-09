@@ -39,6 +39,9 @@ class VideoFragment : Fragment() {
 
 	private lateinit var adapter: VideoAdapter
 
+	/** 全屏（横屏）播放状态 */
+	private var isFullscreen = false
+
 	override fun onCreateView(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
@@ -62,10 +65,9 @@ class VideoFragment : Fragment() {
 			},
 			onClickShare = { video -> shareVideo(video) },
 			onClickFollow = { video -> viewModel.dispatch(VideoIntent.ToggleFollow(video)) },
-			// TODO(fullscreen): 横屏全屏播放待实现（需旋转 + 隐藏系统栏 + 调整 PlayerView resizeMode）
-			onClickFullscreen = {
-				Toast.makeText(requireContext(), "全屏播放开发中", Toast.LENGTH_SHORT).show()
-			},
+			// 全屏：横屏播放（旋转 + 隐藏系统栏 + 视频铺满，见 enterFullscreen）
+			onClickFullscreen = { enterFullscreen() },
+			onExitFullscreen = { exitFullscreen() },
 			// 头像点击 → 作者主页（后端 /api/v2/users/{id} 提供资料与作品）
 			onClickAvatar = { video ->
 				if (video.uploaderId > 0) {
@@ -116,6 +118,33 @@ class VideoFragment : Fragment() {
 		initEmptyState()
 		observeCommentDelta()
 		initByArgs()
+		// 全屏时返回键先退全屏（同一回调处理顶栏返回与物理返回）
+		requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
+	}
+
+	/** 全屏模式下拦截返回：先退全屏，不退出页面 */
+	private val backCallback = object : androidx.activity.OnBackPressedCallback(false) {
+		override fun handleOnBackPressed() {
+			exitFullscreen()
+		}
+	}
+
+	/** 进入全屏（横屏播放）：视频铺满 + 隐藏系统栏 */
+	private fun enterFullscreen() {
+		if (isFullscreen) return
+		isFullscreen = true
+		backCallback.isEnabled = true
+		adapter.setFullscreen(true)
+		(requireActivity() as VideoActivity).enterFullscreen()
+	}
+
+	/** 退出全屏：恢复竖屏布局与系统栏 */
+	fun exitFullscreen() {
+		if (!isFullscreen) return
+		isFullscreen = false
+		backCallback.isEnabled = false
+		adapter.setFullscreen(false)
+		(requireActivity() as VideoActivity).exitFullscreen()
 	}
 
 	/** 空列表态：显示提示 + 重试入口（重新加载走退出重进语义，直接刷新当前模式数据） */

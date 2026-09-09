@@ -8,8 +8,11 @@ import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -33,6 +36,7 @@ class VideoAdapter(
     private val onClickShare: (VideoCardInfo) -> Unit,
     private val onClickFollow: (VideoCardInfo) -> Unit,
     private val onClickFullscreen: () -> Unit,
+    private val onExitFullscreen: () -> Unit,
     private val onClickAvatar: (VideoCardInfo) -> Unit,
     private val onPlayerError: (Long, String) -> Unit,
     private val onRequestPlayUrl: (VideoCardInfo) -> Unit
@@ -42,9 +46,18 @@ class VideoAdapter(
     private val enginePool = PlayerEnginePool(maxSize = 5) { ExoPlayerEngine(context) }
     private val savedPositions = LinkedHashMap<String, Long>(100, 0.75f, true)
 
+    /** 全屏（横屏）模式：由播放页进入/退出，翻页后新 item 也保持全屏态 */
+    private var fullscreenMode = false
+
     init { setHasStableIds(true) }
 
     override fun getItemId(position: Int): Long = getItem(position).aid
+
+    /** 切换全屏：立即应用到全部已绑定条目（含当前可见项） */
+    fun setFullscreen(enabled: Boolean) {
+        fullscreenMode = enabled
+        viewHolderMap.values.forEach { it.applyFullscreen(enabled) }
+    }
 
     inner class ViewHolder(private val binding: VideoItemViewBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -54,6 +67,7 @@ class VideoAdapter(
         private var eventBridge: PlayerEvents? = null
         private var currentVideo: VideoCardInfo? = null
         private var isProgressTracking = false
+        private var hasTags = false
 
         init {
             // 全面屏：黑色背景延展到系统栏后方，页面内容避让状态栏/导航栏
@@ -97,8 +111,10 @@ class VideoAdapter(
             val titleText = tokens.filterNot { it.startsWith("#") }.joinToString(" ")
             binding.videoItemDescription.text = titleText.ifEmpty { videoInfo.description }
             if (tags.isEmpty()) {
+                hasTags = false
                 binding.videoItemTags.visibility = View.GONE
             } else {
+                hasTags = true
                 binding.videoItemTags.visibility = View.VISIBLE
                 binding.videoItemTags.text = tags.joinToString(" ")
             }
@@ -161,9 +177,12 @@ class VideoAdapter(
             )
             binding.videoItemFollowBtn.setOnClickListener { currentVideo?.let(onClickFollow) }
             binding.videoItemFullscreen.setOnClickListener { onClickFullscreen() }
+            binding.videoItemExitFullscreen.setOnClickListener { onExitFullscreen() }
             binding.videoItemAvatar.setOnClickListener { currentVideo?.let(onClickAvatar) }
             binding.videoItemBack.setOnClickListener { onClickBack() }
             binding.videoItemShare.setOnClickListener { currentVideo?.let(onClickShare) }
+
+            applyFullscreen(fullscreenMode)
 
             // 双击点赞 + 长按倍速
             val speedHandler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -237,9 +256,33 @@ class VideoAdapter(
             }
         }
 
+        /**
+         * 全屏（横屏）模式：视频区域解除上下边距铺满屏幕、resizeMode 切 ZOOM（无黑边），
+         * 隐藏页面浮层（顶栏/作者行/标题/标签/底部互动栏），保留进度条与退出全屏按钮。
+         * 退出时恢复 bind() 确定的默认可见性（hasTags 由 bind 记录）。
+         */
+        fun applyFullscreen(enabled: Boolean) {
+            binding.videoItemContainer.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = if (enabled) 0 else dp(84)
+                bottomMargin = if (enabled) 0 else dp(56)
+            }
+            binding.videoItemVideoPlayer.resizeMode =
+                if (enabled) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+            val hidden = if (enabled) View.GONE else View.VISIBLE
+            binding.videoItemBack.visibility = hidden
+            binding.videoItemShare.visibility = hidden
+            binding.videoItemAuthorRow.visibility = hidden
+            binding.videoItemDescription.visibility = hidden
+            binding.videoItemTags.visibility = if (enabled) View.GONE else if (hasTags) View.VISIBLE else View.GONE
+            binding.videoItemBottomBar.visibility = hidden
+            binding.videoItemFullscreen.visibility = hidden
+            binding.videoItemExitFullscreen.visibility = if (enabled) View.VISIBLE else View.GONE
+        }
+
+        private fun dp(v: Int): Int = (v * itemView.resources.displayMetrics.density).toInt()
+
         /** payload 局部刷新：只更新互动区图标与计数，不重新 bind 播放器 */
-        fun bindLikeChange(videoInfo: VideoCardInfo, like: Int, isLike: Boolean) {
-            currentVideo = videoInfo
+        fun bindLikeChange(videoInfo: VideoCardInfo, like: Int, isLike: Boolean) {            currentVideo = videoInfo
             binding.videoItemLikeBtn.setImageResource(
                 if (isLike) R.drawable.icon_love_selected else R.drawable.icon_love
             )

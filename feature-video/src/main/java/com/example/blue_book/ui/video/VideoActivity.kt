@@ -1,10 +1,12 @@
 package com.example.blue_book.ui.video
 
+import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.commit
 import androidx.media3.common.util.UnstableApi
@@ -49,5 +51,20 @@ class VideoActivity : AppCompatActivity() {
 			replace(R.id.video_container, com.example.blue_book.ui.publish.PublishFragment())
 			addToBackStack("publish")
 		}
+	}
+
+	/** 全屏（横屏播放）：旋转 + 隐藏系统栏（轻扫可临时唤出） */
+	fun enterFullscreen() {
+		requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+		WindowInsetsControllerCompat(window, window.decorView).apply {
+			hide(WindowInsetsCompat.Type.systemBars())
+			systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+		}
+	}
+
+	/** 退出全屏：恢复竖屏 + 显示系统栏 */
+	fun exitFullscreen() {
+		requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+		WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
 	}
 }

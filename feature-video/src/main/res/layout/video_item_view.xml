@@ -7,8 +7,9 @@
     android:background="@color/video_background">
 
     <!-- 底层：视频区（顶边接返回按钮行，底边接底部互动栏），
-         竖屏近似铺满该区域、横屏 fit 模式黑边居中 -->
+         竖屏近似铺满该区域、横屏 fit 模式黑边居中；全屏模式下解除上下边距铺满 -->
     <FrameLayout
+        android:id="@+id/video_item_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="84dp"
@@ -61,8 +62,23 @@
 
     <!-- 上层：浮动的页面 UI，互不与播放器抢约束 -->
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/video_item_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <!-- 全屏模式专用：退出全屏（默认隐藏） -->
+        <ImageView
+            android:id="@+id/video_item_exit_fullscreen"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="退出全屏"
+            android:padding="10dp"
+            android:src="@drawable/_chevron_left"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- 顶栏：返回 / 分享 -->
         <ImageView

@@ -2,6 +2,7 @@ package com.example.blue_book.view
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import com.example.blue_book.R
@@ -34,6 +35,11 @@ class MainActivity : AppCompatActivity() {
 				else -> return@setOnCheckedChangeListener
 			}
 			navigateToTab(targetPath)
+		}
+
+		// 底部导航正中发布入口（小红书风格）：不切换 tab，直接打开发布页
+		findViewById<ImageView>(R.id.publish_btn).setOnClickListener {
+			TheRouter.build(RoutePath.PUBLISH).navigation(this)
 		}
 	}
 

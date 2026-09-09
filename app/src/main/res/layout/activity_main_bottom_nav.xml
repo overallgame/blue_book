@@ -29,6 +29,26 @@
             android:text="视频"
             android:textColor="@color/navigation_item_selector" />
 
+        <!-- 发布入口：小红书风格，位于底部导航栏正中，凸起红色圆形加号 -->
+        <FrameLayout
+            android:id="@+id/tab_publish"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/publish_btn"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="-24dp"
+                android:background="@drawable/shape_publish_circle"
+                android:contentDescription="发布视频"
+                android:elevation="4dp"
+                android:padding="12dp"
+                android:src="@drawable/_ic_add_white" />
+        </FrameLayout>
+
         <RadioButton
             android:id="@+id/tab_message"
             style="@style/RadioGroupButtonStyle"

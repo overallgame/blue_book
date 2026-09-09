@@ -45,14 +45,6 @@ class VideoActivity : AppCompatActivity() {
 		controller.isAppearanceLightNavigationBars = false
 	}
 
-	/** 进入发布页（分块上传 + 元数据提交） */
-	fun navigateToPublish() {
-		supportFragmentManager.commit {
-			replace(R.id.video_container, com.example.blue_book.ui.publish.PublishFragment())
-			addToBackStack("publish")
-		}
-	}
-
 	/** 全屏（横屏播放）：旋转 + 隐藏系统栏（轻扫可临时唤出） */
 	fun enterFullscreen() {
 		requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE

@@ -86,9 +86,6 @@ class VideoFragment : Fragment() {
 		)
 
 		binding.videoViewPager.adapter = adapter
-		binding.videoPublish.setOnClickListener {
-			(requireActivity() as VideoActivity).navigateToPublish()
-		}
 		binding.videoViewPager.offscreenPageLimit = 1
 		binding.videoViewPager.orientation = ViewPager2.ORIENTATION_VERTICAL
 		binding.videoViewPager.registerOnPageChangeCallback(object :

@@ -1,6 +1,7 @@
 <resources>
 
-    <style name="ShapeAppearance.Profile.Thumb">
+    <!-- 显式 parent=""：避免点分样式名隐式继承不存在的 ShapeAppearance.Profile 导致链接失败 -->
+    <style name="ShapeAppearance.Profile.Thumb" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
     </style>

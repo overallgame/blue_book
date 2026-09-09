@@ -8,19 +8,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- 发布入口：悬浮右下角 -->
-    <ImageView
-        android:id="@+id/video_publish"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="80dp"
-        android:background="@drawable/shape_follow_btn"
-        android:contentDescription="发布视频"
-        android:padding="12dp"
-        android:src="@drawable/_ic_add_white" />
-
     <!-- 空列表态：搜索无结果 / 数据加载失败后列表为空 -->
     <LinearLayout
         android:id="@+id/video_empty"

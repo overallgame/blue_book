@@ -14,6 +14,9 @@ object RoutePath {
 	/** 视频页 */
 	const val VIDEO = "/video/main"
 
+	/** 视频发布页（独立入口，底部导航栏正中） */
+	const val PUBLISH = "/video/publish"
+
 	/** 消息页 */
 	const val MESSAGE = "/message/main"
 

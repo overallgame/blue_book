@@ -6,5 +6,9 @@
             android:launchMode="singleTask"
             android:exported="false"
             android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name="com.example.blue_book.ui.publish.PublishActivity"
+            android:exported="false" />
     </application>
 </manifest>

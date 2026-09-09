@@ -6,38 +6,25 @@
     android:layout_height="match_parent"
     android:background="@color/md_theme_surface">
 
-    <LinearLayout
-        android:id="@+id/follow_list_toolbar"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/md_theme_surface"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/follow_list_back"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="返回"
-            app:srcCompat="@drawable/_chevron_left" />
-
-        <TextView
-            android:id="@+id/follow_list_title"
-            android:layout_width="wrap_content"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/follow_list_toolbar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:text="我的关注"
-            android:textColor="@color/md_theme_onSurface"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            tools:text="我的关注" />
-    </LinearLayout>
+            android:background="@color/md_theme_surface"
+            android:minHeight="?attr/actionBarSize"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:navigationIcon="@drawable/_chevron_left"
+            app:titleCentered="true"
+            app:titleTextColor="@color/md_theme_onSurface" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <View
         android:id="@+id/follow_list_divider"

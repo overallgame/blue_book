@@ -53,9 +53,9 @@ class FollowListFragment : Fragment() {
 		val userId = requireArguments().getLong(ExtraKeys.EXTRA_USER_ID, 0L)
 		viewModel.bind(followType, userId)
 
-		binding.followListTitle.text =
+		binding.followListToolbar.title =
 			if (followType == "followers") "我的粉丝" else "我的关注"
-		binding.followListBack.setOnClickListener {
+		binding.followListToolbar.setNavigationOnClickListener {
 			requireActivity().onBackPressedDispatcher.onBackPressed()
 		}
 		binding.followListEmptyRetry.setOnClickListener {

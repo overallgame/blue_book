@@ -19,7 +19,6 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             app:navigationIcon="@drawable/_chevron_left"
-            app:navigationIconTint="@color/md_theme_onSurface"
             app:titleTextColor="@color/md_theme_onSurface">
 
             <TextView

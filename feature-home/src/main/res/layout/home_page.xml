@@ -19,11 +19,15 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <RadioButton
+            <ImageView
                 android:id="@+id/main_pager_navButton"
-                style="@style/RadioGroupButtonStyle"
-                android:background="@drawable/sidebar_background1"
-                android:backgroundTint="@color/md_theme_onSurfaceVariant_highContrast" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="菜单"
+                android:padding="12dp"
+                android:src="@drawable/_ic_sidebar_menu" />
 
             <RadioButton
                 android:id="@+id/no1"
@@ -51,11 +55,15 @@
                 android:id="@+id/no2"
                 style="@style/RadioGroupButtonStyle1" />
 
-            <RadioButton
+            <ImageView
                 android:id="@+id/main_pager_search"
-                style="@style/RadioGroupButtonStyle"
-                android:background="@drawable/search_background"
-                android:backgroundTint="@color/md_theme_onSurfaceVariant_highContrast" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="搜索"
+                android:padding="12dp"
+                android:src="@drawable/search_icon2" />
 
         </RadioGroup>
 

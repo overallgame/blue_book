@@ -1,58 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/md_theme_surfaceContainer"
     android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@color/md_theme_surface"
-        android:elevation="2dp">
+        android:layout_height="wrap_content">
 
-        <ImageButton
-            android:id="@+id/after_search_back"
-            android:layout_width="0dp"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/search_result_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/md_theme_surface"
+            android:minHeight="?attr/actionBarSize"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            app:navigationIcon="@drawable/_chevron_left1"
+            app:navigationIconTint="@color/md_theme_onSurfaceVariant_mediumContrast">
+
+            <EditText
+                android:id="@+id/after_search_comment"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:background="@drawable/shape1"
+                android:drawableStart="@drawable/search_icon2"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:hint="搜索视频"
+                android:paddingHorizontal="12dp"
+                android:textColor="@color/md_theme_primary"
+                android:textColorHint="@color/md_theme_outline"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/after_search_search"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:paddingHorizontal="12dp"
+                android:text="搜索"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="15sp" />
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/after_search_recycleView"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:src="@drawable/_chevron_left1" />
+            android:clipToPadding="false"
+            android:padding="4dp" />
 
-        <EditText
-            android:id="@+id/after_search_comment"
-            android:layout_width="0dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="1dp"
-            android:layout_weight="9"
-            android:background="@drawable/shape1"
-            android:drawableStart="@drawable/search_icon2"
-            android:drawablePadding="8dp"
-            android:gravity="center_vertical"
-            android:padding="5dp"
-            android:textColor="@color/md_theme_primary"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/after_search_search"
+        <!-- 空态：搜索无结果 / 加载失败 -->
+        <LinearLayout
+            android:id="@+id/search_result_empty"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:gravity="center"
-            android:text="搜索"
-            android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone">
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/search_result_empty_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="暂无结果"
+                android:textColor="@color/md_theme_outline"
+                android:textSize="14sp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/after_search_recycleView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:padding="4dp" />
+            <TextView
+                android:id="@+id/search_result_empty_retry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="8dp"
+                android:text="重新加载"
+                android:textColor="@color/md_theme_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </FrameLayout>
 
 </LinearLayout>

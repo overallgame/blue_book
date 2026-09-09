@@ -20,6 +20,7 @@ android {
 dependencies {
     kapt("cn.therouter:apt:1.3.0")
     implementation(project(":lib-base"))
+    implementation(project(":core-datastore"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("javax.inject:javax.inject:1")
     implementation("androidx.recyclerview:recyclerview:1.3.2")

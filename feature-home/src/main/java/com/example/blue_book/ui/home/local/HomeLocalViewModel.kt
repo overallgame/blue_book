@@ -25,30 +25,29 @@ class HomeLocalViewModel @Inject constructor(
 
 	private suspend fun initLoad() {
 		runResult(
-			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos() },
-			onSuccess = { list -> setState { copy(items = items + list, isLoading = false) } },
+			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null, cursorId = null, hasMore = true) } },
+			call = { videoProvider.fetchRandomVideos(cursorId = null, size = uiState.value.pageSize) },
+			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)
 	}
 
 	private suspend fun refresh() {
 		runResult(
-			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos() },
-			onSuccess = { list -> setState { copy(items = list, isLoading = false) } },
+			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
+			call = { videoProvider.fetchRandomVideos(cursorId = null, size = uiState.value.pageSize) },
+			onSuccess = { list -> setState { copy(items = list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)
 	}
 
 	private suspend fun loadMore() {
 		val state = uiState.value
-		if (state.isLoading) return
-		val cursorId = if (state.items.isNotEmpty()) state.items.last().aid else null
+		if (state.isLoading || !state.hasMore) return
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos(cursorId) },
-			onSuccess = { list -> setState { copy(items = items + list, isLoading = false) } },
+			call = { videoProvider.fetchRandomVideos(state.cursorId, state.pageSize) },
+			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)
 	}

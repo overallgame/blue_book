@@ -6,6 +6,8 @@ interface VideoRepository {
 
 	suspend fun fetchRandom(cursorId: Long?, size: Int?): Result<List<Video>>
 
+	suspend fun fetchFollowingFeed(cursorId: Long?, size: Int?): Result<List<Video>>
+
 	suspend fun fetchByKeyword(keyword: String, cursorId: Long?, size: Int?): Result<List<Video>>
 
 	suspend fun fetchPlayUrl(aid: Long, cid: Long): Result<String>

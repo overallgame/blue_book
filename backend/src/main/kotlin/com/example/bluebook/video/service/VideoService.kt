@@ -40,6 +40,15 @@ class VideoService(
         return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
 
+    /** 关注流：当前用户所关注作者的作品（未登录返回空列表） */
+    fun followingFeed(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
+        if (userId <= 0) return FeedResponseDto(items = emptyList(), nextCursorId = null)
+        val pageable = PageRequest.of(0, size)
+        val videos = videoRepository.findFollowingFeedVideos(userId, cursorId, pageable)
+        val items = videos.map { v -> toDto(v, currentUserId) }
+        return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
+    }
+
     fun search(keyword: String, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
         val videos = videoRepository.searchVideos(keyword, cursorId, pageable)

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -14,11 +15,13 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.router.ExtraKeys
+import com.example.blue_book.data.SearchHistoryStore
 import com.example.blue_book.feature_home.databinding.SearchResultPageBinding
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AfterSearchFragment : Fragment() {
@@ -26,6 +29,9 @@ class AfterSearchFragment : Fragment() {
 	private var _binding: SearchResultPageBinding? = null
 	private val binding get() = _binding!!
 	private val viewModel: SearchResultViewModel by viewModels()
+
+	@Inject
+	lateinit var historyStore: SearchHistoryStore
 
 	private var isLoading = false
 	private var keyword: String = ""
@@ -42,16 +48,32 @@ class AfterSearchFragment : Fragment() {
 		keyword = arguments?.getString(ExtraKeys.EXTRA_KEYWORD).orEmpty()
 		initToolbar()
 		initRecyclerView()
+		initEmptyState()
 		observeViewModel()
 		viewModel.dispatch(SearchIntent.Init(keyword))
 	}
 
 	private fun initToolbar() {
-		binding.afterSearchBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+		binding.searchResultToolbar.setNavigationOnClickListener {
+			requireActivity().onBackPressedDispatcher.onBackPressed()
+		}
 		binding.afterSearchComment.setText(keyword)
 		binding.afterSearchSearch.setOnClickListener {
+			val newKeyword = binding.afterSearchComment.text?.toString().orEmpty().trim()
+			if (newKeyword.isBlank()) {
+				Toast.makeText(requireContext(), "请输入搜索内容", Toast.LENGTH_SHORT).show()
+				return@setOnClickListener
+			}
+			viewLifecycleOwner.lifecycleScope.launch { historyStore.add(newKeyword) }
 			adapterSubmitClear()
-			keyword = binding.afterSearchComment.text?.toString().orEmpty()
+			keyword = newKeyword
+			viewModel.dispatch(SearchIntent.Init(keyword))
+		}
+	}
+
+	/** 空态重试：以当前关键字重新发起搜索 */
+	private fun initEmptyState() {
+		binding.searchResultEmptyRetry.setOnClickListener {
 			viewModel.dispatch(SearchIntent.Init(keyword))
 		}
 	}
@@ -87,6 +109,13 @@ class AfterSearchFragment : Fragment() {
 				launch { viewModel.uiState.collect { state ->
 					adapter.submitAppend(state.items)
 					isLoading = state.isLoading
+					// 空态：无结果且不在加载中（搜索失败/无结果）时展示，优先显示错误信息
+					if (state.items.isEmpty() && !state.isLoading) {
+						binding.searchResultEmpty.visibility = View.VISIBLE
+						binding.searchResultEmptyText.text = state.message ?: "暂无结果"
+					} else {
+						binding.searchResultEmpty.visibility = View.GONE
+					}
 				} }
 				launch { viewModel.uiEffect.collect { effect ->
 					when (effect) {

@@ -17,6 +17,11 @@ class VideoRepositoryImpl @Inject constructor(
 		return result.map { it.items.toDomainVideos() }
 	}
 
+	override suspend fun fetchFollowingFeed(cursorId: Long?, size: Int?): Result<List<Video>> {
+		val result = remote.feedFollowing(cursorId, size)
+		return result.map { it.items.toDomainVideos() }
+	}
+
 	override suspend fun fetchByKeyword(keyword: String, cursorId: Long?, size: Int?): Result<List<Video>> {
 		val result = remote.searchVideos(keyword, cursorId, size)
 		return result.map { it.items.toDomainVideos() }

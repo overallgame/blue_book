@@ -42,6 +42,16 @@ interface VideoRepository : JpaRepository<Video, Long> {
     """)
     fun findUserVideosCursor(uploaderId: Long, cursorId: Long?, pageable: Pageable): List<Video>
 
+    /** 关注流：当前用户关注的所有作者的作品（转码完成才可播，与 feed 同过滤标准），按 id 倒序游标分页 */
+    @Query("""
+        SELECT v FROM Video v, UserFollow f
+        WHERE f.followeeId = v.uploaderId AND f.followerId = :userId
+        AND v.status = 'PUBLISHED' AND v.transcodeStatus = 'DONE'
+        AND (:cursorId IS NULL OR v.id < :cursorId)
+        ORDER BY v.id DESC
+    """)
+    fun findFollowingFeedVideos(userId: Long, cursorId: Long?, pageable: Pageable): List<Video>
+
     @Modifying
     @Query("UPDATE Video v SET v.likeCount = v.likeCount + :delta WHERE v.id = :id")
     fun incrementLikeCount(id: Long, delta: Long)

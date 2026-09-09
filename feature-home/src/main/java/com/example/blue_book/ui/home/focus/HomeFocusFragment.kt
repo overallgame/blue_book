@@ -27,6 +27,7 @@ class HomeFocusFragment : Fragment() {
 	private val viewModel: HomeFocusViewModel by viewModels()
 	private lateinit var adapter: PreVideoAdapter
 	private var isLoading = false
+	private var noMoreToasted = false
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -47,6 +48,7 @@ class HomeFocusFragment : Fragment() {
 
 	private fun initSwipeRefresh() {
 		binding.mainFocusPagerSwipeRefreshLayout.setOnRefreshListener {
+			noMoreToasted = false
 			viewModel.dispatch(HomeFocusIntent.Refresh)
 		}
 	}
@@ -67,9 +69,15 @@ class HomeFocusFragment : Fragment() {
 			addOnScrollListener(object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
 					super.onScrolled(recyclerView, dx, dy)
-					if (!recyclerView.canScrollVertically(1) && !isLoading) {
-						isLoading = true
-						viewModel.dispatch(HomeFocusIntent.LoadMore)
+					if (!recyclerView.canScrollVertically(1)) {
+						val state = viewModel.uiState.value
+						if (state.hasMore && !state.isLoading) {
+							isLoading = true
+							viewModel.dispatch(HomeFocusIntent.LoadMore)
+						} else if (!state.hasMore && !state.isLoading && state.items.isNotEmpty() && !noMoreToasted) {
+							noMoreToasted = true
+							Toast.makeText(requireContext(), "没有更多了", Toast.LENGTH_SHORT).show()
+						}
 					}
 				}
 			})

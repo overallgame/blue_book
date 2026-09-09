@@ -12,6 +12,10 @@ class VideoProviderImpl(
 		return repository.fetchRandom(cursorId, size).map { list -> list.map { it.toCardInfo() } }
 	}
 
+	override suspend fun fetchFollowingFeed(cursorId: Long?, size: Int?): Result<List<VideoCardInfo>> {
+		return repository.fetchFollowingFeed(cursorId, size).map { list -> list.map { it.toCardInfo() } }
+	}
+
 	override suspend fun fetchVideosByKeyword(keyword: String, cursorId: Long?, size: Int?): Result<List<VideoCardInfo>> {
 		return repository.fetchByKeyword(keyword, cursorId, size).map { list -> list.map { it.toCardInfo() } }
 	}

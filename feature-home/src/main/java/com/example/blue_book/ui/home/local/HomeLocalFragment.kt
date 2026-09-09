@@ -27,6 +27,7 @@ class HomeLocalFragment : Fragment() {
 	private val viewModel: HomeLocalViewModel by viewModels()
 	private lateinit var adapter: PreVideoAdapter
 	private var isLoading = false
+	private var noMoreToasted = false
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -47,6 +48,7 @@ class HomeLocalFragment : Fragment() {
 
 	private fun initSwipeRefresh() {
 		binding.mainLocalPagerSwipeRefreshLayout.setOnRefreshListener {
+			noMoreToasted = false
 			viewModel.dispatch(HomeLocalIntent.Refresh)
 		}
 	}
@@ -67,9 +69,15 @@ class HomeLocalFragment : Fragment() {
 			addOnScrollListener(object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
 					super.onScrolled(recyclerView, dx, dy)
-					if (!recyclerView.canScrollVertically(1) && !isLoading) {
-						isLoading = true
-						viewModel.dispatch(HomeLocalIntent.LoadMore)
+					if (!recyclerView.canScrollVertically(1)) {
+						val state = viewModel.uiState.value
+						if (state.hasMore && !state.isLoading) {
+							isLoading = true
+							viewModel.dispatch(HomeLocalIntent.LoadMore)
+						} else if (!state.hasMore && !state.isLoading && state.items.isNotEmpty() && !noMoreToasted) {
+							noMoreToasted = true
+							Toast.makeText(requireContext(), "没有更多了", Toast.LENGTH_SHORT).show()
+						}
 					}
 				}
 			})

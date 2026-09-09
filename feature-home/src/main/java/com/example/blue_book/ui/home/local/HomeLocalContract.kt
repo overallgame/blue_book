@@ -15,7 +15,10 @@ sealed interface HomeLocalIntent : UiIntent {
 data class HomeLocalUiState(
 	val items: List<VideoCardInfo> = emptyList(),
 	val isLoading: Boolean = false,
-	val message: String? = null
+	val message: String? = null,
+	val cursorId: Long? = null,
+	val hasMore: Boolean = true,
+	val pageSize: Int = 10
 ) : UiState
 
 sealed interface HomeLocalEffect : UiEffect {

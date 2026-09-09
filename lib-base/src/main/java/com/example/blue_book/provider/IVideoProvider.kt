@@ -9,6 +9,9 @@ interface IVideoProvider {
 
 	suspend fun fetchRandomVideos(cursorId: Long? = null, size: Int? = 10): Result<List<VideoCardInfo>>
 
+	/** 关注流：当前登录用户所关注作者的作品（未登录返回空） */
+	suspend fun fetchFollowingFeed(cursorId: Long? = null, size: Int? = 10): Result<List<VideoCardInfo>>
+
 	suspend fun fetchVideosByKeyword(keyword: String, cursorId: Long? = null, size: Int? = 20): Result<List<VideoCardInfo>>
 
 	suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit>

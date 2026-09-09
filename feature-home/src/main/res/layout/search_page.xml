@@ -1,90 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/md_theme_surfaceContainer"
     android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@color/md_theme_surface"
-        android:elevation="2dp">
+        android:layout_height="wrap_content">
 
-        <ImageButton
-            android:id="@+id/search_back"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:src="@drawable/_chevron_left1" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/search_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/md_theme_surface"
+            android:minHeight="?attr/actionBarSize"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            app:navigationIcon="@drawable/_chevron_left1"
+            app:navigationIconTint="@color/md_theme_onSurfaceVariant_mediumContrast">
 
-        <EditText
-            android:id="@+id/search_comment"
-            android:layout_width="0dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="1dp"
-            android:layout_weight="9"
-            android:background="@drawable/shape1"
-            android:drawableStart="@drawable/search_icon2"
-            android:drawablePadding="8dp"
+            <EditText
+                android:id="@+id/search_comment"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:background="@drawable/shape1"
+                android:drawableStart="@drawable/search_icon2"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:hint="搜索视频"
+                android:paddingHorizontal="12dp"
+                android:textColor="@color/md_theme_primary"
+                android:textColorHint="@color/md_theme_outline"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/search_search"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:paddingHorizontal="12dp"
+                android:text="搜索"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="15sp" />
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- 历史记录：标题 + 清空 + chip 流（无历史时整块隐藏） -->
+    <LinearLayout
+        android:id="@+id/search_history_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:padding="5dp"
-            android:textColor="@color/md_theme_primary"
-            android:textSize="16sp" />
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="10dp">
 
-        <TextView
-            android:id="@+id/search_search"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="搜索"
-            android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="历史记录"
+                android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+                android:textSize="14sp" />
 
+            <TextView
+                android:id="@+id/search_history_clear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                android:text="清空"
+                android:textColor="@color/md_theme_outline"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/search_history_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="4dp" />
     </LinearLayout>
 
+    <!-- 猜你想搜 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="历史记录"
-        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/history_recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:nestedScrollingEnabled="false" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="16dp"
         android:text="猜你想搜"
-        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+        android:textSize="14sp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/suggested_recycler_view"
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/search_suggested_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:nestedScrollingEnabled="false" />
+        android:paddingHorizontal="16dp"
+        app:chipSpacingHorizontal="8dp"
+        app:chipSpacingVertical="4dp" />
 
+    <!-- 热点 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="16dp"
         android:text="热点"
-        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast" />
+        android:textColor="@color/md_theme_onSurfaceVariant_mediumContrast"
+        android:textSize="14sp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/hot_topics_recycler_view"
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/search_hot_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:nestedScrollingEnabled="false" />
+        android:paddingHorizontal="16dp"
+        app:chipSpacingHorizontal="8dp"
+        app:chipSpacingVertical="4dp" />
 
 </LinearLayout>

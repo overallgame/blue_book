@@ -25,31 +25,30 @@ class HomeFocusViewModel @Inject constructor(
 
 	private suspend fun initLoad() {
 		runResult(
-			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos() },
-			onSuccess = { list -> setState { copy(items = items + list, isLoading = false) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
+			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null, cursorId = null, hasMore = true) } },
+			call = { videoProvider.fetchFollowingFeed(cursorId = null, size = uiState.value.pageSize) },
+			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
+			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "请先登录") } }
 		)
 	}
 
 	private suspend fun refresh() {
 		runResult(
-			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos() },
-			onSuccess = { list -> setState { copy(items = list, isLoading = false) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
+			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
+			call = { videoProvider.fetchFollowingFeed(cursorId = null, size = uiState.value.pageSize) },
+			onSuccess = { list -> setState { copy(items = list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
+			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "请先登录") } }
 		)
 	}
 
 	private suspend fun loadMore() {
 		val state = uiState.value
-		if (state.isLoading) return
-		val cursorId = if (state.items.isNotEmpty()) state.items.last().aid else null
+		if (state.isLoading || !state.hasMore) return
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos(cursorId) },
-			onSuccess = { list -> setState { copy(items = items + list, isLoading = false) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
+			call = { videoProvider.fetchFollowingFeed(state.cursorId, state.pageSize) },
+			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
+			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "请先登录") } }
 		)
 	}
 

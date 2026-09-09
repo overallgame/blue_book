@@ -20,6 +20,12 @@ interface VideoApi {
 		@Query("size") size: Int? = null
 	): Response<ApiResponse<FeedResponseDto>>
 
+	@GET("/api/v2/feed/following")
+	suspend fun feedFollowing(
+		@Query("cursorId") cursorId: Long? = null,
+		@Query("size") size: Int? = null
+	): Response<ApiResponse<FeedResponseDto>>
+
 	@GET("/api/v2/videos/search")
 	suspend fun searchVideos(
 		@Query("keyword") keyword: String,

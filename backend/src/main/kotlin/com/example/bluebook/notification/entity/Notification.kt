@@ -37,4 +37,4 @@ class Notification(
     var createdAt: LocalDateTime = LocalDateTime.now()
 )
 
-enum class NotifyType { LIKE, COMMENT, FOLLOW, SYSTEM }
+enum class NotifyType { LIKE, COMMENT, COLLECT, FOLLOW, SYSTEM }

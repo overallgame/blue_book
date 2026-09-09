@@ -11,8 +11,11 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     @Query("SELECT c FROM Comment c WHERE c.videoId = :videoId AND c.parentId IS NULL AND c.status = 'NORMAL' AND (:cursorId IS NULL OR c.id < :cursorId) ORDER BY c.id DESC")
     fun findRootComments(videoId: Long, cursorId: Long?, pageable: Pageable): List<Comment>
 
-    @Query("SELECT c FROM Comment c WHERE c.parentId = :parentId AND c.status = 'NORMAL' AND (:cursorId IS NULL OR c.id < :cursorId) ORDER BY c.id ASC")
+    @Query("SELECT c FROM Comment c WHERE c.parentId = :parentId AND c.status = 'NORMAL' AND (:cursorId IS NULL OR c.id > :cursorId) ORDER BY c.id ASC")
     fun findReplies(parentId: Long, cursorId: Long?, pageable: Pageable): List<Comment>
+
+    @Query("SELECT c.parentId, COUNT(c) FROM Comment c WHERE c.parentId IN :parentIds AND c.status = 'NORMAL' GROUP BY c.parentId")
+    fun countByParentIds(parentIds: Collection<Long>): List<Array<Any>>
 
     fun findByIdAndStatus(id: Long, status: CommentStatus): Comment?
 

@@ -3,11 +3,14 @@ package com.example.bluebook.video.service
 import com.example.bluebook.auth.entity.User
 import com.example.bluebook.auth.repository.UserRepository
 import com.example.bluebook.common.BusinessException
+import com.example.bluebook.common.ForbiddenException
+import com.example.bluebook.common.assetUrl
 import com.example.bluebook.common.VideoNotFoundException
 import com.example.bluebook.interaction.repository.VideoCollectRepository
 import com.example.bluebook.interaction.repository.VideoLikeRepository
 import com.example.bluebook.notification.entity.NotifyType
 import com.example.bluebook.notification.service.NotificationService
+import com.example.bluebook.user.repository.UserFollowRepository
 import com.example.bluebook.video.dto.*
 import com.example.bluebook.video.entity.Video
 import com.example.bluebook.video.entity.VideoStatus
@@ -27,6 +30,7 @@ class VideoService(
     private val collectRepository: VideoCollectRepository,
     private val redisTemplate: StringRedisTemplate,
     private val notificationService: NotificationService,
+    private val followRepository: UserFollowRepository,
     private val rabbitTemplate: RabbitTemplate? = null
 ) {
     fun feed(cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
@@ -104,7 +108,7 @@ class VideoService(
             if (userId != video.uploaderId) {
                 notificationService.create(
                     receiverId = video.uploaderId, senderId = userId,
-                    type = NotifyType.LIKE,
+                    type = NotifyType.COLLECT,
                     videoId = videoId,
                     content = "收藏了你的视频"
                 )
@@ -120,29 +124,34 @@ class VideoService(
         return video.transcodeStatus.name
     }
 
+    /** 删除视频（含 FAILED 清理）：仅发布者可删，软删 + 清理点赞/收藏记录 */
+    @Transactional
+    fun deleteVideo(userId: Long, videoId: Long) {
+        val video = videoRepository.findById(videoId).orElseThrow { VideoNotFoundException() }
+        if (video.uploaderId != userId) throw ForbiddenException()
+        video.status = VideoStatus.DELETED
+        videoRepository.save(video)
+        likeRepository.deleteByVideoId(videoId)
+        collectRepository.deleteByVideoId(videoId)
+    }
+
     fun getLikedVideos(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
-        val likes = likeRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-        val videoIds = likes.map { it.videoId }
-        val videos = videoRepository.findAllById(videoIds)
-            .filter { it.status == VideoStatus.PUBLISHED }
+        val videos = videoRepository.findLikedVideosByUser(userId, cursorId, pageable)
         val items = videos.map { v -> toDto(v, currentUserId) }
         return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
 
     fun getCollectedVideos(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
-        val collects = collectRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-        val videoIds = collects.map { it.videoId }
-        val videos = videoRepository.findAllById(videoIds)
-            .filter { it.status == VideoStatus.PUBLISHED }
+        val videos = videoRepository.findCollectedVideosByUser(userId, cursorId, pageable)
         val items = videos.map { v -> toDto(v, currentUserId) }
         return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
 
     fun getUserVideos(uploaderId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
-        val videos = videoRepository.findByUploaderIdAndStatus(uploaderId, VideoStatus.PUBLISHED, pageable)
+        val videos = videoRepository.findUserVideosCursor(uploaderId, cursorId, pageable)
         val items = videos.map { v -> toDto(v, currentUserId) }
         return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
@@ -151,14 +160,15 @@ class VideoService(
         val uploader = userRepository.findById(video.uploaderId).orElse(null)
         val isLike = currentUserId?.let { likeRepository.existsByUserIdAndVideoId(it, video.id) } ?: false
         val isCollect = currentUserId?.let { collectRepository.existsByUserIdAndVideoId(it, video.id) } ?: false
+        val isFollowed = currentUserId?.let { followRepository.existsByFollowerIdAndFolloweeId(it, video.uploaderId) } ?: false
         return Video2Dto(
             videoId = video.id, uploaderId = video.uploaderId,
-            uploaderNickname = uploader?.nickname ?: "", uploaderAvatar = uploader?.avatarUrl ?: "",
-            title = video.title ?: "", description = video.description ?: "", coverUrl = video.coverUrl ?: "",
-            videoUrl = video.hlsUrl ?: video.originalUrl ?: "",
+            uploaderNickname = uploader?.nickname ?: "", uploaderAvatar = assetUrl(uploader?.avatarUrl, "upload/images") ?: "",
+            title = video.title ?: "", description = video.description ?: "", coverUrl = assetUrl(video.coverUrl, "hls") ?: "",
+            videoUrl = video.hlsUrl?.let { assetUrl(it, "hls") } ?: assetUrl(video.originalUrl, "upload/videos") ?: "",
             likeCount = video.likeCount, collectCount = video.collectCount,
             viewCount = video.viewCount, commentCount = video.commentCount,
-            isLike = isLike, isCollect = isCollect
+            isLike = isLike, isCollect = isCollect, isFollowed = isFollowed
         )
     }
 }

@@ -14,5 +14,7 @@ data class Video2Dto(
     val viewCount: Long,
     val commentCount: Long,
     val isLike: Boolean,
-    val isCollect: Boolean
+    val isCollect: Boolean,
+    /** 当前登录用户是否已关注该作者（未登录为 false） */
+    val isFollowed: Boolean = false
 )

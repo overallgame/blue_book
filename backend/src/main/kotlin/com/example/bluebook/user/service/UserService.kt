@@ -1,12 +1,14 @@
 package com.example.bluebook.user.service
 
 import com.example.bluebook.auth.entity.User
+import com.example.bluebook.common.assetUrl
 import com.example.bluebook.auth.repository.UserRepository
 import com.example.bluebook.common.BusinessException
 import com.example.bluebook.common.UnauthorizedException
 import com.example.bluebook.user.dto.*
 import com.example.bluebook.user.entity.UserFollow
 import com.example.bluebook.user.repository.UserFollowRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -101,27 +103,39 @@ class UserService(
     }
 
     fun followers(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): UserV2FollowListResponseDto {
-        val followerIds = followRepository.findFollowerIdsByFolloweeId(userId)
-        val users = userRepository.findAllById(followerIds)
-        val items = users.map { u ->
+        val pageable = PageRequest.of(0, size)
+        val followerIds = followRepository.findFollowerIdsByFolloweeId(userId, cursorId, pageable)
+        val userMap = userRepository.findAllById(followerIds).associateBy { it.id }
+        val items = followerIds.mapNotNull { id ->
+            val u = userMap[id] ?: return@mapNotNull null
             val isFollowed = currentUserId?.let {
                 followRepository.existsByFollowerIdAndFolloweeId(it, u.id)
             } ?: false
             toProfileDto(u, isFollowed)
         }
-        return UserV2FollowListResponseDto(items = items, nextCursorId = items.lastOrNull()?.id)
+        return UserV2FollowListResponseDto(
+            items = items,
+            nextCursorId = items.lastOrNull()?.id,
+            hasMore = followerIds.size == size
+        )
     }
 
     fun following(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): UserV2FollowListResponseDto {
-        val followeeIds = followRepository.findFolloweeIdsByFollowerId(userId)
-        val users = userRepository.findAllById(followeeIds)
-        val items = users.map { u ->
+        val pageable = PageRequest.of(0, size)
+        val followeeIds = followRepository.findFolloweeIdsByFollowerId(userId, cursorId, pageable)
+        val userMap = userRepository.findAllById(followeeIds).associateBy { it.id }
+        val items = followeeIds.mapNotNull { id ->
+            val u = userMap[id] ?: return@mapNotNull null
             val isFollowed = currentUserId?.let {
                 followRepository.existsByFollowerIdAndFolloweeId(it, u.id)
             } ?: false
             toProfileDto(u, isFollowed)
         }
-        return UserV2FollowListResponseDto(items = items, nextCursorId = items.lastOrNull()?.id)
+        return UserV2FollowListResponseDto(
+            items = items,
+            nextCursorId = items.lastOrNull()?.id,
+            hasMore = followeeIds.size == size
+        )
     }
 
     private fun findUser(userId: Long) =
@@ -131,8 +145,8 @@ class UserService(
         id = user.id,
         phone = user.phone.replaceRange(3, 7, "****"),
         nickname = user.nickname,
-        avatar = user.avatarUrl,
-        backgroundImage = user.backgroundUrl,
+        avatar = assetUrl(user.avatarUrl, "upload/images"),
+        backgroundImage = assetUrl(user.backgroundUrl, "upload/images"),
         bio = user.bio,
         gender = user.gender,
         birthday = user.birthday?.toString(),
@@ -146,8 +160,8 @@ class UserService(
     private fun toProfileDto(user: User, isFollowed: Boolean) = UserV2ProfileDto(
         id = user.id,
         nickname = user.nickname,
-        avatar = user.avatarUrl,
-        backgroundImage = user.backgroundUrl,
+        avatar = assetUrl(user.avatarUrl, "upload/images"),
+        backgroundImage = assetUrl(user.backgroundUrl, "upload/images"),
         bio = user.bio,
         gender = user.gender,
         birthday = user.birthday?.toString(),

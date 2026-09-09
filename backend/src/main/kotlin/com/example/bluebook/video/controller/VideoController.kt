@@ -41,6 +41,12 @@ class VideoController(private val videoService: VideoService) {
     fun publish(@RequestBody request: PublishRequest): ApiResponse<Video2Dto> =
         ApiResponse.ok(videoService.publish(currentUserId(), request))
 
+    @DeleteMapping("/api/v2/videos/{id}")
+    fun deleteVideo(@PathVariable id: Long): ApiResponse<Any> {
+        videoService.deleteVideo(currentUserId(), id)
+        return ApiResponse.ok()
+    }
+
     @PostMapping("/api/v2/videos/{id}/like")
     fun likeVideo(@PathVariable id: Long, @RequestParam liked: Boolean): ApiResponse<Any> {
         videoService.likeVideo(currentUserId(), id, liked)

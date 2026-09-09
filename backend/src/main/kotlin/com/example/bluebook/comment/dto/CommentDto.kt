@@ -13,5 +13,6 @@ data class CommentDto(
     val parentId: Long? = null,
     val replyToUserId: Long? = null,
     val replyToNickname: String? = null,
+    val replyCount: Int = 0,
     val replies: List<CommentDto> = emptyList()
 )

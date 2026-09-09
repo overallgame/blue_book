@@ -77,6 +77,17 @@ class ChunkUploadService(
         val session = uploadSessionRepository.findById(uploadId)
             .orElseThrow { BusinessException(13002, "上传会话不存在") }
 
+        // 秒传命中（skipUpload）：文件此前已合并完成且保留在 videos 目录，
+        // 直接按 uploadId 反查已存文件返回相对路径，避免重复上传/合并
+        if (session.status == UploadStatus.DONE) {
+            val ext = session.fileName?.substringAfterLast('.') ?: "mp4"
+            val fileName = "${session.id}.$ext"
+            val matched = File("$storagePath/videos").listFiles()
+                ?.filter { it.isDirectory }
+                ?.firstOrNull { dir -> File(dir, fileName).exists() }
+            if (matched != null) return "${matched.name}/$fileName"
+        }
+
         val totalChunks = session.totalChunks ?: throw ChunkMissingException()
         val uploadedChunks = getProgress(uploadId)
         if (uploadedChunks.size != totalChunks) {

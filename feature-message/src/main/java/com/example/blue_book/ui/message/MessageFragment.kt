@@ -13,9 +13,16 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blue_book.feature_message.databinding.MessagePageBinding
+import com.example.blue_book.provider.IVideoProvider
+import com.example.blue_book.router.ExtraKeys
+import com.example.blue_book.router.RoutePath
+import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+/** 消息中心：真实通知列表；点击标记已读并跳转（关注→作者主页，互动→对应视频） */
 @AndroidEntryPoint
 class MessageFragment : Fragment() {
 
@@ -42,24 +49,63 @@ class MessageFragment : Fragment() {
 	}
 
 	private fun initRecyclerView() {
-		adapter = MessageAdapter { item ->
-			viewModel.dispatch(MessageIntent.MarkRead(item.id))
-			when (item.type) {
-				MessageType.Follow -> Toast.makeText(requireContext(), "关注详情（待实现）", Toast.LENGTH_SHORT).show()
-				MessageType.Like, MessageType.Comment -> {
-					// 后端 API 就绪后跳转到对应视频
-					Toast.makeText(requireContext(), "跳转到视频（待实现）", Toast.LENGTH_SHORT).show()
-				}
-				MessageType.System -> { /* 系统消息，已读即可 */ }
-			}
-		}
+		adapter = MessageAdapter { item -> handleItemClick(item) }
 		binding.messageRecycleView.layoutManager = LinearLayoutManager(requireContext())
 		binding.messageRecycleView.adapter = adapter
+		// 触底加载更多
+		binding.messageRecycleView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+			override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+				super.onScrolled(recyclerView, dx, dy)
+				val state = viewModel.uiState.value
+				if (!recyclerView.canScrollVertically(1) && !state.isLoading && state.hasMore) {
+					viewModel.dispatch(MessageIntent.LoadMore)
+				}
+			}
+		})
 	}
 
 	private fun initSwipeRefresh() {
 		binding.messageSwipeRefreshLayout.setOnRefreshListener {
 			viewModel.dispatch(MessageIntent.Refresh)
+		}
+	}
+
+	/** 点击：标记已读并跳转 */
+	private fun handleItemClick(item: MessageItem) {
+		viewModel.dispatch(MessageIntent.MarkRead(item.id))
+		when (item.type) {
+			MessageType.Follow -> {
+				if (item.senderId > 0) {
+					TheRouter.build(RoutePath.USER_PROFILE)
+						.withLong(ExtraKeys.EXTRA_USER_ID, item.senderId)
+						.navigation(requireContext())
+				}
+			}
+
+			MessageType.Like, MessageType.Comment, MessageType.Collect -> {
+				val videoId = item.videoId
+				if (videoId != null && videoId > 0) {
+					openVideo(videoId)
+				}
+			}
+
+			MessageType.System -> Unit
+		}
+	}
+
+	/** 按 id 拉取视频卡后进入播放页（首条为该视频） */
+	private fun openVideo(videoId: Long) {
+		viewLifecycleOwner.lifecycleScope.launch {
+			val card = withContext(Dispatchers.IO) {
+				TheRouter.get(IVideoProvider::class.java)?.fetchVideoById(videoId)?.getOrNull()
+			}
+			if (card != null) {
+				TheRouter.build(RoutePath.VIDEO)
+					.withParcelable(ExtraKeys.EXTRA_VIDEO, card)
+					.navigation(requireContext())
+			} else {
+				Toast.makeText(requireContext(), "视频不存在或已删除", Toast.LENGTH_SHORT).show()
+			}
 		}
 	}
 
@@ -78,8 +124,9 @@ class MessageFragment : Fragment() {
 				launch {
 					viewModel.uiEffect.collect { effect ->
 						when (effect) {
-							is MessageEffect.ShowToast -> Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
-							is MessageEffect.NavigateToVideo -> Toast.makeText(requireContext(), "跳转视频 ${effect.aid}", Toast.LENGTH_SHORT).show()
+							is MessageEffect.ShowToast -> Toast.makeText(
+								requireContext(), effect.message, Toast.LENGTH_SHORT
+							).show()
 						}
 					}
 				}

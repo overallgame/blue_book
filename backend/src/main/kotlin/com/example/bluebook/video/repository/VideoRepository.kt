@@ -52,6 +52,13 @@ interface VideoRepository : JpaRepository<Video, Long> {
     """)
     fun findFollowingFeedVideos(userId: Long, cursorId: Long?, pageable: Pageable): List<Video>
 
+    /** 某作者已发布作品的获赞与收藏合计（[0]=点赞合计，[1]=收藏合计） */
+    @Query("""
+        SELECT COALESCE(SUM(v.likeCount), 0), COALESCE(SUM(v.collectCount), 0)
+        FROM Video v WHERE v.uploaderId = :uploaderId AND v.status = 'PUBLISHED'
+    """)
+    fun sumInteractionsByUploader(uploaderId: Long): Array<Any>
+
     @Modifying
     @Query("UPDATE Video v SET v.likeCount = v.likeCount + :delta WHERE v.id = :id")
     fun incrementLikeCount(id: Long, delta: Long)
@@ -63,6 +70,10 @@ interface VideoRepository : JpaRepository<Video, Long> {
     @Modifying
     @Query("UPDATE Video v SET v.commentCount = v.commentCount + :delta WHERE v.id = :id")
     fun incrementCommentCount(id: Long, delta: Long)
+
+    @Modifying
+    @Query("UPDATE Video v SET v.viewCount = v.viewCount + :delta WHERE v.id = :id")
+    fun incrementViewCount(id: Long, delta: Long)
 
     @Query("SELECT v FROM Video v WHERE v.status = 'PUBLISHED' AND v.transcodeStatus = 'DONE' AND (v.title LIKE %:keyword% OR v.description LIKE %:keyword%) AND (:cursorId IS NULL OR v.id < :cursorId) ORDER BY v.id DESC")
     fun searchVideos(keyword: String, cursorId: Long?, pageable: Pageable): List<Video>

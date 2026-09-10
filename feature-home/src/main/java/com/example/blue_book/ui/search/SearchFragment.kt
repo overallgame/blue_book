@@ -8,13 +8,16 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.blue_book.data.SearchHistoryStore
+import com.example.blue_book.data.remote.SearchRemoteDataSource
 import com.example.blue_book.feature_home.R
 import com.example.blue_book.ui.home.HomeActivity
 import com.example.blue_book.feature_home.databinding.SearchPageBinding
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -25,6 +28,9 @@ class SearchFragment : Fragment() {
 
 	@Inject
 	lateinit var historyStore: SearchHistoryStore
+
+	@Inject
+	lateinit var searchRemote: SearchRemoteDataSource
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		_binding = SearchPageBinding.inflate(inflater, container, false)
@@ -76,7 +82,15 @@ class SearchFragment : Fragment() {
 
 	private fun renderStaticGroups() {
 		SUGGESTED.forEach { term -> binding.searchSuggestedGroup.addChip(term) { performSearch(term) } }
-		HOT.forEach { term -> binding.searchHotGroup.addChip(term) { performSearch(term) } }
+		// 热搜优先用后端数据，失败/为空时回退静态词
+		viewLifecycleOwner.lifecycleScope.launch {
+			val hot = withContext(Dispatchers.IO) { searchRemote.hotSearches().getOrNull() }
+				?.filter { it.isNotBlank() }
+				.orEmpty()
+			val terms = hot.ifEmpty { HOT }
+			binding.searchHotGroup.removeAllViews()
+			terms.take(10).forEach { term -> binding.searchHotGroup.addChip(term) { performSearch(term) } }
+		}
 	}
 
 	private fun ChipGroup.addChip(text: String, onClick: () -> Unit) {

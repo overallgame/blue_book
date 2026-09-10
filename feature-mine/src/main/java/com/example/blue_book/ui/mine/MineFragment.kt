@@ -309,8 +309,7 @@ class MineFragment : Fragment() {
 							binding.mineIntroduction.text = user.introduction.orEmpty()
 							binding.mineFocusNumber.text = user.followingCount.toString()
 							binding.mineFanNumber.text = user.followerCount.toString()
-							// TODO(获赞与收藏): 后端暂无按 uploader 聚合的获赞/收藏计数接口，待提供后替换
-							binding.mineRevLoveNumber.text = "0"
+							binding.mineRevLoveNumber.text = (user.likedCount + user.collectedCount).toCountText()
 						}
 						binding.mineSwipeRefreshLayout.isRefreshing = false
 					}
@@ -338,4 +337,11 @@ class MineFragment : Fragment() {
 		super.onDestroyView()
 		_binding = null
 	}
+}
+
+/** 统计数字格式化：1.2k / 3.4w */
+private fun Long.toCountText(): String = when {
+	this >= 10000 -> "%.1fw".format(this / 10000.0)
+	this >= 1000 -> "%.1fk".format(this / 1000.0)
+	else -> toString()
 }

@@ -13,5 +13,8 @@ data class UserV2MeDto(
     val region: String?,
     val school: String?,
     val followerCount: Long,
-    val followingCount: Long
+    val followingCount: Long,
+    /** 获赞与收藏合计（我的页统计） */
+    val likedCount: Long = 0,
+    val collectedCount: Long = 0
 )

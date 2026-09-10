@@ -99,4 +99,9 @@ interface VideoApi {
 	suspend fun deleteVideo(
 		@Path("videoId") videoId: Long
 	): Response<ApiResponse<Any>>
+
+	@POST("/api/v2/videos/{videoId}/view")
+	suspend fun reportView(
+		@Path("videoId") videoId: Long
+	): Response<ApiResponse<Any>>
 }

@@ -56,7 +56,17 @@ class VideoViewModel @Inject constructor(
 			is VideoIntent.ToggleLike -> toggleLike(intent.video)
 			is VideoIntent.ToggleCollect -> toggleCollect(intent.video)
 			is VideoIntent.ToggleFollow -> toggleFollow(intent.video)
+			is VideoIntent.ReportView -> reportView(intent.aid)
 		}
+	}
+
+	/** 已上报过播放量的视频 id（会话内去重） */
+	private val reportedViewAids = mutableSetOf<Long>()
+
+	/** 播放量上报：静默失败，不打扰播放体验 */
+	private suspend fun reportView(aid: Long) {
+		if (aid <= 0L || !reportedViewAids.add(aid)) return
+		runCatching { videoRepository.reportView(aid) }
 	}
 
 	/**

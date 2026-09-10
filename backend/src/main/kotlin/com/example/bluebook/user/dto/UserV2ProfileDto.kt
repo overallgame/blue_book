@@ -13,5 +13,8 @@ data class UserV2ProfileDto(
     val school: String?,
     val followerCount: Long,
     val followingCount: Long,
-    val isFollowed: Boolean
+    val isFollowed: Boolean,
+    /** 获赞与收藏合计（作者主页统计） */
+    val likedCount: Long = 0,
+    val collectedCount: Long = 0
 )

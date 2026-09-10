@@ -1,7 +1,7 @@
 package com.example.bluebook.notification.controller
 
 import com.example.bluebook.common.ApiResponse
-import com.example.bluebook.notification.entity.Notification
+import com.example.bluebook.notification.dto.NotificationListDto
 import com.example.bluebook.notification.service.NotificationService
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -16,7 +16,7 @@ class NotificationController(
 
     @GetMapping
     fun list(@RequestParam(required = false) cursorId: Long?,
-             @RequestParam(defaultValue = "20") size: Int): ApiResponse<List<Notification>> =
+             @RequestParam(defaultValue = "20") size: Int): ApiResponse<NotificationListDto> =
         ApiResponse.ok(notificationService.list(currentUserId(), cursorId, size))
 
     @GetMapping("/unread-count")

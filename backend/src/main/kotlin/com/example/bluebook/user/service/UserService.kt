@@ -8,6 +8,7 @@ import com.example.bluebook.common.UnauthorizedException
 import com.example.bluebook.user.dto.*
 import com.example.bluebook.user.entity.UserFollow
 import com.example.bluebook.user.repository.UserFollowRepository
+import com.example.bluebook.video.repository.VideoRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -16,11 +17,21 @@ import java.time.LocalDate
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val followRepository: UserFollowRepository
+    private val followRepository: UserFollowRepository,
+    private val videoRepository: VideoRepository
 ) {
     fun me(userId: Long): UserV2MeDto {
         val user = findUser(userId)
-        return toMeDto(user)
+        val (liked, collected) = interactionSum(userId)
+        return toMeDto(user, liked, collected)
+    }
+
+    /** 获赞与收藏合计：[0]=点赞合计，[1]=收藏合计 */
+    private fun interactionSum(uploaderId: Long): Pair<Long, Long> {
+        val row = videoRepository.sumInteractionsByUploader(uploaderId).firstOrNull() as? Array<*>
+        val liked = (row?.getOrNull(0) as? Number)?.toLong() ?: 0L
+        val collected = (row?.getOrNull(1) as? Number)?.toLong() ?: 0L
+        return liked to collected
     }
 
     @Transactional
@@ -64,7 +75,8 @@ class UserService(
         request.school?.let { user.school = it }
         request.backgroundImage?.let { user.backgroundUrl = it }
         userRepository.save(user)
-        return toMeDto(user)
+        val (liked, collected) = interactionSum(userId)
+        return toMeDto(user, liked, collected)
     }
 
     fun profile(userId: Long, currentUserId: Long?): UserV2ProfileDto {
@@ -73,7 +85,8 @@ class UserService(
         val isFollowed = currentUserId?.let {
             followRepository.existsByFollowerIdAndFolloweeId(it, userId)
         } ?: false
-        return toProfileDto(user, isFollowed)
+        val (liked, collected) = interactionSum(userId)
+        return toProfileDto(user, isFollowed, liked, collected)
     }
 
     @Transactional
@@ -141,7 +154,7 @@ class UserService(
     private fun findUser(userId: Long) =
         userRepository.findById(userId).orElseThrow { UnauthorizedException() }
 
-    private fun toMeDto(user: User) = UserV2MeDto(
+    private fun toMeDto(user: User, liked: Long = 0, collected: Long = 0) = UserV2MeDto(
         id = user.id,
         phone = user.phone.replaceRange(3, 7, "****"),
         nickname = user.nickname,
@@ -154,10 +167,17 @@ class UserService(
         region = user.region,
         school = user.school,
         followerCount = user.followerCount,
-        followingCount = user.followingCount
+        followingCount = user.followingCount,
+        likedCount = liked,
+        collectedCount = collected
     )
 
-    private fun toProfileDto(user: User, isFollowed: Boolean) = UserV2ProfileDto(
+    private fun toProfileDto(
+        user: User,
+        isFollowed: Boolean,
+        liked: Long = 0,
+        collected: Long = 0
+    ) = UserV2ProfileDto(
         id = user.id,
         nickname = user.nickname,
         avatar = assetUrl(user.avatarUrl, "upload/images"),
@@ -170,6 +190,8 @@ class UserService(
         school = user.school,
         followerCount = user.followerCount,
         followingCount = user.followingCount,
-        isFollowed = isFollowed
+        isFollowed = isFollowed,
+        likedCount = liked,
+        collectedCount = collected
     )
 }

@@ -11,17 +11,19 @@ sealed interface MessageIntent : UiIntent {
 	data class MarkRead(val id: Long) : MessageIntent
 }
 
-enum class MessageType { Follow, Like, Comment, System }
+enum class MessageType { Follow, Like, Comment, Collect, System }
 
 data class MessageItem(
 	val id: Long,
 	val type: MessageType,
+	val senderId: Long = 0,
 	val avatar: String = "",
 	val nickname: String = "",
 	val content: String = "",
 	val time: Long = 0L,
 	val isRead: Boolean = false,
-	val thumbUrl: String = ""
+	/** 关联视频（点赞/评论/收藏类通知可跳转播放） */
+	val videoId: Long? = null
 )
 
 data class MessageUiState(
@@ -29,10 +31,12 @@ data class MessageUiState(
 	val isLoading: Boolean = false,
 	val isEmpty: Boolean = true,
 	val unreadCount: Int = 0,
-	val message: String? = null
+	val message: String? = null,
+	val cursorId: Long? = null,
+	val hasMore: Boolean = true,
+	val pageSize: Int = 20
 ) : UiState
 
 sealed interface MessageEffect : UiEffect {
 	data class ShowToast(val message: String) : MessageEffect
-	data class NavigateToVideo(val aid: Long) : MessageEffect
 }

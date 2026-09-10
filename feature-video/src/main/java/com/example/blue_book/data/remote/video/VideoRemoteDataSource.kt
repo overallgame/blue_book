@@ -53,4 +53,8 @@ class VideoRemoteDataSource @Inject constructor(
 	/** 删除视频（含 FAILED 清理）：仅发布者本人可调用 */
 	suspend fun deleteVideo(videoId: Long): Result<Unit> =
 		apiGateway.apiUnitResult { api.deleteVideo(videoId) }
+
+	/** 播放量上报：开始播放时调用 */
+	suspend fun reportView(videoId: Long): Result<Unit> =
+		apiGateway.apiUnitResult { api.reportView(videoId) }
 }

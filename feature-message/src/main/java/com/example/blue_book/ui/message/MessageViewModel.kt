@@ -1,49 +1,104 @@
 package com.example.blue_book.ui.message
 
+import com.example.blue_book.data.dto.NotificationDto
+import com.example.blue_book.data.remote.MessageRemoteDataSource
 import com.example.blue_book.udf.UdfViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+/** 消息中心：真实通知数据（游标分页 + 单条已读 + 未读数） */
 @HiltViewModel
 class MessageViewModel @Inject constructor(
+	private val remote: MessageRemoteDataSource
 ) : UdfViewModel<MessageIntent, MessageUiState, MessageEffect>(MessageUiState()) {
 
 	override suspend fun handleIntent(intent: MessageIntent) {
 		when (intent) {
-			MessageIntent.Init -> initMessages()
+			MessageIntent.Init -> refresh()
 			MessageIntent.Refresh -> refresh()
 			MessageIntent.LoadMore -> loadMore()
 			is MessageIntent.MarkRead -> markRead(intent.id)
 		}
 	}
 
-	private suspend fun initMessages() {
-		setState { copy(isLoading = false, isEmpty = false, unreadCount = 3, items = mockMessages()) }
-	}
-
 	private suspend fun refresh() {
-		setState { copy(isLoading = false, items = mockMessages(), unreadCount = 3) }
+		runResult(
+			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
+			call = { remote.list(cursorId = null, size = uiState.value.pageSize) },
+			onSuccess = { dto ->
+				val items = dto.items.map { it.toUi() }
+				setState {
+					copy(
+						items = items,
+						isLoading = false,
+						isEmpty = items.isEmpty(),
+						unreadCount = items.count { !it.isRead },
+						cursorId = items.lastOrNull()?.id,
+						hasMore = dto.hasMore
+					)
+				}
+				// 拉取全局未读数（含未加载分页）
+				remote.unreadCount().onSuccess { count ->
+					setState { copy(unreadCount = count.toInt()) }
+				}
+			},
+			onFailure = { e ->
+				setState { copy(isLoading = false, message = e.message ?: "加载失败") }
+			}
+		)
 	}
 
 	private suspend fun loadMore() {
-		// 后端 API 就绪后接入分页
+		val state = uiState.value
+		if (state.isLoading || !state.hasMore) return
+		runResult(
+			onStart = { setState { copy(isLoading = true, message = null) } },
+			call = { remote.list(cursorId = state.cursorId, size = state.pageSize) },
+			onSuccess = { dto ->
+				val mapped = dto.items.map { it.toUi() }
+				setState {
+					copy(
+						items = items + mapped,
+						isLoading = false,
+						cursorId = mapped.lastOrNull()?.id ?: cursorId,
+						hasMore = dto.hasMore
+					)
+				}
+			},
+			onFailure = { e ->
+				setState { copy(isLoading = false, message = e.message ?: "加载失败") }
+			}
+		)
 	}
 
-	private fun markRead(id: Long) {
+	/** 单条已读：乐观更新，接口失败静默（下次刷新自动纠正） */
+	private suspend fun markRead(id: Long) {
+		val target = uiState.value.items.firstOrNull { it.id == id } ?: return
+		if (target.isRead) return
 		setState {
-			val updated = items.map { if (it.id == id) it.copy(isRead = true) else it }
-			copy(items = updated, unreadCount = updated.count { !it.isRead })
+			copy(
+				items = items.map { if (it.id == id) it.copy(isRead = true) else it },
+				unreadCount = (unreadCount - 1).coerceAtLeast(0)
+			)
 		}
+		remote.markRead(id)
 	}
 
-	/** 本地 mock 数据，后端 API 就绪后替换 */
-	private fun mockMessages() = listOf(
-		MessageItem(1, MessageType.Follow, nickname = "摄影达人", content = "关注了你", time = System.currentTimeMillis() - 60_000),
-		MessageItem(2, MessageType.Like, nickname = "旅行者小张", content = "赞了你的视频", time = System.currentTimeMillis() - 300_000, thumbUrl = "thumb"),
-		MessageItem(3, MessageType.Comment, nickname = "美食家小王", content = "评论了你的视频：这个地方我也去过！", time = System.currentTimeMillis() - 3_600_000),
-		MessageItem(4, MessageType.System, content = "欢迎来到小蓝书，开始你的创作之旅吧", time = System.currentTimeMillis() - 86_400_000, isRead = true),
-		MessageItem(5, MessageType.Like, nickname = "音乐爱好者", content = "赞了你的视频", time = System.currentTimeMillis() - 172_800_000, isRead = true),
-		MessageItem(6, MessageType.Follow, nickname = "画师小林", content = "关注了你", time = System.currentTimeMillis() - 259_200_000, isRead = true),
-		MessageItem(7, MessageType.Comment, nickname = "程序员老李", content = "评论了你的视频：技术干货，收藏了", time = System.currentTimeMillis() - 604_800_000, isRead = true)
+	private fun NotificationDto.toUi(): MessageItem = MessageItem(
+		id = id,
+		type = when (type.uppercase()) {
+			"FOLLOW" -> MessageType.Follow
+			"LIKE" -> MessageType.Like
+			"COLLECT" -> MessageType.Collect
+			"COMMENT" -> MessageType.Comment
+			else -> MessageType.System
+		},
+		senderId = senderId,
+		avatar = senderAvatar,
+		nickname = senderNickname,
+		content = content,
+		time = createdAt,
+		isRead = isRead,
+		videoId = videoId
 	)
 }

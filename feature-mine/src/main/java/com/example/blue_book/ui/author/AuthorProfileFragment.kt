@@ -155,8 +155,7 @@ class AuthorProfileFragment : Fragment() {
 							binding.authorNickname.text = profile.nickname ?: "用户"
 							binding.authorFocusNumber.text = profile.followingCount.toString()
 							binding.authorFanNumber.text = profile.followerCount.toString()
-							// TODO(获赞与收藏): 后端暂无按 uploader 聚合的获赞/收藏计数接口，待提供后替换
-							binding.authorRevLoveNumber.text = "0"
+							binding.authorRevLoveNumber.text = (profile.likedCount + profile.collectedCount).toCountText()
 							binding.authorIntroduction.text = profile.introduction.orEmpty()
 						}
 						bindFollowButton(state)
@@ -208,4 +207,11 @@ class AuthorProfileFragment : Fragment() {
 		super.onDestroyView()
 		_binding = null
 	}
+}
+
+/** 统计数字格式化：1.2k / 3.4w */
+private fun Long.toCountText(): String = when {
+	this >= 10000 -> "%.1fw".format(this / 10000.0)
+	this >= 1000 -> "%.1fk".format(this / 1000.0)
+	else -> toString()
 }

@@ -16,6 +16,9 @@ data class UserAccount(
 	val isFollowed: Boolean = false,
 	/** 粉丝数 / 关注数（我的页统计展示） */
 	val followerCount: Long = 0,
-	val followingCount: Long = 0
+	val followingCount: Long = 0,
+	/** 获赞与收藏合计（我的页/作者主页统计展示） */
+	val likedCount: Long = 0,
+	val collectedCount: Long = 0
 )
 

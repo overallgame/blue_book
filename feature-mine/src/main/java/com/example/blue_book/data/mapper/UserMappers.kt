@@ -31,7 +31,9 @@ fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
 		background = abs(backgroundImage),
 		isFollowed = isFollowed,
 		followerCount = followerCount,
-		followingCount = followingCount
+		followingCount = followingCount,
+		likedCount = likedCount,
+		collectedCount = collectedCount
 	)
 }
 
@@ -60,6 +62,8 @@ fun UserV2MeDto.toDomain(): UserAccount {
 		school = n(school),
 		background = abs(backgroundImage),
 		followerCount = followerCount,
-		followingCount = followingCount
+		followingCount = followingCount,
+		likedCount = likedCount,
+		collectedCount = collectedCount
 	)
 }

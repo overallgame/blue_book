@@ -20,6 +20,8 @@ android {
 dependencies {
     kapt("cn.therouter:apt:1.3.0")
     implementation(project(":lib-base"))
+    implementation(project(":core-network"))
+    implementation("com.github.bumptech.glide:glide:4.13.2")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.fragment:fragment-ktx:1.5.0")
     implementation("com.google.dagger:hilt-android:2.48.1")

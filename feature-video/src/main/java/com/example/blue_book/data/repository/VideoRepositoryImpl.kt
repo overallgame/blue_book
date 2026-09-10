@@ -17,6 +17,11 @@ class VideoRepositoryImpl @Inject constructor(
 		return result.map { it.items.toDomainVideos() }
 	}
 
+	override suspend fun fetchVideoById(videoId: Long): Result<Video> {
+		val result = remote.getVideoDto(videoId)
+		return result.map { listOf(it).toDomainVideos().first() }
+	}
+
 	override suspend fun fetchFollowingFeed(cursorId: Long?, size: Int?): Result<List<Video>> {
 		val result = remote.feedFollowing(cursorId, size)
 		return result.map { it.items.toDomainVideos() }
@@ -62,4 +67,7 @@ class VideoRepositoryImpl @Inject constructor(
 
 	override suspend fun deleteVideo(videoId: Long): Result<Unit> =
 		remote.deleteVideo(videoId)
+
+	override suspend fun reportView(videoId: Long): Result<Unit> =
+		remote.reportView(videoId)
 }

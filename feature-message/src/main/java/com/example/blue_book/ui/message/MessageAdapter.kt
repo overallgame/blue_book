@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.blue_book.feature_message.R
 
 class MessageAdapter(
@@ -46,9 +47,18 @@ class MessageAdapter(
 				MessageType.Follow -> R.drawable.ic_msg_follow
 				MessageType.Like -> R.drawable.ic_msg_like
 				MessageType.Comment -> R.drawable.ic_msg_comment
+				MessageType.Collect -> R.drawable.ic_msg_collect
 				MessageType.System -> R.drawable.ic_message_empty
 			}
 			typeIcon.setImageResource(iconRes)
+
+			// 发送者头像（系统消息不展示）
+			if (item.type != MessageType.System && item.avatar.isNotBlank()) {
+				Glide.with(itemView.context)
+					.load(item.avatar)
+					.centerCrop()
+					.into(avatar)
+			}
 
 			// 系统消息隐藏头像和时间
 			if (item.type == MessageType.System) {

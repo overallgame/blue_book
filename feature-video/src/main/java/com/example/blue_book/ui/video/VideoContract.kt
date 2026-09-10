@@ -23,6 +23,9 @@ sealed interface VideoIntent : UiIntent {
 	data class ToggleCollect(val video: VideoCardInfo) : VideoIntent
 	data class ToggleFollow(val video: VideoCardInfo) : VideoIntent
 
+	/** 播放量上报：滑动到某视频开始播放时触发（每视频每会话仅上报一次） */
+	data class ReportView(val aid: Long) : VideoIntent
+
 	/**
 	 * 从来源列表进入播放页：首屏为用户点击的那条视频，
 	 * 后续 loadMore 按 [VideoUiState.Mode] 用来源游标续拉

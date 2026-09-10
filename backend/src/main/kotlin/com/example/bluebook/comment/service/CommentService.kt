@@ -10,6 +10,8 @@ import com.example.bluebook.comment.repository.CommentRepository
 import com.example.bluebook.common.CommentNotFoundException
 import com.example.bluebook.common.assetUrl
 import com.example.bluebook.common.ForbiddenException
+import com.example.bluebook.interaction.entity.CommentLike
+import com.example.bluebook.interaction.repository.CommentLikeRepository
 import com.example.bluebook.notification.entity.NotifyType
 import com.example.bluebook.notification.service.NotificationService
 import com.example.bluebook.video.repository.VideoRepository
@@ -21,6 +23,7 @@ import java.time.ZoneOffset
 @Service
 class CommentService(
     private val commentRepository: CommentRepository,
+    private val commentLikeRepository: CommentLikeRepository,
     private val userRepository: UserRepository,
     private val videoRepository: VideoRepository,
     private val notificationService: NotificationService
@@ -88,24 +91,34 @@ class CommentService(
         videoRepository.incrementCommentCount(comment.videoId, -1L)
     }
 
+    /** 点赞/取消点赞：comment_like 表去重保证幂等，计数只在状态真正变化时增减 */
     @Transactional
     fun likeComment(userId: Long, commentId: Long, liked: Boolean) {
         val comment = commentRepository.findByIdAndStatus(commentId, CommentStatus.NORMAL)
             ?: throw CommentNotFoundException()
-        val delta = if (liked) 1 else -1
-        commentRepository.incrementLikeCount(commentId, delta)
-        if (liked && comment.userId != userId) {
-            notificationService.create(
-                receiverId = comment.userId, senderId = userId,
-                type = NotifyType.LIKE, videoId = comment.videoId,
-                commentId = commentId, content = "赞了你的评论"
-            )
+        if (liked) {
+            if (commentLikeRepository.existsByUserIdAndCommentId(userId, commentId)) return
+            commentLikeRepository.save(CommentLike(userId = userId, commentId = commentId))
+            commentRepository.incrementLikeCount(commentId, 1)
+            if (comment.userId != userId) {
+                notificationService.create(
+                    receiverId = comment.userId, senderId = userId,
+                    type = NotifyType.LIKE, videoId = comment.videoId,
+                    commentId = commentId, content = "赞了你的评论"
+                )
+            }
+        } else {
+            val deleted = commentLikeRepository.deleteByUserIdAndCommentId(userId, commentId)
+            if (deleted > 0) commentRepository.incrementLikeCount(commentId, -1)
         }
     }
 
     private fun toDto(comment: Comment, currentUserId: Long?, replyCount: Int = 0): CommentDto {
         val author = userRepository.findById(comment.userId).orElse(null)
         val replyToUser = comment.replyToUserId?.let { userRepository.findById(it).orElse(null) }
+        val isLiked = currentUserId?.let {
+            commentLikeRepository.existsByUserIdAndCommentId(it, comment.id)
+        } ?: false
         return CommentDto(
             id = comment.id,
             videoId = comment.videoId,
@@ -114,7 +127,7 @@ class CommentService(
             avatar = assetUrl(author?.avatarUrl, "upload/images") ?: "",
             content = comment.content,
             likeCount = comment.likeCount,
-            isLiked = false,
+            isLiked = isLiked,
             createTime = comment.createdAt.toEpochSecond(ZoneOffset.UTC) * 1000,
             parentId = comment.parentId,
             replyToUserId = comment.replyToUserId,

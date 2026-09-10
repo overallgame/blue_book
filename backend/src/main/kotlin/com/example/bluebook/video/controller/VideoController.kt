@@ -1,13 +1,17 @@
 package com.example.bluebook.video.controller
 
 import com.example.bluebook.common.ApiResponse
+import com.example.bluebook.search.service.SearchService
 import com.example.bluebook.video.dto.*
 import com.example.bluebook.video.service.VideoService
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
-class VideoController(private val videoService: VideoService) {
+class VideoController(
+    private val videoService: VideoService,
+    private val searchService: SearchService
+) {
     private fun currentUserId(): Long =
         SecurityContextHolder.getContext().authentication?.principal as? Long ?: 0
 
@@ -27,8 +31,13 @@ class VideoController(private val videoService: VideoService) {
     @GetMapping("/api/v2/videos/search")
     fun search(@RequestParam keyword: String,
                @RequestParam(required = false) cursorId: Long?,
-               @RequestParam(defaultValue = "20") size: Int): ApiResponse<FeedResponseDto> =
-        ApiResponse.ok(videoService.search(keyword, cursorId, size, optionalUserId()))
+               @RequestParam(defaultValue = "20") size: Int): ApiResponse<FeedResponseDto> {
+        // 首屏搜索（无游标）时记录热词，供 /search/hot 热度排名
+        if (cursorId == null && keyword.isNotBlank()) {
+            searchService.recordSearchKeyword(keyword.trim())
+        }
+        return ApiResponse.ok(videoService.search(keyword, cursorId, size, optionalUserId()))
+    }
 
     @GetMapping("/api/v2/videos/{id}/dto")
     fun getVideoDto(@PathVariable id: Long): ApiResponse<Video2Dto> =
@@ -49,6 +58,12 @@ class VideoController(private val videoService: VideoService) {
     @DeleteMapping("/api/v2/videos/{id}")
     fun deleteVideo(@PathVariable id: Long): ApiResponse<Any> {
         videoService.deleteVideo(currentUserId(), id)
+        return ApiResponse.ok()
+    }
+
+    @PostMapping("/api/v2/videos/{id}/view")
+    fun reportView(@PathVariable id: Long): ApiResponse<Any> {
+        videoService.reportView(id)
         return ApiResponse.ok()
     }
 

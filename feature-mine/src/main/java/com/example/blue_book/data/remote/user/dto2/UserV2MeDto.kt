@@ -13,5 +13,7 @@ data class UserV2MeDto(
 	val region: String?,
 	val school: String?,
 	val followerCount: Long,
-	val followingCount: Long
+	val followingCount: Long,
+	val likedCount: Long = 0,
+	val collectedCount: Long = 0
 )

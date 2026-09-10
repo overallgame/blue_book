@@ -144,6 +144,14 @@ class VideoService(
         collectRepository.deleteByVideoId(videoId)
     }
 
+    /** 播放量上报：客户端开始播放时调用，幂等由端上（每视频每次会话一次）保证 */
+    @Transactional
+    fun reportView(videoId: Long) {
+        videoRepository.findByIdAndStatus(videoId, VideoStatus.PUBLISHED)
+            ?: throw VideoNotFoundException()
+        videoRepository.incrementViewCount(videoId, 1L)
+    }
+
     fun getLikedVideos(userId: Long, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
         val videos = videoRepository.findLikedVideosByUser(userId, cursorId, pageable)

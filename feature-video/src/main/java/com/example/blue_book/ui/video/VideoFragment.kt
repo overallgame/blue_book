@@ -95,6 +95,10 @@ class VideoFragment : Fragment() {
 				adapter.pauseAtPosition(currentPosition)
 				adapter.playAtPosition(position)
 				currentPosition = position
+				// 播放量上报（每视频每会话一次，静默）
+				viewModel.uiState.value.items.getOrNull(position)?.aid?.let { aid ->
+					viewModel.dispatch(VideoIntent.ReportView(aid))
+				}
 				if (position == adapter.itemCount - 1) {
 					viewModel.dispatch(VideoIntent.LoadMore)
 				}

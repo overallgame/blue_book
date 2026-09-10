@@ -74,6 +74,13 @@ CREATE TABLE video_collect (
     PRIMARY KEY (user_id, video_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE comment_like (
+    user_id BIGINT NOT NULL,
+    comment_id BIGINT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, comment_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE user_follow (
     follower_id BIGINT NOT NULL,
     followee_id BIGINT NOT NULL,

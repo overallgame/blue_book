@@ -6,6 +6,9 @@ interface VideoRepository {
 
 	suspend fun fetchRandom(cursorId: Long?, size: Int?): Result<List<Video>>
 
+	/** 单条视频（消息中心等场景按 id 获取首条播放卡） */
+	suspend fun fetchVideoById(videoId: Long): Result<Video>
+
 	suspend fun fetchFollowingFeed(cursorId: Long?, size: Int?): Result<List<Video>>
 
 	suspend fun fetchByKeyword(keyword: String, cursorId: Long?, size: Int?): Result<List<Video>>
@@ -27,4 +30,6 @@ interface VideoRepository {
 	suspend fun unfollowUser(targetUserId: Long): Result<Unit>
 
 	suspend fun deleteVideo(videoId: Long): Result<Unit>
+
+	suspend fun reportView(videoId: Long): Result<Unit>
 }

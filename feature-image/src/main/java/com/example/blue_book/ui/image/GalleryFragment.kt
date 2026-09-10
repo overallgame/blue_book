@@ -37,7 +37,7 @@ import java.io.File
 class GalleryFragment : Fragment() {
 
 	private var tag: String? = null
-	private lateinit var permissionLauncher: ActivityResultLauncher<String>
+	private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
 	private lateinit var cameraLauncher: ActivityResultLauncher<Uri>
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var galleryAdapter: GalleryAdapter
@@ -82,7 +82,7 @@ class GalleryFragment : Fragment() {
 	override fun onResume() {
 		super.onResume()
 		// 从系统设置授权返回后自动刷新
-		if (isPermissionGranted() && galleryAdapter.itemCount == 0) {
+		if (hasGalleryAccess() && galleryAdapter.itemCount == 0) {
 			checkPermissionAndLoad()
 		}
 	}
@@ -93,22 +93,44 @@ class GalleryFragment : Fragment() {
 
 	// ==================== 权限 ====================
 
-	private fun currentPermission(): String =
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			Manifest.permission.READ_MEDIA_IMAGES
-		} else {
-			Manifest.permission.READ_EXTERNAL_STORAGE
-		}
+	/** 需要申请的相册权限（按系统版本） */
+	private fun requiredPermissions(): Array<String> = when {
+		Build.VERSION.SDK_INT >= 34 -> arrayOf(
+			Manifest.permission.READ_MEDIA_IMAGES,
+			Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+		)
 
-	private fun isPermissionGranted(): Boolean =
-		ContextCompat.checkSelfPermission(requireContext(), currentPermission()) ==
+		Build.VERSION.SDK_INT >= 33 -> arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+
+		else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+	}
+
+	private fun isGranted(permission: String): Boolean =
+		ContextCompat.checkSelfPermission(requireContext(), permission) ==
 				PackageManager.PERMISSION_GRANTED
+
+	/**
+	 * 是否具备相册访问能力：
+	 * - Android 14+：全量（READ_MEDIA_IMAGES）或部分授权（仅选中照片，READ_MEDIA_VISUAL_USER_SELECTED）
+	 * - Android 13：READ_MEDIA_IMAGES
+	 * - Android 12 及以下：READ_EXTERNAL_STORAGE
+	 */
+	private fun hasGalleryAccess(): Boolean = when {
+		Build.VERSION.SDK_INT >= 34 ->
+			isGranted(Manifest.permission.READ_MEDIA_IMAGES) ||
+					isGranted(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
+		Build.VERSION.SDK_INT >= 33 -> isGranted(Manifest.permission.READ_MEDIA_IMAGES)
+
+		else -> isGranted(Manifest.permission.READ_EXTERNAL_STORAGE)
+	}
 
 	private fun initPermissionLauncher() {
 		permissionLauncher = registerForActivityResult(
-			ActivityResultContracts.RequestPermission()
-		) { granted ->
-			if (granted) {
+			ActivityResultContracts.RequestMultiplePermissions()
+		) { _ ->
+			// 以系统当前授权状态为准（部分授权同样可读用户选中的照片）
+			if (hasGalleryAccess()) {
 				loadImagesAsync()
 			} else {
 				showPermissionDenied()
@@ -117,10 +139,10 @@ class GalleryFragment : Fragment() {
 	}
 
 	private fun checkPermissionAndLoad() {
-		if (isPermissionGranted()) {
+		if (hasGalleryAccess()) {
 			loadImagesAsync()
 		} else {
-			permissionLauncher.launch(currentPermission())
+			permissionLauncher.launch(requiredPermissions())
 		}
 	}
 

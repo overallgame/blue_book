@@ -45,10 +45,6 @@ class FileController(
         return ApiResponse.ok()
     }
 
-    @GetMapping("/upload/progress")
-    fun getProgress(@RequestParam("uploadId") uploadId: String): ApiResponse<List<Int>> =
-        ApiResponse.ok(chunkUploadService.getProgress(uploadId))
-
     @PostMapping("/upload/complete")
     fun completeUpload(@RequestParam("uploadId") uploadId: String): ApiResponse<String> {
         val path = chunkUploadService.completeUpload(currentUserId(), uploadId)

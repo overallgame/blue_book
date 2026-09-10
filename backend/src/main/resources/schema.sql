@@ -138,7 +138,6 @@ CREATE TABLE upload_session (
     file_size BIGINT,
     file_md5 VARCHAR(32),
     total_chunks INT,
-    chunk_size INT,
     status ENUM('UPLOADING','MERGING','DONE','EXPIRED'),
     video_id BIGINT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

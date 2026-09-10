@@ -14,8 +14,7 @@ data class UploadInitRequestDto(
 	val fileName: String,
 	val fileSize: Long,
 	val fileMd5: String,
-	val totalChunks: Int,
-	val chunkSize: Int = 2 * 1024 * 1024
+	val totalChunks: Int
 )
 
 /** 分块上传初始化响应（对齐后端 UploadInitResponse） */

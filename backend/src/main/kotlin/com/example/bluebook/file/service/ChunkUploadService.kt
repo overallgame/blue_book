@@ -21,32 +21,44 @@ import java.util.UUID
 class ChunkUploadService(
     private val uploadSessionRepository: UploadSessionRepository,
     private val redisTemplate: StringRedisTemplate,
-    @Value("\${app.upload.storage-path}") private val storagePath: String,
-    @Value("\${app.upload.chunk-size:2097152}") private val defaultChunkSize: Int
+    @Value("\${app.upload.storage-path}") private val storagePath: String
 ) {
     fun initUpload(userId: Long, request: UploadInitRequest): UploadInitResponse {
-        // Check for dedup (秒传): same MD5 already uploaded
-        val existing = uploadSessionRepository.findByFileMd5AndStatus(request.fileMd5, UploadStatus.DONE)
-        if (existing.isPresent) {
-            return UploadInitResponse(uploadId = existing.get().id, skipUpload = true)
+        // 秒传：该文件此前已合并完成
+        val done = uploadSessionRepository.findByFileMd5AndStatus(request.fileMd5, UploadStatus.DONE)
+        if (done.isPresent) {
+            return UploadInitResponse(uploadId = done.get().id, skipUpload = true)
+        }
+
+        // 断点续传：同用户、同文件且大小一致的中断会话，复用原 uploadId 与已传分片
+        val pending = uploadSessionRepository
+            .findFirstByUserIdAndFileMd5AndStatusAndFileSizeOrderByUpdatedAtDesc(
+                userId, request.fileMd5, UploadStatus.UPLOADING, request.fileSize
+            )
+        if (pending.isPresent) {
+            val session = pending.get()
+            return UploadInitResponse(
+                uploadId = session.id,
+                uploadedChunks = uploadedChunks(session.id)
+            )
         }
 
         val uploadId = UUID.randomUUID().toString()
         val session = UploadSession(
             id = uploadId, userId = userId, fileName = request.fileName,
             fileSize = request.fileSize, fileMd5 = request.fileMd5,
-            totalChunks = request.totalChunks, chunkSize = request.chunkSize
+            totalChunks = request.totalChunks
         )
         uploadSessionRepository.save(session)
+        return UploadInitResponse(uploadId = uploadId)
+    }
 
-        // Check which chunks already exist (for resume)
-        val chunkDir = File("$storagePath/chunks/$uploadId")
-        val uploadedChunks = if (chunkDir.exists()) {
-            chunkDir.listFiles()?.map { it.name.toIntOrNull() }?.filterNotNull() ?: emptyList()
-        } else {
-            emptyList()
-        }
-        return UploadInitResponse(uploadId = uploadId, uploadedChunks = uploadedChunks)
+    /** 已上传分片：磁盘与 Redis 取并集（Redis 记录可能过期，以磁盘文件为准） */
+    private fun uploadedChunks(uploadId: String): List<Int> {
+        val fromDisk = File("$storagePath/chunks/$uploadId")
+            .listFiles()?.mapNotNull { it.name.toIntOrNull() } ?: emptyList()
+        val fromRedis = getProgress(uploadId)
+        return (fromDisk + fromRedis).distinct().sorted()
     }
 
     fun uploadChunk(uploadId: String, chunkIndex: Int, chunkData: ByteArray) {
@@ -63,10 +75,9 @@ class ChunkUploadService(
         // Track progress in Redis
         val hashOps = redisTemplate.opsForHash<String, String>()
         hashOps.put("upload:$uploadId", "chunk_$chunkIndex", "1")
-        hashOps.put("upload:$uploadId", "lastChunkTime", System.currentTimeMillis().toString())
     }
 
-    fun getProgress(uploadId: String): List<Int> {
+    private fun getProgress(uploadId: String): List<Int> {
         val keys = redisTemplate.opsForHash<String, String>().keys("upload:$uploadId")
         return keys.filter { it.toString().startsWith("chunk_") }
             .map { it.toString().removePrefix("chunk_").toInt() }

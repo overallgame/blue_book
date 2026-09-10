@@ -25,9 +25,6 @@ class UploadSession(
     @Column(name = "total_chunks")
     var totalChunks: Int? = null,
 
-    @Column(name = "chunk_size")
-    var chunkSize: Int? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     var status: UploadStatus = UploadStatus.UPLOADING,

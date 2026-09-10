@@ -4,4 +4,6 @@
 	<color name="md_theme_outline">#79747E</color>
 	<color name="md_theme_surfaceContainer">#F3EDF7</color>
 	<color name="md_theme_onSurface">#1C1B1F</color>
+	<!-- 消息类型图标圆底（shape1 引用；夜版见 values-night） -->
+	<color name="msg_icon_background">#E6E0EC</color>
 </resources>

@@ -6,11 +6,11 @@
     android:viewportHeight="56">
     <!-- 视频占位图标：圆环 + 播放三角 -->
     <path
-        android:strokeColor="@color/video_text_secondary"
+        android:strokeColor="@color/md_theme_onSurfaceVariant"
         android:strokeWidth="2"
         android:fillColor="#00000000"
         android:pathData="M28,7a21,21 0,1 0,0 42a21,21 0,0 0,0 -42z" />
     <path
-        android:fillColor="@color/video_text_secondary"
+        android:fillColor="@color/md_theme_onSurfaceVariant"
         android:pathData="M23,20.5l12,7.5l-12,7.5z" />
 </vector>

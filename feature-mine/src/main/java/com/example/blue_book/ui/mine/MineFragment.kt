@@ -15,7 +15,9 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -33,6 +35,8 @@ import com.example.blue_book.ui.mine.page.MineCollectionFragment
 import com.example.blue_book.ui.mine.page.MineLoveFragment
 import com.example.blue_book.ui.mine.page.MineWorkFragment
 import com.therouter.TheRouter
+import com.example.blue_book.datastore.ThemeMode
+import com.example.blue_book.datastore.ThemeRepository
 import com.example.blue_book.network.CurrentUser
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -50,6 +54,10 @@ class MineFragment : Fragment() {
 	/** 当前登录用户（关注/粉丝列表入口使用） */
 	@Inject
 	lateinit var currentUser: CurrentUser
+
+	/** 主题偏好（深色模式设置） */
+	@Inject
+	lateinit var themeRepository: ThemeRepository
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -123,6 +131,12 @@ class MineFragment : Fragment() {
 		}
 		binding.minePagerNavigationView.setNavigationItemSelectedListener { menuItem ->
 			when (menuItem.itemId) {
+				R.id.menu_theme_mode -> {
+					binding.layoutMine.closeDrawers()
+					showThemeModeDialog()
+					true
+				}
+
 				R.id.menu_backLogin -> {
 					viewModel.dispatch(MineIntent.Logout)
 					true
@@ -133,6 +147,30 @@ class MineFragment : Fragment() {
 					true
 				}
 			}
+		}
+	}
+
+	/** 深色模式三选：跟随系统 / 浅色 / 深色（持久化 + 立即生效） */
+	private fun showThemeModeDialog() {
+		val modes = ThemeMode.entries
+		val labels = arrayOf("跟随系统", "浅色", "深色")
+		viewLifecycleOwner.lifecycleScope.launch {
+			val current = themeRepository.getThemeMode()
+			AlertDialog.Builder(requireContext())
+				.setTitle("深色模式")
+				.setSingleChoiceItems(labels, modes.indexOf(current)) { dialog, which ->
+					val mode = modes[which]
+					viewLifecycleOwner.lifecycleScope.launch { themeRepository.setThemeMode(mode) }
+					AppCompatDelegate.setDefaultNightMode(
+						when (mode) {
+							ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+							ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+							ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
+						}
+					)
+					dialog.dismiss()
+				}
+				.show()
 		}
 	}
 

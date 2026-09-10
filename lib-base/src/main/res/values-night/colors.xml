@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 公用卡片（pre_video_item_view）：跟随主题（深色） -->
+    <color name="lib_card_background">#2B2A2A</color>
+    <color name="lib_card_text_primary">#E6E1E2</color>
+</resources>

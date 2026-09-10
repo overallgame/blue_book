@@ -29,7 +29,7 @@
 			android:layout_marginTop="8dp"
 			android:maxLines="2"
 			android:ellipsize="end"
-			android:textColor="#1C1B1F"
+			android:textColor="@color/lib_card_text_primary"
 			android:textSize="14sp"
 			tools:text="视频描述内容" />
 
@@ -58,7 +58,7 @@
 				android:ellipsize="end"
 				android:maxLength="8"
 				android:maxLines="1"
-				android:textColor="#1C1B1F"
+				android:textColor="@color/lib_card_text_primary"
 				android:textSize="12sp"
 				tools:text="昵称" />
 
@@ -74,7 +74,7 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="8dp"
-				android:textColor="#1C1B1F"
+				android:textColor="@color/lib_card_text_primary"
 				android:textSize="12sp"
 				tools:text="123" />
 

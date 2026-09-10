@@ -30,8 +30,11 @@
     <color name="video_progress_track_bg">#33FFFFFF</color>
 
 
-    <color name="md_theme_onPrimary">#FFFFFF</color>
-    <color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
+    <!-- 发布页跟随主题的取色（浅色值；夜版见 values-night） -->
+    <color name="md_theme_surface">#FDF8F8</color>
+    <color name="md_theme_onSurface">#1C1B1C</color>
+    <color name="md_theme_onSurfaceVariant">#48464B</color>
+    <color name="md_theme_outline">#79767B</color>
     <color name="md_theme_surfaceContainer">#F1EDED</color>
 
 </resources>

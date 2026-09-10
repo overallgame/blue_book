@@ -3,6 +3,7 @@ package com.example.blue_book.network
 import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.network.dto.CommonResult
 import com.example.blue_book.network.exception.NetworkException
+import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import retrofit2.Response
 
@@ -13,13 +14,32 @@ import retrofit2.Response
 @PublishedApi
 internal fun httpFailure(response: Response<*>): NetworkException {
 	val code = response.code()
-	val message = when {
+	val message = serverMessage(response) ?: when {
 		code == 401 || code == 403 -> "登录状态已失效，请重新登录"
 		code == 404 -> "内容不存在或已删除"
 		code in 500..599 -> "服务器繁忙，请稍后重试"
 		else -> "请求失败($code)"
 	}
 	return NetworkException(code, message)
+}
+
+/**
+ * 解析服务端错误体里的业务文案。
+ * 后端对业务异常返回非 2xx（密码错误 400、用户不存在 404、未登录 401 等），
+ * 具体原因（"手机号或密码错误""验证码错误或已过期""视频正在转码中"）只在响应体 message 里，
+ * 不解析就只能给用户看"请求失败(400)"。
+ */
+@PublishedApi
+internal fun serverMessage(response: Response<*>): String? = try {
+	val raw = response.errorBody()?.string().orEmpty()
+	if (raw.isBlank()) {
+		null
+	} else {
+		val parsed = Gson().fromJson(raw, Map::class.java) as? Map<*, *>
+		(parsed?.get("message") as? String)?.trim()?.takeIf { it.isNotEmpty() && it != "success" }
+	}
+} catch (_: Throwable) {
+	null
 }
 
 suspend inline fun <T> apiCall(

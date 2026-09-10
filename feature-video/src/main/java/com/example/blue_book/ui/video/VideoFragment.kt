@@ -94,7 +94,7 @@ class VideoFragment : Fragment() {
 			private var currentPosition = 0
 			override fun onPageSelected(position: Int) {
 				adapter.pauseAtPosition(currentPosition)
-				adapter.playAtPosition(position)
+				if (foreground) adapter.playAtPosition(position)
 				currentPosition = position
 				// 播放量上报（每视频每会话一次，静默）：以 adapter 当前条目为准，
 				// 首页带视频进入时 state.items 与 adapter 列表相差一条，按 state 取会报错视频
@@ -114,7 +114,7 @@ class VideoFragment : Fragment() {
 				when (state) {
 					ViewPager2.SCROLL_STATE_DRAGGING -> adapter.pauseAtPosition(currentPosition)
 					// 拖动后回弹到原页时 onPageSelected 不会派发，这里兜底恢复播放
-					ViewPager2.SCROLL_STATE_IDLE -> adapter.playAtPosition(currentPosition)
+					ViewPager2.SCROLL_STATE_IDLE -> if (foreground) adapter.playAtPosition(currentPosition)
 				}
 			}
 		})
@@ -272,14 +272,19 @@ class VideoFragment : Fragment() {
 
 	private var savedPosition: Int = 0
 
+	/** 页面是否处于前台：分页回调只在可见时自动播放（否则 onPause 之后到达的回调会把播放重新拉起） */
+	private var foreground = true
+
 	override fun onPause() {
 		super.onPause()
+		foreground = false
 		savedPosition = binding.videoViewPager.currentItem
 		adapter.pauseAll()
 	}
 
 	override fun onResume() {
 		super.onResume()
+		foreground = true
 		adapter.playAtPosition(savedPosition)
 	}
 

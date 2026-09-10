@@ -1,8 +1,12 @@
 package com.example.blue_book.ui.video
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.view.GestureDetector
 import android.view.LayoutInflater
 import java.util.LinkedHashMap
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
@@ -53,6 +57,9 @@ class VideoAdapter(
 
     override fun getItemId(position: Int): Long = getItem(position).aid
 
+    /** 按位置取条目（ListAdapter 的 getItem 为 protected，供播放页按索引取数据） */
+    fun itemAt(position: Int): VideoCardInfo? = currentList.getOrNull(position)
+
     /** 切换全屏：立即应用到全部已绑定条目（含当前可见项） */
     fun setFullscreen(enabled: Boolean) {
         fullscreenMode = enabled
@@ -69,12 +76,74 @@ class VideoAdapter(
         private var isProgressTracking = false
         private var hasTags = false
 
+        /** 长按倍速：延迟进入 2x；UP/CANCEL 必须复位，否则引擎回到对象池后仍是 2x */
+        private val gestureHandler = Handler(Looper.getMainLooper())
+        private var speedRunnable: Runnable? = null
+
+        /** 双击点赞（手势必由手势层消费才能收到上一次 UP，见 init 内的触摸处理） */
+        private val tapDetector = GestureDetector(
+            itemView.context,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDown(e: MotionEvent): Boolean = true
+
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    val video = currentVideo ?: return false
+                    if (!video.isLike) onClickLike(video)
+                    playLikeHeart()
+                    return true
+                }
+            }
+        )
+
         init {
             // 全面屏：黑色背景延展到系统栏后方，页面内容避让状态栏/导航栏
             ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
                 val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.updatePadding(top = bars.top, bottom = bars.bottom)
                 insets
+            }
+            // 手势层：消费触摸（返回 true）以保证收到 UP/CANCEL——双击检测依赖上一次 UP，
+            // 长按倍速依赖 UP/CANCEL 复位；翻页滑动时 ViewPager2 会下发 CANCEL
+            binding.videoItemGestureLayer.setOnTouchListener { _, event ->
+                tapDetector.onTouchEvent(event)
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        speedRunnable?.let { gestureHandler.removeCallbacks(it) }
+                        speedRunnable = Runnable {
+                            engine?.setSpeed(LONG_PRESS_SPEED)
+                            binding.videoItemSpeedHint.visibility = View.VISIBLE
+                        }
+                        gestureHandler.postDelayed(speedRunnable!!, LONG_PRESS_SPEED_DELAY_MS)
+                    }
+
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> resetSpeed()
+                }
+                true
+            }
+        }
+
+        /** 恢复 1x 并隐藏提示（触摸结束 / 离屏回收 / 归还引擎时都要调用） */
+        private fun resetSpeed() {
+            speedRunnable?.let { gestureHandler.removeCallbacks(it) }
+            speedRunnable = null
+            engine?.setSpeed(1f)
+            binding.videoItemSpeedHint.visibility = View.GONE
+        }
+
+        /** 双击点赞爱心动画 */
+        private fun playLikeHeart() {
+            binding.videoItemHeart.apply {
+                visibility = View.VISIBLE
+                alpha = 0f
+                scaleX = 0.3f
+                scaleY = 0.3f
+                animate()
+                    .alpha(1f).scaleX(1f).scaleY(1f).setDuration(300)
+                    .withEndAction {
+                        animate().alpha(0f).setDuration(200).withEndAction {
+                            visibility = View.GONE
+                        }
+                    }
             }
         }
 
@@ -86,6 +155,7 @@ class VideoAdapter(
                 currentUrl = null
                 return
             }
+            resetSpeed()
             savedPositions[url] = e.currentPosition()
             eventBridge?.let { eb -> e.removeListener(eb) }
             eventBridge = null
@@ -184,52 +254,6 @@ class VideoAdapter(
             binding.videoItemShare.setOnClickListener { currentVideo?.let(onClickShare) }
 
             applyFullscreen(fullscreenMode)
-
-            // 双击点赞 + 长按倍速
-            val speedHandler = android.os.Handler(android.os.Looper.getMainLooper())
-            var speedRunnable: Runnable? = null
-            val tapDetector = android.view.GestureDetector(
-                binding.root.context,
-                object : android.view.GestureDetector.SimpleOnGestureListener() {
-						override fun onDown(e: android.view.MotionEvent) = true
-                    override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
-                        val v = currentVideo ?: return false
-                        if (!v.isLike) onClickLike(v)
-                        binding.videoItemHeart.apply {
-                            visibility = View.VISIBLE
-                            alpha = 0f
-                            scaleX = 0.3f
-                            scaleY = 0.3f
-                            animate()
-                                .alpha(1f).scaleX(1f).scaleY(1f).setDuration(300)
-                                .withEndAction {
-                                    animate().alpha(0f).setDuration(200).withEndAction {
-                                        visibility = View.GONE
-                                    }
-                                }
-                        }
-                        return true
-                    }
-                }
-            )
-			binding.root.setOnTouchListener { _, event ->
-				tapDetector.onTouchEvent(event)
-				when (event.action) {
-					android.view.MotionEvent.ACTION_DOWN -> {
-						speedRunnable = Runnable {
-							engine?.setSpeed(2f)
-							binding.videoItemSpeedHint.visibility = View.VISIBLE
-						}
-						speedHandler.postDelayed(speedRunnable!!, 300)
-					}
-					android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-						speedRunnable?.let { speedHandler.removeCallbacks(it) }
-						engine?.setSpeed(1f)
-						binding.videoItemSpeedHint.visibility = View.GONE
-					}
-				}
-				false
-			}
 
             // 进度条 — 只在暂停时可见
             binding.videoItemProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -430,6 +454,12 @@ class VideoAdapter(
         data class LikeChanged(val like: Int, val isLike: Boolean) : VideoPayload
         data class CollectChanged(val collect: Int, val isCollect: Boolean) : VideoPayload
         data class CommentCountChanged(val commentCount: Int) : VideoPayload
+    }
+
+    private companion object {
+        /** 长按倍速：延迟与倍率 */
+        const val LONG_PRESS_SPEED_DELAY_MS = 300L
+        const val LONG_PRESS_SPEED = 2f
     }
 
     private class VideoDiffCallback : DiffUtil.ItemCallback<VideoCardInfo>() {

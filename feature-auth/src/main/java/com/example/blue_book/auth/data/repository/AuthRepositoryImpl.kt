@@ -27,9 +27,11 @@ class AuthRepositoryImpl @Inject constructor(
 
 	override suspend fun isLoggedIn(): Boolean {
 		if (currentUser.isLoggedIn) return true
+		// 冷启动：等待持久化 token/phone 恢复完成，避免把已登录用户误判为游客
+		tokenHolder.awaitLoaded()
 		val phone = tokenHolder.phone
 		val token = tokenHolder.authToken
-		if (phone != null && !token.isNullOrBlank()) {
+		if (!phone.isNullOrBlank() && !token.isNullOrBlank()) {
 			userStore.getUserByPhone(phone)?.let { currentUser.restore(it) }
 		}
 		return currentUser.isLoggedIn

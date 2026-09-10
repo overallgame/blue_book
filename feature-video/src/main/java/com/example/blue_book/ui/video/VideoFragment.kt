@@ -96,9 +96,10 @@ class VideoFragment : Fragment() {
 				adapter.pauseAtPosition(currentPosition)
 				adapter.playAtPosition(position)
 				currentPosition = position
-				// 播放量上报（每视频每会话一次，静默）
-				viewModel.uiState.value.items.getOrNull(position)?.aid?.let { aid ->
-					viewModel.dispatch(VideoIntent.ReportView(aid))
+				// 播放量上报（每视频每会话一次，静默）：以 adapter 当前条目为准，
+				// 首页带视频进入时 state.items 与 adapter 列表相差一条，按 state 取会报错视频
+				adapter.itemAt(position)?.let { video ->
+					viewModel.dispatch(VideoIntent.ReportView(video.aid))
 				}
 				if (position == adapter.itemCount - 1) {
 					viewModel.dispatch(VideoIntent.LoadMore)
@@ -110,8 +111,10 @@ class VideoFragment : Fragment() {
 			}
 
 			override fun onPageScrollStateChanged(state: Int) {
-				if (state == ViewPager2.SCROLL_STATE_DRAGGING) {
-					adapter.pauseAtPosition(currentPosition)
+				when (state) {
+					ViewPager2.SCROLL_STATE_DRAGGING -> adapter.pauseAtPosition(currentPosition)
+					// 拖动后回弹到原页时 onPageSelected 不会派发，这里兜底恢复播放
+					ViewPager2.SCROLL_STATE_IDLE -> adapter.playAtPosition(currentPosition)
 				}
 			}
 		})
@@ -248,7 +251,15 @@ class VideoFragment : Fragment() {
 								Toast.LENGTH_SHORT
 							).show()
 
-							is VideoUiEffect.UpdateItem -> adapter.updateVideoList(it.item)
+							is VideoUiEffect.UpdateItem -> {
+								adapter.updateVideoList(it.item)
+								// 播放地址后到（RequestPlayUrl → 局部重绑）时兜底起播：
+								// 当前页正是该条，否则会停在首帧不动
+								val position = binding.videoViewPager.currentItem
+								if (adapter.itemAt(position)?.aid == it.item.aid) {
+									adapter.playAtPosition(position)
+								}
+							}
 
 							// 未登录触发互动：弹登录引导卡片
 							VideoUiEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())

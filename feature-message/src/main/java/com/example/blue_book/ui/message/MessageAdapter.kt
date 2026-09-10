@@ -53,12 +53,15 @@ class MessageAdapter(
 			}
 			typeIcon.setImageResource(iconRes)
 
-			// 发送者头像（系统消息不展示）
+			// 发送者头像（系统消息/空头像不展示，需清掉复用残留）
 			if (item.type != MessageType.System && item.avatar.isNotBlank()) {
 				Glide.with(itemView.context)
 					.load(item.avatar)
 					.centerCrop()
 					.into(avatar)
+			} else {
+				Glide.with(itemView.context).clear(avatar)
+				avatar.setImageDrawable(null)
 			}
 
 			// 系统消息隐藏头像和时间

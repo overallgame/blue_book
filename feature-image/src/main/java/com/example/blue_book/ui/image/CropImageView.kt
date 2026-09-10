@@ -161,9 +161,12 @@ class CropImageView @JvmOverloads constructor(
 
 			MotionEvent.ACTION_POINTER_UP -> {
 				isScaling = false
-				if (event.pointerCount == 1) {
-					lastX = event.x
-					lastY = event.y
+				// 抬起一根手指后，剩下那根继续拖动：以剩余手指为基准重置起点，
+				// 否则沿用双指前的 lastX/lastY 会造成图片瞬间跳变
+				if (event.pointerCount - 1 == 1) {
+					val remainIndex = if (event.actionIndex == 0) 1 else 0
+					lastX = event.getX(remainIndex)
+					lastY = event.getY(remainIndex)
 					isDragging = true
 				}
 			}

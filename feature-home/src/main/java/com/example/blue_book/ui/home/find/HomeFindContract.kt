@@ -24,6 +24,9 @@ data class HomeFindUiState(
 sealed interface HomeFindEffect : UiEffect {
 	data class ShowToast(val message: String) : HomeFindEffect
 	data class UpdateItem(val item: VideoCardInfo) : HomeFindEffect
+
+	/** 未登录触发点赞：弹登录引导卡片 */
+	data object ShowLoginGuide : HomeFindEffect
 }
 
 

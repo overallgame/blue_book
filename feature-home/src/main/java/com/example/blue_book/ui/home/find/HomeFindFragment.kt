@@ -122,14 +122,15 @@ class HomeFindFragment : Fragment() {
 						binding.mainFindPagerSwipeRefreshLayout.isRefreshing = false
 					}
 				}
-				launch {
-					viewModel.uiEffect.collect { effect ->
-						when (effect) {
-							is HomeFindEffect.ShowToast -> Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
-							is HomeFindEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+					launch {
+						viewModel.uiEffect.collect { effect ->
+							when (effect) {
+								is HomeFindEffect.ShowToast -> Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
+								is HomeFindEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+								HomeFindEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
+							}
 						}
 					}
-				}
 			}
 		}
 	}

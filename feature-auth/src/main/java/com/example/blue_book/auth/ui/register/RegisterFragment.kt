@@ -87,7 +87,7 @@ class RegisterFragment : Fragment() {
 
 	private fun handleEffect(effect: RegisterUiEffect) {
 		when (effect) {
-			RegisterUiEffect.NavigateHome -> (requireActivity() as AuthActivity).navigateToHome()
+			RegisterUiEffect.NavigateHome -> (requireActivity() as AuthActivity).finishAuth()
 			is RegisterUiEffect.ShowToast -> {
 				if (effect.message.isNotBlank()) {
 					Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()

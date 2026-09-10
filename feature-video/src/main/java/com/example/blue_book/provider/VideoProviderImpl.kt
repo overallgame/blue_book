@@ -3,6 +3,7 @@ package com.example.blue_book.provider
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.domain.model.Video
 import com.example.blue_book.domain.repository.VideoRepository
+import com.example.blue_book.event.VideoInteractionBus
 
 class VideoProviderImpl(
 	private val repository: VideoRepository
@@ -29,11 +30,16 @@ class VideoProviderImpl(
 	}
 
 	override suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit> {
-		return repository.likeVideo(aid, liked)
+		val result = repository.likeVideo(aid, liked)
+		// 成功才广播：列表页据此同步卡片爱心/计数（失败由调用方回滚）
+		if (result.isSuccess) VideoInteractionBus.publishLike(aid, liked)
+		return result
 	}
 
 	override suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit> {
-		return repository.collectVideo(aid, collected)
+		val result = repository.collectVideo(aid, collected)
+		if (result.isSuccess) VideoInteractionBus.publishCollect(aid, collected)
+		return result
 	}
 
 	override suspend fun fetchLikedVideos(cursorId: Long?, size: Int?): Result<List<VideoCardInfo>> {

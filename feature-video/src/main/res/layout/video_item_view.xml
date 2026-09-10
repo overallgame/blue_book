@@ -19,7 +19,8 @@
             android:id="@+id/video_item_VideoPlayer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@android:color/black" />
+            android:background="@android:color/black"
+            app:use_controller="false" />
 
         <!-- 首帧封面：播放器起播前显示，首帧渲染后淡出 -->
         <ImageView
@@ -27,6 +28,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop" />
+
+        <!-- 手势层：双击点赞 / 长按倍速。必须消费触摸（返回 true），否则条目拿不到
+             ACTION_UP/CANCEL，双击与倍速复位都会失效；父级 ViewPager2 判定为翻页
+             滑动时会下发 CANCEL，倍速可正常复位 -->
+        <View
+            android:id="@+id/video_item_gesture_layer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <!-- 播放失败错误态：错误文案 + 重试按钮 -->
         <LinearLayout

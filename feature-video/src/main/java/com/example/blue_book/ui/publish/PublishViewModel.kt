@@ -68,7 +68,8 @@ class PublishViewModel @Inject constructor(
 	private suspend fun uploadThenPublish(title: String, description: String): Result<Unit> {
 		return withContext(Dispatchers.IO) {
 			runCatching {
-				val size = queryFileSize(publishFileUri)
+				// 大小读不到时必须失败：按 -1 会算出 1 块，只上传首块导致视频残缺
+				val size = queryFileSize(publishFileUri) ?: error("无法读取视频文件信息，请重新选择")
 				val fileName = queryFileName(publishFileUri)
 				val md5 = computeMd5(publishFileUri)
 				val totalChunks = ((size + CHUNK_SIZE - 1) / CHUNK_SIZE).toInt().coerceAtLeast(1)
@@ -79,17 +80,7 @@ class PublishViewModel @Inject constructor(
 
 				// 秒传命中（skipUpload=true）：服务端已有该文件，跳过逐块上传直接 complete
 				val uploaded = if (init.skipUpload) (0 until totalChunks).toSet() else init.uploadedChunks.toSet()
-				for (index in 0 until totalChunks) {
-					if (index in uploaded) continue
-					val bytes = readChunk(publishFileUri, index.toLong())
-					val part = okhttp3.MultipartBody.Part.createFormData(
-						"file", "$fileName.part$index",
-						bytes.toRequestBody("application/octet-stream".toMediaType())
-					)
-					publishRemote.uploadChunk(init.uploadId, index, part).getOrThrow()
-					val percent = ((index + 1) * 100 / totalChunks).coerceIn(0, 100)
-					setState { copy(progress = percent) }
-				}
+				uploadChunks(init.uploadId, fileName, totalChunks, uploaded)
 
 				val filePath = publishRemote.completeUpload(init.uploadId).getOrThrow()
 				// 发布时定位城市（未授权/失败为 null，"本地"流按此过滤）
@@ -109,8 +100,70 @@ class PublishViewModel @Inject constructor(
 		}
 	}
 
-	private fun queryFileSize(uri: Uri): Long =
-		appContext.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: 0L
+	/**
+	 * 单次顺序读取完成上传：只打开一次输入流、偏移单调递增，
+	 * 已上传分块按偏移跳过（避免逐块重开流 + 从头 skip 造成的大文件 O(n²) 读取）
+	 */
+	private suspend fun uploadChunks(
+		uploadId: String,
+		fileName: String,
+		totalChunks: Int,
+		uploaded: Set<Int>
+	) {
+		val input = appContext.contentResolver.openInputStream(publishFileUri)
+			?: error("无法读取视频文件")
+		input.use {
+			for (index in 0 until totalChunks) {
+				if (index in uploaded) {
+					skipFully(it, CHUNK_SIZE.toLong())
+					continue
+				}
+				val bytes = readFully(it, CHUNK_SIZE)
+				if (bytes.isEmpty() && index < totalChunks - 1) {
+					error("视频文件读取不完整，请重新选择")
+				}
+				val part = okhttp3.MultipartBody.Part.createFormData(
+					"file", "$fileName.part$index",
+					bytes.toRequestBody("application/octet-stream".toMediaType())
+				)
+				publishRemote.uploadChunk(uploadId, index, part).getOrThrow()
+				val percent = ((index + 1) * 100 / totalChunks).coerceIn(0, 100)
+				setState { copy(progress = percent) }
+			}
+		}
+	}
+
+	/** 跳过量：skip 返回值可能小于请求量，循环补齐；不支持 skip 时退化为读取丢弃 */
+	private fun skipFully(input: java.io.InputStream, target: Long) {
+		var skipped = 0L
+		while (skipped < target) {
+			val n = input.skip(target - skipped)
+			if (n > 0) {
+				skipped += n
+				continue
+			}
+			if (input.read() < 0) return
+			skipped++
+		}
+	}
+
+	/** 读取最多 max 字节（末尾分块允许不足） */
+	private fun readFully(input: java.io.InputStream, max: Int): ByteArray {
+		val buffer = ByteArray(max)
+		var offset = 0
+		while (offset < max) {
+			val read = input.read(buffer, offset, max - offset)
+			if (read <= 0) break
+			offset += read
+		}
+		return if (offset == max) buffer else buffer.copyOf(offset)
+	}
+
+	/** 视频文件大小；无法解析（UNKNOWN_LENGTH/异常）时返回 null */
+	private fun queryFileSize(uri: Uri): Long? {
+		val length = appContext.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: return null
+		return length.takeIf { it > 0 }
+	}
 
 	private fun queryFileName(uri: Uri): String {
 		appContext.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
@@ -133,27 +186,5 @@ class PublishViewModel @Inject constructor(
 			}
 		}
 		return digest.digest().joinToString("") { "%02x".format(it) }
-	}
-
-	private fun readChunk(uri: Uri, index: Long): ByteArray {
-		appContext.contentResolver.openInputStream(uri)?.use { input ->
-			// skip 返回实际跳过的字节数，ContentProvider 可能不完整跳过，需循环累计
-			var skipped = 0L
-			val skipTarget = index * CHUNK_SIZE
-			while (skipped < skipTarget) {
-				val n = input.skip(skipTarget - skipped)
-				if (n <= 0) break
-				skipped += n
-			}
-			val buffer = ByteArray(CHUNK_SIZE)
-			var offset = 0
-			while (offset < CHUNK_SIZE) {
-				val read = input.read(buffer, offset, CHUNK_SIZE - offset)
-				if (read <= 0) break
-				offset += read
-			}
-			return if (offset == CHUNK_SIZE) buffer else buffer.copyOf(offset)
-		}
-		error("无法读取视频文件")
 	}
 }

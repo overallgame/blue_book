@@ -91,6 +91,9 @@ class MineFragment : Fragment() {
 	/** 游客状态（未登录）：浏览可，功能使用引导登录 */
 	private var isGuest = false
 
+	/** 最近一次已提示的加载错误（避免重复 Toast） */
+	private var lastMessage: String? = null
+
 	/** 从资料编辑/播放页返回时刷新；未登录进入弹登录引导卡片 */
 	override fun onResume() {
 		super.onResume()
@@ -338,6 +341,14 @@ class MineFragment : Fragment() {
 							binding.mineFocusNumber.text = user.followingCount.toString()
 							binding.mineFanNumber.text = user.followerCount.toString()
 							binding.mineRevLoveNumber.text = (user.likedCount + user.collectedCount).toCountText()
+						} else if (isGuest) {
+							// 游客：明确标识（已登录用户在资料加载完成前不覆盖昵称）
+							binding.mineNickname.text = "未登录"
+						}
+						// 加载失败等提示（同一条只提示一次）
+						state.message?.takeIf { it.isNotBlank() && it != lastMessage }?.let {
+							lastMessage = it
+							Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
 						}
 						binding.mineSwipeRefreshLayout.isRefreshing = false
 					}

@@ -218,6 +218,7 @@ class HomeLocalFragment : Fragment() {
 								requireContext(), effect.message, Toast.LENGTH_SHORT
 							).show()
 							is HomeLocalEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+							HomeLocalEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
 						}
 					}
 				}

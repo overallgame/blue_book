@@ -75,7 +75,7 @@ class LoginFragment : Fragment() {
 
 	private fun handleEffect(effect: LoginUiEffect) {
 		when (effect) {
-			LoginUiEffect.NavigateHome -> (requireActivity() as AuthActivity).navigateToHome()
+			LoginUiEffect.NavigateHome -> (requireActivity() as AuthActivity).finishAuth()
 			is LoginUiEffect.ShowToast -> {
 				if (effect.message.isNotBlank()) {
 					Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()

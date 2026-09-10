@@ -29,7 +29,8 @@ class MineViewModel @Inject constructor(
 	private suspend fun init() {
 		val phone = getCurrentUserPhone()
 		if (phone.isNullOrBlank()) {
-			setState { copy(isLoading = false, message = "未登录") }
+			// 未登录：由页面弹登录引导卡片，不作为错误提示
+			setState { copy(isLoading = false, message = null) }
 			return
 		}
 		runResult(

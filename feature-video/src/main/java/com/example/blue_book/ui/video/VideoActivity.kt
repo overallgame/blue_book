@@ -1,5 +1,6 @@
 package com.example.blue_book.ui.video
 
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
@@ -25,13 +26,30 @@ class VideoActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_video)
 		setupEdgeToEdge()
 		if (savedInstanceState == null) {
-			val fragment = VideoFragment().apply {
-				// 从首页带视频进入时携带参数定位首个视频；否则走随机视频流
-				if (intent.hasExtra(ExtraKeys.EXTRA_VIDEO)) arguments = intent.extras
-			}
 			supportFragmentManager.commit {
-				replace(R.id.video_container, fragment)
+				replace(R.id.video_container, buildFragment(intent))
 			}
+		}
+	}
+
+	/**
+	 * singleTask 复用时必须处理新 Intent：
+	 * 带新视频参数则重建播放页，否则保留当前播放会话（底部导航回到视频 Tab 时无参数）。
+	 * 不处理会导致"点了另一个视频却还在播上一个"。
+	 */
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		if (!intent.hasExtra(ExtraKeys.EXTRA_VIDEO)) return
+		supportFragmentManager.commit {
+			replace(R.id.video_container, buildFragment(intent))
+		}
+	}
+
+	/** 从首页带视频进入时携带参数定位首个视频；否则走随机视频流 */
+	private fun buildFragment(intent: Intent): VideoFragment {
+		return VideoFragment().apply {
+			if (intent.hasExtra(ExtraKeys.EXTRA_VIDEO)) arguments = intent.extras
 		}
 	}
 

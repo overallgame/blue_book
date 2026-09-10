@@ -110,7 +110,11 @@ class UserRepositoryImpl @Inject constructor(
 		)
 	}
 
-	override suspend fun currentUserPhone(): String? = tokenHolder.phone
+	override suspend fun currentUserPhone(): String? {
+		// 冷启动：等待持久化恢复完成，避免资料页拿到 null 手机号
+		tokenHolder.awaitLoaded()
+		return tokenHolder.phone
+	}
 
 	private suspend fun persistAndRestore(dto: com.example.blue_book.data.remote.user.dto2.UserV2MeDto) {
 		val domain = dto.toDomain()

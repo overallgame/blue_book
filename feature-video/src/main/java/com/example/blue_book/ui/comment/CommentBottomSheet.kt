@@ -112,7 +112,14 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 	private fun setupRecyclerView() {
 		commentAdapter = CommentAdapter(
 			currentUserId = currentUserId,
-			onLikeClick = { comment -> viewModel.likeComment(comment.id) },
+			onLikeClick = { comment ->
+				// 游客可看评论，点赞评论需登录
+				if (currentUser.userId == null) {
+					LoginGuideDialog.show(requireActivity())
+				} else {
+					viewModel.likeComment(comment.id)
+				}
+			},
 			onReplyClick = { comment ->
 				viewModel.setReplyTo(comment)
 				binding.commentInput.requestFocus()
@@ -120,8 +127,7 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 				binding.commentReplyHint.text = "回复 @${comment.nickname}"
 			},
 			onDeleteClick = { comment ->
-				// 对齐后端：删除仅软删单条并 incrementCommentCount(-1)，回复不级联计数
-				commentDelta -= 1
+				// 计数在删除成功后再扣（失败不扣，见 deleteSuccess 分支）
 				viewModel.deleteComment(comment.id)
 			},
 			onLoadReplies = { comment ->
@@ -194,6 +200,12 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 							Toast.makeText(requireContext(), "评论成功", Toast.LENGTH_SHORT).show()
 							commentDelta += 1
 							viewModel.clearPostSuccess()
+						}
+
+						// 删除成功才扣减（对齐后端：软删单条即 -1，回复不级联计数；失败不扣）
+						if (state.deleteSuccess) {
+							commentDelta -= 1
+							viewModel.clearDeleteSuccess()
 						}
 					}
 				}

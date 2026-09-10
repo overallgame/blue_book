@@ -65,6 +65,8 @@ class MainActivity : AppCompatActivity() {
 			// 游客可自由浏览各 Tab；需要登录的功能在页面内触发时再引导
 			currentCheckedId = checkedId
 			navigateToTab(targetPath)
+			// Tab 切换时同步未读角标（消息页内已读/清空后离开也能立即纠正）
+			refreshUnreadBadge()
 		}
 
 		// 底部导航正中发布入口（小红书风格）：未登录先引导，已登录直接打开发布页

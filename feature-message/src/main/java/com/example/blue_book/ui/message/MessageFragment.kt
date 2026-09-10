@@ -68,6 +68,9 @@ class MessageFragment : Fragment() {
 				if (!initialized) {
 					initialized = true
 					viewModel.dispatch(MessageIntent.Init)
+				} else {
+					// 再次可见时刷新首屏，避免新通知必须手动下拉才出现
+					viewModel.dispatch(MessageIntent.Refresh)
 				}
 			} else {
 				LoginGuideDialog.show(requireActivity())

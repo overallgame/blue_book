@@ -25,6 +25,8 @@ data class CommentUiState(
 	val replyToComment: Comment? = null,
 	val isPosting: Boolean = false,
 	val postSuccess: Boolean = false,
+	/** 单条删除成功（弹层据此扣减回传给播放页的评论数增量，失败不扣） */
+	val deleteSuccess: Boolean = false,
 	val cursorId: Long? = null,
 	val hasMore: Boolean = true
 )
@@ -242,7 +244,7 @@ class CommentViewModel @Inject constructor(
 						} else {
 							comments
 						}
-						state.copy(comments = adjusted)
+						state.copy(comments = adjusted, deleteSuccess = true)
 					}
 				}
 				.onFailure { e ->
@@ -257,6 +259,10 @@ class CommentViewModel @Inject constructor(
 
 	fun clearPostSuccess() {
 		_uiState.update { it.copy(postSuccess = false) }
+	}
+
+	fun clearDeleteSuccess() {
+		_uiState.update { it.copy(deleteSuccess = false) }
 	}
 
 	fun clearError() {

@@ -25,7 +25,14 @@ class PlayerEnginePool(
 		return engine
 	}
 
+	/**
+	 * 预加载下一个视频。
+	 * key 仍处于 active（对应 ViewHolder 还在用这个引擎，例如刚滑过去的相邻页）时
+	 * 直接返回：否则 prepare() 会把在用引擎的位置清零、缓冲丢弃，
+	 * 造成"滑回去从头播"以及预加载完全失效。
+	 */
 	fun preload(key: String, url: String) {
+		if (active.containsKey(key)) return
 		val engine = acquire(key)
 		engine.setPlayWhenReady(false)
 		engine.prepare(url)

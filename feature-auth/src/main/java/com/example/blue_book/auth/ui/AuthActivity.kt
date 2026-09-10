@@ -40,10 +40,16 @@ class AuthActivity : AppCompatActivity() {
 		}
 	}
 
-	fun navigateToHome() {
-		TheRouter.build(RoutePath.MAIN)
-			.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-			.navigation(this)
+	/**
+	 * 登录/注册完成：返回调用页面（保留任务栈，用户回到原页面继续操作，如播放页点赞）。
+	 * 若登录页本身就是任务根（退出登录后进入），则回到首页。
+	 */
+	fun finishAuth() {
+		if (isTaskRoot) {
+			TheRouter.build(RoutePath.MAIN)
+				.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+				.navigation(this)
+		}
 		finish()
 	}
 }

@@ -37,7 +37,7 @@ class AuthEntryFragment : Fragment() {
 		viewLifecycleOwner.lifecycleScope.launch {
 			try {
 				if (isLoggedInUseCase()) {
-					(requireActivity() as AuthActivity).navigateToHome()
+					(requireActivity() as AuthActivity).finishAuth()
 				}
 			} catch (e: Throwable) {
 				android.util.Log.e("AuthEntry", "检查登录状态失败: ${e.message}", e)

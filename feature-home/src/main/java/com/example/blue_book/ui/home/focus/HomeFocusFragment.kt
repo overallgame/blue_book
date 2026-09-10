@@ -159,6 +159,7 @@ class HomeFocusFragment : Fragment() {
 								requireContext(), effect.message, Toast.LENGTH_SHORT
 							).show()
 							is HomeFocusEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+							HomeFocusEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
 						}
 					}
 				}

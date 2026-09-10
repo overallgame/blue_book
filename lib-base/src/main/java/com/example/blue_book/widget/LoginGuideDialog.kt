@@ -20,6 +20,10 @@ object LoginGuideDialog {
 
 	private var shownInProcess = false
 
+	/** 当前展示中的卡片：多页面同帧请求时只保留一张，避免叠层 */
+	private var current: Dialog? = null
+	private var currentOwner: java.lang.ref.WeakReference<Activity>? = null
+
 	/** 进程内仅弹一次（进入 App 的首页引导） */
 	fun showIfNeeded(activity: Activity) {
 		if (shownInProcess) return
@@ -29,10 +33,22 @@ object LoginGuideDialog {
 
 	fun show(activity: Activity) {
 		if (activity.isFinishing || activity.isDestroyed) return
+		if (current?.isShowing == true) {
+			val owner = currentOwner?.get()
+			// 同一页面重复请求：已在展示，忽略；其它页面的旧卡片：先关掉再弹新的
+			if (owner == null || owner === activity) return
+			current?.dismiss()
+		}
 		val dialog = Dialog(activity)
 		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
 		dialog.setContentView(R.layout.dialog_login_guide)
 		dialog.setCancelable(true)
+		dialog.setOnDismissListener {
+			if (current === dialog) {
+				current = null
+				currentOwner = null
+			}
+		}
 		dialog.window?.apply {
 			setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 			addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -49,6 +65,8 @@ object LoginGuideDialog {
 		dialog.findViewById<View>(R.id.login_guide_dismiss).setOnClickListener {
 			dialog.dismiss()
 		}
+		current = dialog
+		currentOwner = java.lang.ref.WeakReference(activity)
 		dialog.show()
 	}
 }

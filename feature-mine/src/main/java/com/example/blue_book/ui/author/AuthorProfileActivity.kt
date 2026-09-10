@@ -1,5 +1,6 @@
 package com.example.blue_book.ui.author
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -21,12 +22,28 @@ class AuthorProfileActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_author_profile)
 		setupEdgeToEdge()
 		if (savedInstanceState == null) {
-			val userId = intent.getLongExtra(ExtraKeys.EXTRA_USER_ID, 0L)
-			supportFragmentManager.commit {
-				replace(R.id.author_profile_container, AuthorProfileFragment().apply {
-					arguments = Bundle().apply { putLong(ExtraKeys.EXTRA_USER_ID, userId) }
-				})
-			}
+			showProfile(intent.getLongExtra(ExtraKeys.EXTRA_USER_ID, 0L))
+		}
+	}
+
+	/**
+	 * singleTask 复用时按新 userId 重建页面：
+	 * 否则从播放页点头像进入另一位作者，看到的仍是上一位作者的主页。
+	 */
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		val userId = intent.getLongExtra(ExtraKeys.EXTRA_USER_ID, 0L)
+		val current = supportFragmentManager.findFragmentById(R.id.author_profile_container)
+		if (current != null && current.arguments?.getLong(ExtraKeys.EXTRA_USER_ID, 0L) == userId) return
+		showProfile(userId)
+	}
+
+	private fun showProfile(userId: Long) {
+		supportFragmentManager.commit {
+			replace(R.id.author_profile_container, AuthorProfileFragment().apply {
+				arguments = Bundle().apply { putLong(ExtraKeys.EXTRA_USER_ID, userId) }
+			})
 		}
 	}
 

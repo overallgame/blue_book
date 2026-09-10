@@ -14,8 +14,10 @@ import com.example.blue_book.network.interceptor.CommonParamsInterceptor
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -31,7 +33,8 @@ import javax.inject.Singleton
 class ApiGateway @Inject constructor(
 	@ApplicationContext private val context: Context,
 	private val dataStore: IDataStore,
-	tokenHolder: TokenHolder
+	tokenHolder: TokenHolder,
+	currentUser: CurrentUser
 ) {
 	companion object {
 		const val BASE_URL: String = BuildConfig.BASE_URL
@@ -50,7 +53,8 @@ class ApiGateway @Inject constructor(
 	private val gson = Gson()
 
 	private val tokenInterceptor = TokenInterceptor(tokenHolder)
-	private val tokenAuthenticator = TokenAuthenticator(tokenHolder)
+	// 会话失效时同时清内存登录态（CurrentUser），避免"有登录态但请求全 401"的僵尸状态
+	private val tokenAuthenticator = TokenAuthenticator(tokenHolder) { currentUser.clear() }
 
 	private var okHttpClient: OkHttpClient? = null
 
@@ -71,10 +75,12 @@ class ApiGateway @Inject constructor(
 			.build()
 	}
 
+	/** 后台恢复持久化的 Base URL 覆盖（不做主线程阻塞读） */
+	private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
 	init {
 		refreshOkHttpClient()
-		// 同步恢复持久化的 Base URL 覆盖，避免首次 API 调用命中错误地址
-		runBlocking {
+		ioScope.launch {
 			val persisted = dataStore.getString("base_url_override")
 			if (!persisted.isNullOrBlank() && persisted != baseUrl) {
 				baseUrl = persisted

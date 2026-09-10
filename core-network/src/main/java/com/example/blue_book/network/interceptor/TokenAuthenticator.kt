@@ -18,7 +18,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 
 class TokenAuthenticator(
-	private val tokenHolder: TokenHolder
+	private val tokenHolder: TokenHolder,
+	/** 会话失效（刷新失败/重试超限）回调：清空内存登录态，避免"僵尸登录"（有登录态但请求全 401） */
+	private val onSessionExpired: () -> Unit = {}
 ) : Authenticator {
 	private val lock = Any()
 	private val gson = Gson()
@@ -38,10 +40,10 @@ class TokenAuthenticator(
 	override fun authenticate(route: Route?, response: Response): Request? {
 		val request = response.request
 		if (request.url.encodedPath.startsWith("/api/v2/auth/refresh")) return null
-		if (responseCount(response) >= 2) { tokenHolder.clear(); return null }
+		if (responseCount(response) >= 2) { clearSession(); return null }
 
 		val refresh = tokenHolder.refreshToken?.trim().orEmpty()
-		if (refresh.isBlank()) { tokenHolder.clear(); return null }
+		if (refresh.isBlank()) { clearSession(); return null }
 
 		synchronized(lock) {
 			val current = tokenHolder.authToken?.trim().orEmpty()
@@ -50,11 +52,17 @@ class TokenAuthenticator(
 				return request.newBuilder().header("Authorization", "Bearer $current").build()
 			}
 			val result = executeRefresh(refresh)
-			if (result == null) { tokenHolder.clear(); return null }
+			if (result == null) { clearSession(); return null }
 			tokenHolder.saveAuthToken(result.token)
 			tokenHolder.saveRefreshToken(result.refreshToken)
 			return request.newBuilder().header("Authorization", "Bearer ${result.token}").build()
 		}
+	}
+
+	/** 会话彻底失效：清空 token 与内存登录态（CurrentUser），各页面下次读取即为游客 */
+	private fun clearSession() {
+		tokenHolder.clear()
+		runCatching { onSessionExpired() }
 	}
 
 	private fun executeRefresh(refreshToken: String): TokenResponse? {

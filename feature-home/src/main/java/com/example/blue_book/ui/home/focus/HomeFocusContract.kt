@@ -24,4 +24,7 @@ data class HomeFocusUiState(
 sealed interface HomeFocusEffect : UiEffect {
 	data class ShowToast(val message: String) : HomeFocusEffect
 	data class UpdateItem(val item: VideoCardInfo) : HomeFocusEffect
+
+	/** 未登录触发点赞：弹登录引导卡片 */
+	data object ShowLoginGuide : HomeFocusEffect
 }

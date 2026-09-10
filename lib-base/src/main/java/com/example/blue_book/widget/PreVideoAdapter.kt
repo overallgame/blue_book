@@ -75,8 +75,8 @@ class PreVideoAdapter(
 			desc.text = item.description
 			nickname.text = item.nickname
 			bindLike(item.isLike, item.like)
-			Glide.with(itemView).load(item.image).placeholder(R.drawable.default_avatar).into(cover)
-			Glide.with(itemView).load(item.avatar).placeholder(R.drawable.ic_launcher_background).into(avatar)
+			Glide.with(itemView).load(item.image).placeholder(R.drawable.ic_launcher_background).into(cover)
+			Glide.with(itemView).load(item.avatar).placeholder(R.drawable.default_avatar).into(avatar)
 			likeIcon.setOnClickListener { currentItem?.let(onClickLike) }
 			itemView.setOnClickListener { currentItem?.let(onClickItem) }
 			itemView.setOnLongClickListener { cv ->

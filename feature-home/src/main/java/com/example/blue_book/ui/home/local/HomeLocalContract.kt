@@ -27,4 +27,7 @@ data class HomeLocalUiState(
 sealed interface HomeLocalEffect : UiEffect {
 	data class ShowToast(val message: String) : HomeLocalEffect
 	data class UpdateItem(val item: VideoCardInfo) : HomeLocalEffect
+
+	/** 未登录触发点赞：弹登录引导卡片 */
+	data object ShowLoginGuide : HomeLocalEffect
 }

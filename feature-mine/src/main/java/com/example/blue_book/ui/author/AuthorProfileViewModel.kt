@@ -2,12 +2,15 @@ package com.example.blue_book.ui.author
 
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.domain.repository.UserRepository
+import com.example.blue_book.event.VideoInteractionBus
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.udf.UdfViewModel
 import com.therouter.TheRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AuthorProfileViewModel @Inject constructor(
@@ -24,6 +27,13 @@ class AuthorProfileViewModel @Inject constructor(
 		this.userId = userId
 	}
 
+	/** 跨页互动同步：播放页内的点赞/收藏/评论数变化落到本列表 */
+	init {
+		viewModelScope.launch {
+			VideoInteractionBus.patches.collect { patch -> applyInteraction(patch) }
+		}
+	}
+
 	override suspend fun handleIntent(intent: AuthorProfileIntent) {
 		when (intent) {
 			AuthorProfileIntent.Init -> initLoad()
@@ -37,6 +47,11 @@ class AuthorProfileViewModel @Inject constructor(
 	private val togglingAids = mutableSetOf<Long>()
 
 	private suspend fun toggleLike(item: VideoCardInfo) {
+		// 作者主页对游客开放，点赞需登录
+		if (currentUser.userId == null) {
+			sendEffect(AuthorProfileEffect.ShowLoginGuide)
+			return
+		}
 		if (item.aid in togglingAids) return
 		togglingAids.add(item.aid)
 		val newStatus = !item.isLike
@@ -154,5 +169,13 @@ class AuthorProfileViewModel @Inject constructor(
 			val newItems = items.map { if (it.aid == updatedVideo.aid && it.cid == updatedVideo.cid) updatedVideo else it }
 			copy(items = newItems)
 		}
+	}
+
+	/** 播放页互动结果同步：更新 state 与对应卡片 */
+	private suspend fun applyInteraction(patch: VideoInteractionBus.Patch) {
+		val target = uiState.value.items.firstOrNull { it.aid == patch.aid } ?: return
+		val updated = VideoInteractionBus.apply(target, patch) ?: return
+		updateItemInList(updated)
+		sendEffect(AuthorProfileEffect.UpdateItem(updated))
 	}
 }

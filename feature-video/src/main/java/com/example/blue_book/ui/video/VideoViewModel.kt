@@ -12,6 +12,7 @@ import com.example.blue_book.domain.usecase.FetchPlayUrlUseCase
 import com.example.blue_book.domain.usecase.FetchRandomVideosUseCase
 import com.example.blue_book.domain.usecase.FetchVideosByKeywordUseCase
 import com.example.blue_book.domain.usecase.LikeVideoUseCase
+import com.example.blue_book.event.VideoInteractionBus
 import com.therouter.TheRouter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -174,6 +175,8 @@ class VideoViewModel @Inject constructor(
 		val updated = target.copy(commentCount = (target.commentCount + delta).coerceAtLeast(0))
 		updateItemInList(updated)
 		sendEffect(VideoUiEffect.UpdateItem(updated))
+		// 广播到各列表页，返回列表卡片上的评论数同步
+		VideoInteractionBus.publishCommentCount(aid, updated.commentCount)
 	}
 
 	/** 服务发现获取视频数据源（feature-video 自身提供） */

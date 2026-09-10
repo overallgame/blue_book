@@ -1,4 +1,10 @@
 <resources>
+    <!-- 登录引导卡片（深色：卡片与文字随夜，品牌蓝不变） -->
+    <color name="login_guide_primary">#2A6AF2</color>
+    <color name="login_guide_on_primary">#FFFFFF</color>
+    <color name="login_guide_card_background">#2B2A2A</color>
+    <color name="login_guide_title">#E6E1E2</color>
+    <color name="login_guide_desc">#938F95</color>
     <color name="md_theme_primary">#FFFFFF</color>
     <color name="md_theme_onPrimary">#322F35</color>
     <color name="md_theme_primaryContainer">#D8D2DA</color>

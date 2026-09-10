@@ -1,5 +1,11 @@
 <resources>
     <color name="publish_red">#FFFE2C55</color>
+    <!-- 登录引导卡片（品牌蓝，与 feature-auth 视觉一致；夜版见 values-night） -->
+    <color name="login_guide_primary">#2A6AF2</color>
+    <color name="login_guide_on_primary">#FFFFFF</color>
+    <color name="login_guide_card_background">#FFFFFF</color>
+    <color name="login_guide_title">#1C1B1C</color>
+    <color name="login_guide_desc">#79767B</color>
     <color name="md_theme_primary">#605D64</color>
     <color name="md_theme_onPrimary">#FFFFFF</color>
     <color name="md_theme_primaryContainer">#F4EEF6</color>

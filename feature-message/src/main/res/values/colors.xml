@@ -3,6 +3,8 @@
 	<color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
 	<color name="md_theme_outline">#79747E</color>
 	<color name="md_theme_surfaceContainer">#F3EDF7</color>
+	<color name="md_theme_surface">#FDF8F8</color>
+	<!-- 列表项容器底色（bg_message_item 引用，模块自包含；值对齐 app 与其他 feature） -->
 	<color name="md_theme_onSurface">#1C1B1F</color>
 	<!-- 消息类型图标圆底（shape1 引用；夜版见 values-night） -->
 	<color name="msg_icon_background">#E6E0EC</color>

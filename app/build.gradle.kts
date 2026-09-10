@@ -55,6 +55,11 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    lint {
+        // Glide 的 NotificationTarget 会触发 NotificationPermission 检查，
+        // 但本应用不发通知、也未申请 POST_NOTIFICATIONS，属依赖带来的误报
+        disable += "NotificationPermission"
+    }
 }
 
 configurations.all {

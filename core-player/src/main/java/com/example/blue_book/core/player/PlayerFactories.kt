@@ -18,8 +18,15 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import com.example.blue_book.network.VideoOkHttpProvider
-data class PlayerFactories @OptIn(UnstableApi::class) constructor
-	(
+
+/**
+ * 播放器构件集合。公开签名直接暴露 media3 的 @UnstableApi 类型
+ * （RenderersFactory / TrackSelector / LoadControl / MediaSource.Factory / Player.Listener），
+ * 因此 opt-in 标注在类声明上：构造函数上的 @OptIn 不覆盖整个声明，
+ * lint 的 UnsafeOptInUsageError 仍会报错（文件头的 @file:Suppress 只压制编译器警告）。
+ */
+@OptIn(UnstableApi::class)
+data class PlayerFactories(
 	val renderersFactory: RenderersFactory,
 	val trackSelector: TrackSelector,
 	val loadControl: LoadControl,

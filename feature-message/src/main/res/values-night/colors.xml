@@ -5,6 +5,7 @@
     <color name="md_theme_onSurfaceVariant_mediumContrast">#CEC9CF</color>
     <color name="md_theme_outline">#938F95</color>
     <color name="md_theme_surfaceContainer">#201F20</color>
+    <color name="md_theme_surface">#141314</color>
     <color name="md_theme_onSurface">#E6E1E2</color>
     <!-- 消息类型图标圆底（夜间深底，与浅灰 tint 图标形成对比） -->
     <color name="msg_icon_background">#48464B</color>

@@ -7,6 +7,7 @@
     android:background="@color/md_theme_surface">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/follow_list_appbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
@@ -26,6 +27,7 @@
             app:titleTextColor="@color/md_theme_onSurface" />
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- 顶栏下方的分隔线：必须约束到 AppBarLayout（toolbar 是其子 View，不是本 ConstraintLayout 的直接子 View） -->
     <View
         android:id="@+id/follow_list_divider"
         android:layout_width="0dp"
@@ -33,7 +35,7 @@
         android:background="@color/profile_divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/follow_list_toolbar" />
+        app:layout_constraintTop_toBottomOf="@id/follow_list_appbar" />
 
     <FrameLayout
         android:layout_width="0dp"

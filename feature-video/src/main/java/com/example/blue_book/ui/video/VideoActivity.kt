@@ -46,7 +46,8 @@ class VideoActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 从首页带视频进入时携带参数定位首个视频；否则走随机视频流 */
+	/** 从首页带视频进入时携带参数定位首个视频；否则走随机视频流（VideoFragment 带 @UnstableApi，引用需 opt-in） */
+	@OptIn(UnstableApi::class)
 	private fun buildFragment(intent: Intent): VideoFragment {
 		return VideoFragment().apply {
 			if (intent.hasExtra(ExtraKeys.EXTRA_VIDEO)) arguments = intent.extras

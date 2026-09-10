@@ -30,4 +30,7 @@ dependencies {
     implementation("javax.inject:javax.inject:1")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.github.bumptech.glide:glide:4.13.2")
+    // pre_video_item_view.xml 使用：布局由本模块持有，依赖也要在本模块声明
+    // （否则 lint 报 MissingClass，单独构建/预览本模块会失败）
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 }

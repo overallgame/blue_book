@@ -7,6 +7,9 @@ import com.example.blue_book.udf.UiState
 
 sealed interface HomeLocalIntent : UiIntent {
 	data object Init : HomeLocalIntent
+
+	/** 定位成功：切换到该城市的本地流 */
+	data class InitRegion(val region: String) : HomeLocalIntent
 	data object Refresh : HomeLocalIntent
 	data object LoadMore : HomeLocalIntent
 	data class ToggleLike(val item: VideoCardInfo) : HomeLocalIntent

@@ -235,9 +235,9 @@ class MineFragment : Fragment() {
 	}
 
 	private fun copyXhsId() {
-		val phone = viewModel.uiState.value.user?.phone ?: return
+		val xhsId = viewModel.uiState.value.user?.xhsId?.takeIf { it.isNotBlank() } ?: return
 		val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-		clipboard.setPrimaryClip(ClipData.newPlainText("xhs_id", phone))
+		clipboard.setPrimaryClip(ClipData.newPlainText("xhs_id", xhsId))
 		Toast.makeText(requireContext(), "已复制小红书号", Toast.LENGTH_SHORT).show()
 	}
 
@@ -305,7 +305,7 @@ class MineFragment : Fragment() {
 								Glide.with(requireContext()).load(it).into(binding.mineAvatar)
 							}
 							binding.mineNickname.text = user.nickname ?: user.phone
-							binding.mineXhsId.text = "小红书号：${user.phone}"
+							binding.mineXhsId.text = "小红书号：${user.xhsId ?: "--"}"
 							binding.mineIntroduction.text = user.introduction.orEmpty()
 							binding.mineFocusNumber.text = user.followingCount.toString()
 							binding.mineFanNumber.text = user.followerCount.toString()

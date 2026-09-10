@@ -7,6 +7,7 @@ USE blue_book;
 CREATE TABLE `user` (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     phone VARCHAR(20) UNIQUE NOT NULL,
+    xhs_id VARCHAR(20) UNIQUE,
     nickname VARCHAR(50) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     avatar_url VARCHAR(500),
@@ -40,11 +41,13 @@ CREATE TABLE video (
     collect_count BIGINT DEFAULT 0,
     comment_count BIGINT DEFAULT 0,
     view_count BIGINT DEFAULT 0,
+    region VARCHAR(100),
     status ENUM('PUBLISHED','DELETED','REVIEWING') DEFAULT 'PUBLISHED',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_uploader_created (uploader_id, created_at),
-    INDEX idx_feed (status, created_at)
+    INDEX idx_feed (status, created_at),
+    INDEX idx_region (region, status, created_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE comment (

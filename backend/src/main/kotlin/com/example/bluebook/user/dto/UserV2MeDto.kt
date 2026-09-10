@@ -3,6 +3,8 @@ package com.example.bluebook.user.dto
 data class UserV2MeDto(
     val id: Long,
     val phone: String,
+    /** 对外"小红书号"（脱敏手机号的替代，不可逆派生） */
+    val xhsId: String? = null,
     val nickname: String,
     val avatar: String?,
     val backgroundImage: String?,

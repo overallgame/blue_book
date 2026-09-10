@@ -34,4 +34,16 @@ class NotificationController(
         notificationService.markRead(currentUserId(), id)
         return ApiResponse.ok()
     }
+
+    @DeleteMapping("/{id}")
+    fun delete(@PathVariable id: Long): ApiResponse<Any> {
+        notificationService.delete(currentUserId(), id)
+        return ApiResponse.ok()
+    }
+
+    @DeleteMapping
+    fun clearAll(): ApiResponse<Any> {
+        notificationService.clearAll(currentUserId())
+        return ApiResponse.ok()
+    }
 }

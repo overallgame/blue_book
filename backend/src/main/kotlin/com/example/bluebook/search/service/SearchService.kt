@@ -29,4 +29,16 @@ class SearchService(
         val results = redisTemplate.opsForZSet().reverseRangeWithScores("hot:search", 0, limit.toLong() - 1)
         return results?.map { it.value ?: "" }?.filter { it.isNotEmpty() } ?: emptyList()
     }
+
+    /**
+     * 猜你想搜：无关键词返回热度 top N；
+     * 有关键词则从热词榜中模糊匹配（按热度排序，含匹配词优先）
+     */
+    fun suggest(keyword: String?, limit: Int = 10): List<String> {
+        val normalized = keyword?.trim().orEmpty()
+        val all = getHotSearches(limit = 200)
+        if (normalized.isEmpty()) return all.take(limit)
+        val lower = normalized.lowercase()
+        return all.filter { it.lowercase().contains(lower) }.take(limit)
+    }
 }

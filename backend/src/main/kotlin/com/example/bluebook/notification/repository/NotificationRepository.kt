@@ -20,4 +20,12 @@ interface NotificationRepository : JpaRepository<Notification, Long> {
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.id = :id AND n.receiverId = :userId")
     fun markReadByIdAndReceiverId(id: Long, userId: Long): Int
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.id = :id AND n.receiverId = :userId")
+    fun deleteByIdAndReceiverId(id: Long, userId: Long): Int
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.receiverId = :userId")
+    fun deleteAllByReceiverId(userId: Long): Int
 }

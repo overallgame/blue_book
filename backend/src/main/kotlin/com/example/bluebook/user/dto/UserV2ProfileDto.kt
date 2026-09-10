@@ -2,6 +2,8 @@ package com.example.bluebook.user.dto
 
 data class UserV2ProfileDto(
     val id: Long,
+    /** 对外"小红书号"（作者主页展示） */
+    val xhsId: String? = null,
     val nickname: String,
     val avatar: String?,
     val backgroundImage: String?,

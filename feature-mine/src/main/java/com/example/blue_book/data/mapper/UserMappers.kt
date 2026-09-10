@@ -19,6 +19,7 @@ fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
 	return UserAccount(
 		id = id,
 		phone = phone,
+		xhsId = xhsId,
 		avatar = abs(avatar),
 		nickname = n(nickname),
 		password = null,
@@ -51,6 +52,7 @@ fun UserV2MeDto.toDomain(): UserAccount {
 	return UserAccount(
 		id = id,
 		phone = phone,
+		xhsId = xhsId,
 		avatar = abs(avatar),
 		nickname = n(nickname),
 		password = null,

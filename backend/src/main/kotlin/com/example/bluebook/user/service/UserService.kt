@@ -22,8 +22,35 @@ class UserService(
 ) {
     fun me(userId: Long): UserV2MeDto {
         val user = findUser(userId)
+        ensureXhsId(user)
         val (liked, collected) = interactionSum(userId)
         return toMeDto(user, liked, collected)
+    }
+
+    /**
+     * "小红书号"懒生成：SHA-256(id + 固定盐) 派生 10 位 base36，
+     * 不可逆、不含手机号信息；SHA-256 前 10 位碰撞概率 1/36^10，实际可忽略
+     */
+    private fun ensureXhsId(user: User): String {
+        user.xhsId?.takeIf { it.isNotBlank() }?.let { return it }
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+            .digest("bluebook:xhs:${user.id}:$XHS_SALT".toByteArray())
+        var value = 0L
+        for (b in digest.take(7)) {
+            value = (value shl 8) or (b.toLong() and 0xFF)
+        }
+        if (value == 0L) value = 1L
+        val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        val id = buildString {
+            var v = value
+            repeat(10) {
+                append(chars[(v % 36).toInt()])
+                v /= 36
+            }
+        }
+        user.xhsId = id
+        userRepository.save(user)
+        return id
     }
 
     /** 获赞与收藏合计：[0]=点赞合计，[1]=收藏合计 */
@@ -75,6 +102,7 @@ class UserService(
         request.school?.let { user.school = it }
         request.backgroundImage?.let { user.backgroundUrl = it }
         userRepository.save(user)
+        ensureXhsId(user)
         val (liked, collected) = interactionSum(userId)
         return toMeDto(user, liked, collected)
     }
@@ -82,6 +110,7 @@ class UserService(
     fun profile(userId: Long, currentUserId: Long?): UserV2ProfileDto {
         val user = userRepository.findById(userId)
             .orElseThrow { BusinessException(11001, "用户不存在") }
+        ensureXhsId(user)
         val isFollowed = currentUserId?.let {
             followRepository.existsByFollowerIdAndFolloweeId(it, userId)
         } ?: false
@@ -154,9 +183,15 @@ class UserService(
     private fun findUser(userId: Long) =
         userRepository.findById(userId).orElseThrow { UnauthorizedException() }
 
+    private companion object {
+        /** 小红书号派生盐（更换会使所有号变化，勿轻易修改） */
+        const val XHS_SALT = "bluebook-xhs-v1"
+    }
+
     private fun toMeDto(user: User, liked: Long = 0, collected: Long = 0) = UserV2MeDto(
         id = user.id,
         phone = user.phone.replaceRange(3, 7, "****"),
+        xhsId = user.xhsId,
         nickname = user.nickname,
         avatar = assetUrl(user.avatarUrl, "upload/images"),
         backgroundImage = assetUrl(user.backgroundUrl, "upload/images"),
@@ -179,6 +214,7 @@ class UserService(
         collected: Long = 0
     ) = UserV2ProfileDto(
         id = user.id,
+        xhsId = user.xhsId,
         nickname = user.nickname,
         avatar = assetUrl(user.avatarUrl, "upload/images"),
         backgroundImage = assetUrl(user.backgroundUrl, "upload/images"),

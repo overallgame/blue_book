@@ -49,6 +49,16 @@ class VideoService(
         return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
     }
 
+    /** 本地流：按地区过滤（region 为空返回全量 feed，端上做降级提示） */
+    fun regionFeed(region: String, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
+        val normalized = region.trim()
+        if (normalized.isEmpty()) return feed(cursorId, size, currentUserId)
+        val pageable = PageRequest.of(0, size)
+        val videos = videoRepository.findRegionFeedVideos(normalized, cursorId, pageable)
+        val items = videos.map { v -> toDto(v, currentUserId) }
+        return FeedResponseDto(items = items, nextCursorId = items.lastOrNull()?.videoId)
+    }
+
     fun search(keyword: String, cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
         val videos = videoRepository.searchVideos(keyword, cursorId, pageable)
@@ -75,6 +85,7 @@ class VideoService(
             title = request.title,
             description = request.description,
             originalUrl = request.filePath,
+            region = request.region?.trim()?.ifBlank { null },
             transcodeStatus = com.example.bluebook.video.entity.TranscodeStatus.PENDING
         )
         videoRepository.save(video)

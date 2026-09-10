@@ -14,8 +14,11 @@ import com.example.blue_book.ui.home.HomeActivity
 import com.example.blue_book.feature_home.databinding.SearchPageBinding
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import androidx.core.widget.doAfterTextChanged
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -31,6 +34,9 @@ class SearchFragment : Fragment() {
 
 	@Inject
 	lateinit var searchRemote: SearchRemoteDataSource
+
+	/** 输入联想防抖任务 */
+	private var suggestJob: Job? = null
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		_binding = SearchPageBinding.inflate(inflater, container, false)
@@ -55,8 +61,26 @@ class SearchFragment : Fragment() {
 			}
 		}
 		renderStaticGroups()
+		bindSuggestInput()
 		viewLifecycleOwner.lifecycleScope.launch {
 			renderHistory()
+		}
+	}
+
+	/** 猜你想搜：输入变化时防抖拉取匹配联想（与初始化同源，空输入回热门推荐） */
+	private fun bindSuggestInput() {
+		binding.searchComment.doAfterTextChanged { editable ->
+			val keyword = editable?.toString().orEmpty().trim()
+			suggestJob?.cancel()
+			suggestJob = viewLifecycleOwner.lifecycleScope.launch {
+				delay(300)
+				val terms = withContext(Dispatchers.IO) {
+					searchRemote.suggest(keyword.ifBlank { null }).getOrNull()
+				}
+				if (!isAdded) return@launch
+				val fallback = if (keyword.isBlank()) SUGGESTED else emptyList()
+				renderSuggested(terms?.filter { it.isNotBlank() }.orEmpty().ifEmpty { fallback })
+			}
 		}
 	}
 
@@ -81,16 +105,29 @@ class SearchFragment : Fragment() {
 	}
 
 	private fun renderStaticGroups() {
-		SUGGESTED.forEach { term -> binding.searchSuggestedGroup.addChip(term) { performSearch(term) } }
+		// 猜你想搜优先后端推荐，失败/为空时回退静态词
+		viewLifecycleOwner.lifecycleScope.launch {
+			val suggested = withContext(Dispatchers.IO) { searchRemote.suggest(null).getOrNull() }
+				?.filter { it.isNotBlank() }
+				.orEmpty()
+			if (!isAdded) return@launch
+			renderSuggested(suggested.ifEmpty { SUGGESTED })
+		}
 		// 热搜优先用后端数据，失败/为空时回退静态词
 		viewLifecycleOwner.lifecycleScope.launch {
 			val hot = withContext(Dispatchers.IO) { searchRemote.hotSearches().getOrNull() }
 				?.filter { it.isNotBlank() }
 				.orEmpty()
+			if (!isAdded) return@launch
 			val terms = hot.ifEmpty { HOT }
 			binding.searchHotGroup.removeAllViews()
 			terms.take(10).forEach { term -> binding.searchHotGroup.addChip(term) { performSearch(term) } }
 		}
+	}
+
+	private fun renderSuggested(terms: List<String>) {
+		binding.searchSuggestedGroup.removeAllViews()
+		terms.take(10).forEach { term -> binding.searchSuggestedGroup.addChip(term) { performSearch(term) } }
 	}
 
 	private fun ChipGroup.addChip(text: String, onClick: () -> Unit) {
@@ -108,6 +145,7 @@ class SearchFragment : Fragment() {
 	}
 
 	override fun onDestroyView() {
+		suggestJob?.cancel()
 		super.onDestroyView()
 		_binding = null
 	}

@@ -3,6 +3,8 @@ package com.example.blue_book.data
 data class UserAccount(
 	val id: Long = 0,
 	val phone: String,
+	/** 对外"小红书号"（脱敏手机号的替代） */
+	val xhsId: String? = null,
 	val avatar: String?,
 	val nickname: String?,
 	val password: String?,

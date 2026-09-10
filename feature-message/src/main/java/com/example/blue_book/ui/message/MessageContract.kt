@@ -9,6 +9,12 @@ sealed interface MessageIntent : UiIntent {
 	data object Refresh : MessageIntent
 	data object LoadMore : MessageIntent
 	data class MarkRead(val id: Long) : MessageIntent
+
+	/** 删除单条通知 */
+	data class Delete(val id: Long) : MessageIntent
+
+	/** 清空全部通知 */
+	data object ClearAll : MessageIntent
 }
 
 enum class MessageType { Follow, Like, Comment, Collect, System }

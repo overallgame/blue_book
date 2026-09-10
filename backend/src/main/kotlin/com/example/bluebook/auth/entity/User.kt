@@ -10,6 +10,10 @@ class User(
     @Column(name = "phone", nullable = false, unique = true, length = 20)
     var phone: String,
 
+    /** 对外展示的"小红书号"：由用户 id 不可逆派生，不含手机号信息，懒生成 */
+    @Column(name = "xhs_id", unique = true, length = 20)
+    var xhsId: String? = null,
+
     @Column(name = "nickname", nullable = false, length = 50)
     var nickname: String,
 

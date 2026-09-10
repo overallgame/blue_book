@@ -59,6 +59,15 @@ interface VideoRepository : JpaRepository<Video, Long> {
     """)
     fun sumInteractionsByUploader(uploaderId: Long): Array<Any>
 
+    /** 本地流：按发布地区过滤（转码完成才可播），按 id 倒序游标分页 */
+    @Query("""
+        SELECT v FROM Video v
+        WHERE v.region = :region AND v.status = 'PUBLISHED' AND v.transcodeStatus = 'DONE'
+        AND (:cursorId IS NULL OR v.id < :cursorId)
+        ORDER BY v.id DESC
+    """)
+    fun findRegionFeedVideos(region: String, cursorId: Long?, pageable: Pageable): List<Video>
+
     @Modifying
     @Query("UPDATE Video v SET v.likeCount = v.likeCount + :delta WHERE v.id = :id")
     fun incrementLikeCount(id: Long, delta: Long)

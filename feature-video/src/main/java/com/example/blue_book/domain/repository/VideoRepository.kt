@@ -11,6 +11,9 @@ interface VideoRepository {
 
 	suspend fun fetchFollowingFeed(cursorId: Long?, size: Int?): Result<List<Video>>
 
+	/** 本地流：按城市过滤（region 为空时后端降级为全量） */
+	suspend fun fetchRegionFeed(region: String, cursorId: Long?, size: Int?): Result<List<Video>>
+
 	suspend fun fetchByKeyword(keyword: String, cursorId: Long?, size: Int?): Result<List<Video>>
 
 	suspend fun fetchPlayUrl(aid: Long, cid: Long): Result<String>

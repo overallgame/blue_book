@@ -92,8 +92,18 @@ class PublishViewModel @Inject constructor(
 				}
 
 				val filePath = publishRemote.completeUpload(init.uploadId).getOrThrow()
-				publishRemote.publish(PublishRequestDto(title = title, description = description.ifBlank { null }, filePath = filePath))
-					.getOrThrow()
+				// 发布时定位城市（未授权/失败为 null，"本地"流按此过滤）
+				val region = runCatching {
+					com.example.blue_book.util.LocationHelper.currentCity(appContext)
+				}.getOrNull()
+				publishRemote.publish(
+					PublishRequestDto(
+						title = title,
+						description = description.ifBlank { null },
+						filePath = filePath,
+						region = region
+					)
+				).getOrThrow()
 				Unit
 			}.onFailure { it.printStackTrace() }
 		}

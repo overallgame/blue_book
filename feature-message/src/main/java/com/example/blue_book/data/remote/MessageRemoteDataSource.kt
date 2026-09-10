@@ -20,4 +20,10 @@ class MessageRemoteDataSource @Inject constructor(
 
 	suspend fun markAllRead(): Result<Unit> =
 		apiGateway.apiUnitResult { api.markAllRead() }
+
+	suspend fun delete(id: Long): Result<Unit> =
+		apiGateway.apiUnitResult { api.delete(id) }
+
+	suspend fun clearAll(): Result<Unit> =
+		apiGateway.apiUnitResult { api.clearAll() }
 }

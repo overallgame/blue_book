@@ -2,6 +2,7 @@ package com.example.blue_book.data.remote.user.dto2
 
 data class UserV2ProfileDto(
 	val id: Long,
+	val xhsId: String? = null,
 	val nickname: String,
 	val avatar: String?,
 	val backgroundImage: String?,

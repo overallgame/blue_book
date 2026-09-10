@@ -49,7 +49,10 @@ class MessageFragment : Fragment() {
 	}
 
 	private fun initRecyclerView() {
-		adapter = MessageAdapter { item -> handleItemClick(item) }
+		adapter = MessageAdapter(
+			onClick = { item -> handleItemClick(item) },
+			onLongClick = { item -> showItemMenu(item) }
+		)
 		binding.messageRecycleView.layoutManager = LinearLayoutManager(requireContext())
 		binding.messageRecycleView.adapter = adapter
 		// 触底加载更多
@@ -91,6 +94,18 @@ class MessageFragment : Fragment() {
 
 			MessageType.System -> Unit
 		}
+	}
+
+	/** 长按：删除单条 / 清空全部 */
+	private fun showItemMenu(item: MessageItem) {
+		androidx.appcompat.app.AlertDialog.Builder(requireContext())
+			.setItems(arrayOf("删除这条通知", "清空全部通知")) { _, which ->
+				when (which) {
+					0 -> viewModel.dispatch(MessageIntent.Delete(item.id))
+					1 -> viewModel.dispatch(MessageIntent.ClearAll)
+				}
+			}
+			.show()
 	}
 
 	/** 按 id 拉取视频卡后进入播放页（首条为该视频） */

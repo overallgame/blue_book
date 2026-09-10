@@ -28,6 +28,12 @@ class VideoController(
                       @RequestParam(defaultValue = "10") size: Int): ApiResponse<FeedResponseDto> =
         ApiResponse.ok(videoService.followingFeed(currentUserId(), cursorId, size, optionalUserId()))
 
+    @GetMapping("/api/v2/feed/region")
+    fun regionFeed(@RequestParam region: String,
+                   @RequestParam(required = false) cursorId: Long?,
+                   @RequestParam(defaultValue = "10") size: Int): ApiResponse<FeedResponseDto> =
+        ApiResponse.ok(videoService.regionFeed(region, cursorId, size, optionalUserId()))
+
     @GetMapping("/api/v2/videos/search")
     fun search(@RequestParam keyword: String,
                @RequestParam(required = false) cursorId: Long?,

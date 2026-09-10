@@ -18,6 +18,8 @@ class MessageViewModel @Inject constructor(
 			MessageIntent.Refresh -> refresh()
 			MessageIntent.LoadMore -> loadMore()
 			is MessageIntent.MarkRead -> markRead(intent.id)
+			is MessageIntent.Delete -> delete(intent.id)
+			MessageIntent.ClearAll -> clearAll()
 		}
 	}
 
@@ -82,6 +84,36 @@ class MessageViewModel @Inject constructor(
 			)
 		}
 		remote.markRead(id)
+	}
+
+	/** 删除单条：乐观移除，失败回滚并提示 */
+	private suspend fun delete(id: Long) {
+		val previous = uiState.value
+		val target = previous.items.firstOrNull { it.id == id } ?: return
+		setState {
+			copy(
+				items = items.filterNot { it.id == id },
+				isEmpty = items.size <= 1,
+				unreadCount = (unreadCount - if (target.isRead) 0 else 1).coerceAtLeast(0)
+			)
+		}
+		remote.delete(id).onFailure { e ->
+			setState { copy(items = previous.items, isEmpty = previous.isEmpty, unreadCount = previous.unreadCount) }
+			sendEffect(MessageEffect.ShowToast(e.message ?: "删除失败"))
+		}
+	}
+
+	/** 清空全部：乐观清空，失败回滚并提示 */
+	private suspend fun clearAll() {
+		val previous = uiState.value
+		if (previous.items.isEmpty()) return
+		setState { copy(items = emptyList(), isEmpty = true, unreadCount = 0, cursorId = null, hasMore = true) }
+		remote.clearAll().onFailure { e ->
+			setState {
+				copy(items = previous.items, isEmpty = previous.isEmpty, unreadCount = previous.unreadCount)
+			}
+			sendEffect(MessageEffect.ShowToast(e.message ?: "清空失败"))
+		}
 	}
 
 	private fun NotificationDto.toUi(): MessageItem = MessageItem(

@@ -14,19 +14,37 @@ class HomeLocalViewModel @Inject constructor(
 	private val videoProvider: IVideoProvider get() = TheRouter.get(IVideoProvider::class.java)!!
 	private val togglingAids = mutableSetOf<Long>()
 
+	/** 定位城市（空 = 未授权/失败，走随机流兜底） */
+	private var region: String = ""
+
 	override suspend fun handleIntent(intent: HomeLocalIntent) {
 		when (intent) {
 			HomeLocalIntent.Init -> initLoad()
+			is HomeLocalIntent.InitRegion -> {
+				region = intent.region
+				refresh()
+			}
+
 			HomeLocalIntent.Refresh -> refresh()
 			HomeLocalIntent.LoadMore -> loadMore()
 			is HomeLocalIntent.ToggleLike -> toggleLike(intent.item)
 		}
 	}
 
+	/** 有城市走本地流，否则随机流兜底 */
+	private suspend fun fetchPage(cursorId: Long?): Result<List<VideoCardInfo>> {
+		val pageSize = uiState.value.pageSize
+		return if (region.isNotBlank()) {
+			videoProvider.fetchRegionFeed(region, cursorId, pageSize)
+		} else {
+			videoProvider.fetchRandomVideos(cursorId, pageSize)
+		}
+	}
+
 	private suspend fun initLoad() {
 		runResult(
 			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null, cursorId = null, hasMore = true) } },
-			call = { videoProvider.fetchRandomVideos(cursorId = null, size = uiState.value.pageSize) },
+			call = { fetchPage(null) },
 			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)
@@ -35,8 +53,19 @@ class HomeLocalViewModel @Inject constructor(
 	private suspend fun refresh() {
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
-			call = { videoProvider.fetchRandomVideos(cursorId = null, size = uiState.value.pageSize) },
-			onSuccess = { list -> setState { copy(items = list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
+			call = { fetchPage(null) },
+			onSuccess = { list ->
+				setState {
+					copy(
+						items = list,
+						isLoading = false,
+						cursorId = list.lastOrNull()?.aid,
+						hasMore = list.size >= pageSize,
+						// 本地流无内容时给出提示
+						message = if (region.isNotBlank() && list.isEmpty()) "该地区暂无内容" else null
+					)
+				}
+			},
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)
 	}
@@ -46,7 +75,7 @@ class HomeLocalViewModel @Inject constructor(
 		if (state.isLoading || !state.hasMore) return
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { videoProvider.fetchRandomVideos(state.cursorId, state.pageSize) },
+			call = { fetchPage(state.cursorId) },
 			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
 			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "加载失败") } }
 		)

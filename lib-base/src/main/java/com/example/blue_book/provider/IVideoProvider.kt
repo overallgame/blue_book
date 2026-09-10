@@ -12,6 +12,9 @@ interface IVideoProvider {
 	/** 关注流：当前登录用户所关注作者的作品（未登录返回空） */
 	suspend fun fetchFollowingFeed(cursorId: Long? = null, size: Int? = 10): Result<List<VideoCardInfo>>
 
+	/** 本地流：按城市过滤（region 为空时后端降级为全量 feed） */
+	suspend fun fetchRegionFeed(region: String, cursorId: Long? = null, size: Int? = 10): Result<List<VideoCardInfo>>
+
 	/** 单条视频（消息中心等场景按 id 获取播放卡） */
 	suspend fun fetchVideoById(aid: Long): Result<VideoCardInfo>
 

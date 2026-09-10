@@ -3,6 +3,7 @@ package com.example.blue_book.data.remote
 import com.example.blue_book.data.dto.NotificationListDto
 import com.example.blue_book.network.data.ApiResponse
 import retrofit2.Response
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -26,4 +27,12 @@ interface MessageApi {
 
 	@POST("/api/v2/notifications/read-all")
 	suspend fun markAllRead(): Response<ApiResponse<Any>>
+
+	@DELETE("/api/v2/notifications/{id}")
+	suspend fun delete(
+		@Path("id") id: Long
+	): Response<ApiResponse<Any>>
+
+	@DELETE("/api/v2/notifications")
+	suspend fun clearAll(): Response<ApiResponse<Any>>
 }

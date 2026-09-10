@@ -55,6 +55,10 @@ class Video(
     @Column(name = "view_count", nullable = false)
     var viewCount: Long = 0,
 
+    /** 发布时定位城市（"本地"流按此过滤，未授权定位则为空） */
+    @Column(name = "region", length = 100)
+    var region: String? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     var status: VideoStatus = VideoStatus.PUBLISHED

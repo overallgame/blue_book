@@ -54,6 +54,16 @@ class NotificationService(
     }
 
     @Transactional
+    fun delete(userId: Long, notificationId: Long) {
+        notificationRepository.deleteByIdAndReceiverId(notificationId, userId)
+    }
+
+    @Transactional
+    fun clearAll(userId: Long) {
+        notificationRepository.deleteAllByReceiverId(userId)
+    }
+
+    @Transactional
     fun create(
         receiverId: Long, senderId: Long, type: NotifyType,
         videoId: Long? = null, commentId: Long? = null, content: String? = null

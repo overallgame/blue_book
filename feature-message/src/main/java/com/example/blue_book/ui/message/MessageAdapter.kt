@@ -13,7 +13,8 @@ import com.bumptech.glide.Glide
 import com.example.blue_book.feature_message.R
 
 class MessageAdapter(
-	private val onClick: (MessageItem) -> Unit
+	private val onClick: (MessageItem) -> Unit,
+	private val onLongClick: (MessageItem) -> Unit = {}
 ) : ListAdapter<MessageItem, MessageAdapter.VH>(DIFF) {
 
 	init { setHasStableIds(true) }
@@ -25,7 +26,7 @@ class MessageAdapter(
 	}
 
 	override fun onBindViewHolder(holder: VH, position: Int) {
-		holder.bind(getItem(position), onClick)
+		holder.bind(getItem(position), onClick, onLongClick)
 	}
 
 	class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -36,7 +37,7 @@ class MessageAdapter(
 		private val unreadDot: View = itemView.findViewById(R.id.msg_unread_dot)
 		private val typeIcon: ImageView = itemView.findViewById(R.id.msg_type_icon)
 
-		fun bind(item: MessageItem, onClick: (MessageItem) -> Unit) {
+		fun bind(item: MessageItem, onClick: (MessageItem) -> Unit, onLongClick: (MessageItem) -> Unit = {}) {
 			title.text = item.nickname
 			content.text = item.content
 			time.text = formatTime(item.time)
@@ -70,6 +71,10 @@ class MessageAdapter(
 			}
 
 			itemView.setOnClickListener { onClick(item) }
+			itemView.setOnLongClickListener {
+				onLongClick(item)
+				true
+			}
 		}
 
 		private fun formatTime(timestamp: Long): String {

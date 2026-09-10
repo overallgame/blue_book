@@ -16,6 +16,9 @@ class VideoRemoteDataSource @Inject constructor(
 	suspend fun feedFollowing(cursorId: Long?, size: Int?): Result<FeedResponseDto> =
 		apiGateway.apiResult { api.feedFollowing(cursorId, size) }
 
+	suspend fun feedRegion(region: String, cursorId: Long?, size: Int?): Result<FeedResponseDto> =
+		apiGateway.apiResult { api.feedRegion(region, cursorId, size) }
+
 	suspend fun searchVideos(keyword: String, cursorId: Long?, size: Int?): Result<FeedResponseDto> =
 		apiGateway.apiResult { api.searchVideos(keyword, cursorId, size) }
 

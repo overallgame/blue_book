@@ -1,11 +1,14 @@
 package com.example.blue_book.ui.publish
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -19,7 +22,7 @@ import com.example.blue_book.feature_video.databinding.PublishPageBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-/** 发布视频页：系统选择器选视频 → 分块上传 → 发布元数据 */
+/** 发布视频页：系统选择器选视频 → 分块上传 → 发布元数据（带定位城市入"本地"流） */
 @AndroidEntryPoint
 class PublishFragment : Fragment() {
 
@@ -30,6 +33,11 @@ class PublishFragment : Fragment() {
 	private val pickVideoLauncher = registerForActivityResult(
 		ActivityResultContracts.OpenDocument()
 	) { uri -> uri?.let { viewModel.dispatch(PublishIntent.SelectMedia(it)) } }
+
+	/** 定位权限：拒绝不阻塞发布，仅使视频不带地区 */
+	private val locationPermissionLauncher = registerForActivityResult(
+		ActivityResultContracts.RequestPermission()
+	) { /* 结果无需处理：发布时按实际授权状态取城市 */ }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		_binding = PublishPageBinding.inflate(inflater, container, false)
@@ -43,6 +51,17 @@ class PublishFragment : Fragment() {
 		initMediaPicker()
 		initSubmit()
 		observeViewModel()
+		requestLocationPermissionIfNeeded()
+	}
+
+	/** 进入发布页时静默申请定位权限（用于发布时带上城市） */
+	private fun requestLocationPermissionIfNeeded() {
+		val granted = ContextCompat.checkSelfPermission(
+			requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION
+		) == PackageManager.PERMISSION_GRANTED
+		if (!granted) {
+			locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+		}
 	}
 
 	/** 全面屏：工具栏避让状态栏，内容避让导航栏 */

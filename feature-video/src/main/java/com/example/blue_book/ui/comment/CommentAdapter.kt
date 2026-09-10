@@ -32,8 +32,19 @@ class CommentAdapter(
 		return CommentViewHolder(view)
 	}
 
+	/** 已被用户"收起回复"的评论 id：按评论记录，重绑/复用 ViewHolder 都不会丢失展开状态 */
+	private val collapsedReplies = mutableSetOf<Long>()
+
 	override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
-		holder.bind(getItem(position), currentUserId, onLikeClick, onReplyClick, onDeleteClick, onLoadReplies)
+		holder.bind(
+			getItem(position),
+			currentUserId,
+			collapsedReplies,
+			onLikeClick,
+			onReplyClick,
+			onDeleteClick,
+			onLoadReplies
+		)
 	}
 
 	class CommentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -49,11 +60,11 @@ class CommentAdapter(
 		private val viewRepliesBtn: TextView = itemView.findViewById(R.id.comment_view_replies_btn)
 
 		private var repliesAdapter: ReplyAdapter? = null
-		private var repliesExpanded = true
 
 		fun bind(
 			comment: Comment,
 			currentUserId: Long,
+			collapsedReplies: MutableSet<Long>,
 			onLikeClick: (Comment) -> Unit,
 			onReplyClick: (Comment) -> Unit,
 			onDeleteClick: (Comment) -> Unit,
@@ -72,18 +83,19 @@ class CommentAdapter(
 			replyBtn.setOnClickListener { onReplyClick(comment) }
 			deleteBtn.setOnClickListener { onDeleteClick(comment) }
 
-			bindReplies(comment, currentUserId, onLikeClick, onReplyClick, onDeleteClick, onLoadReplies)
+			bindReplies(comment, currentUserId, collapsedReplies, onLikeClick, onReplyClick, onDeleteClick, onLoadReplies)
 		}
 
 		/**
 		 * 回复区三种状态：
-		 * 1. 已加载回复（replies 非空）：默认展开，按钮在 收起/展开 间切换
+		 * 1. 已加载回复（replies 非空）：按收起集合决定展开/收起，按钮在两者间切换
 		 * 2. 尚未加载（replies 空但 replyCount > 0）：显示"查看 N 条回复"，点击触发加载
 		 * 3. 确实没有回复：整块隐藏
 		 */
 		private fun bindReplies(
 			comment: Comment,
 			currentUserId: Long,
+			collapsedReplies: MutableSet<Long>,
 			onLikeClick: (Comment) -> Unit,
 			onReplyClick: (Comment) -> Unit,
 			onDeleteClick: (Comment) -> Unit,
@@ -95,14 +107,20 @@ class CommentAdapter(
 				viewRepliesBtn.visibility = View.VISIBLE
 				setupReplies(comment, currentUserId, onLikeClick, onReplyClick, onDeleteClick)
 
+				// 展开状态按评论 id 记录（Adapter 级），重绑不会把用户收起的楼层重新弹开
+				val expanded = !collapsedReplies.contains(comment.id)
+				repliesRecycler.visibility = if (expanded) View.VISIBLE else View.GONE
+				viewRepliesBtn.text = if (expanded) "收起回复" else "展开回复"
 				viewRepliesBtn.setOnClickListener {
-					repliesExpanded = !repliesExpanded
-					repliesRecycler.visibility = if (repliesExpanded) View.VISIBLE else View.GONE
-					viewRepliesBtn.text = if (repliesExpanded) "收起回复" else "展开回复"
+					if (collapsedReplies.contains(comment.id)) {
+						collapsedReplies.remove(comment.id)
+					} else {
+						collapsedReplies.add(comment.id)
+					}
+					val nowExpanded = !collapsedReplies.contains(comment.id)
+					repliesRecycler.visibility = if (nowExpanded) View.VISIBLE else View.GONE
+					viewRepliesBtn.text = if (nowExpanded) "收起回复" else "展开回复"
 				}
-				repliesExpanded = true
-				repliesRecycler.visibility = View.VISIBLE
-				viewRepliesBtn.text = "收起回复"
 			} else if (comment.replyCount > 0) {
 				repliesRecycler.visibility = View.GONE
 				viewRepliesBtn.visibility = View.VISIBLE

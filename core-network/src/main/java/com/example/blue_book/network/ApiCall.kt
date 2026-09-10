@@ -1,6 +1,7 @@
 package com.example.blue_book.network
 
 import com.example.blue_book.network.data.ApiResponse
+import com.example.blue_book.network.data.ResponseState
 import com.example.blue_book.network.dto.CommonResult
 import com.example.blue_book.network.exception.NetworkException
 import com.google.gson.Gson
@@ -15,7 +16,7 @@ import retrofit2.Response
 internal fun httpFailure(response: Response<*>): NetworkException {
 	val code = response.code()
 	val message = serverMessage(response) ?: when {
-		code == 401 || code == 403 -> "登录状态已失效，请重新登录"
+		code == 401 || code == ResponseState.FORBIDDEN -> "登录状态已失效，请重新登录"
 		code == 404 -> "内容不存在或已删除"
 		code in 500..599 -> "服务器繁忙，请稍后重试"
 		else -> "请求失败($code)"
@@ -49,7 +50,7 @@ suspend inline fun <T> apiCall(
 		val response = call()
 		if (!response.isSuccessful) return Result.failure(httpFailure(response))
 		val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
-		if (body.code != 0) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
+		if (body.code != ResponseState.API_SUCCESS) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
 		val data = body.data ?: return Result.failure(IllegalStateException("响应体为空"))
 		Result.success(data)
 	} catch (e: CancellationException) {
@@ -66,7 +67,7 @@ suspend inline fun apiUnitCall(
 		val response = call()
 		if (!response.isSuccessful) return Result.failure(httpFailure(response))
 		val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
-		if (body.code != 0) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
+		if (body.code != ResponseState.API_SUCCESS) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
 		Result.success(Unit)
 	} catch (e: CancellationException) {
 		throw e
@@ -83,7 +84,7 @@ suspend inline fun <T> commonCall(
 		if (!response.isSuccessful) return Result.failure(httpFailure(response))
 		val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
 		val code = body.code
-		if (code != 200) {
+		if (code != ResponseState.COMMON_SUCCESS) {
 			val message = body.msg ?: "业务失败"
 			return Result.failure(IllegalStateException("code=${code ?: -1}, msg=$message"))
 		}

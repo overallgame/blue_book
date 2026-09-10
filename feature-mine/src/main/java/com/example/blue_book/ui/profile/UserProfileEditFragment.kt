@@ -150,11 +150,23 @@ class UserProfileEditFragment : Fragment() {
 							bindValue(binding.userInfoRegion, u.region, "选择所在的地区")
 							bindValue(binding.userInfoCareer, u.career, "选择职业")
 							bindValue(binding.userInfoSchool, u.school, "选择学校")
-							// 上传期间优先显示预览 URI，成功后由重拉的服务端地址接管
+							// 上传期间优先显示预览 URI，成功后由重拉的服务端地址接管；
+							// 上传失败（预览已清空且无服务端地址）时回退占位，
+							// 否则本地图会残留在页面上，看起来像上传成功
 							val avatarSrc = state.avatarPreviewUri ?: u.avatar
-							avatarSrc?.let { Glide.with(requireContext()).load(it).into(binding.userInfoAvatar) }
+							if (avatarSrc != null) {
+								Glide.with(requireContext()).load(avatarSrc).into(binding.userInfoAvatar)
+							} else {
+								Glide.with(requireContext()).clear(binding.userInfoAvatar)
+								binding.userInfoAvatar.setImageResource(R.drawable.default_avatar)
+							}
 							val backgroundSrc = state.backgroundPreviewUri ?: u.background
-							backgroundSrc?.let { Glide.with(requireContext()).load(it).into(binding.userInfoBackgroundImage) }
+							if (backgroundSrc != null) {
+								Glide.with(requireContext()).load(backgroundSrc).into(binding.userInfoBackgroundImage)
+							} else {
+								Glide.with(requireContext()).clear(binding.userInfoBackgroundImage)
+								binding.userInfoBackgroundImage.setImageDrawable(null)
+							}
 						}
 					}
 				}

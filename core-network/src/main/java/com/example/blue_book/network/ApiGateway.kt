@@ -17,8 +17,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import retrofit2.Response
@@ -34,12 +36,16 @@ class ApiGateway @Inject constructor(
 	@ApplicationContext private val context: Context,
 	private val dataStore: IDataStore,
 	tokenHolder: TokenHolder,
-	currentUser: CurrentUser
+	currentUser: CurrentUser,
+	private val networkMonitor: NetworkMonitor
 ) {
 	companion object {
 		const val BASE_URL: String = BuildConfig.BASE_URL
 		private const val CACHE_SIZE = 10L * 1024 * 1024 // 10MB
 		private const val CACHE_DIR = "http_cache"
+
+		/** 断网等待网络恢复的上限（毫秒）：仅在系统报告无连接时生效 */
+		private const val NETWORK_WAIT_MS = 1200L
 	}
 
 	/**
@@ -58,7 +64,16 @@ class ApiGateway @Inject constructor(
 
 	private var okHttpClient: OkHttpClient? = null
 
+	/**
+	 * 目标是局域网/本机地址时跳过断网快速失败：
+	 * 这类网络（内网服务器、无外网的路由器）系统可能不标记 NET_CAPABILITY_INTERNET，
+	 * 但请求本身仍然可达，不能凭系统状态判死。
+	 */
+	@Volatile
+	private var targetIsLocal: Boolean = isLocalHost(baseUrl)
+
 	private fun refreshOkHttpClient() {
+		targetIsLocal = isLocalHost(baseUrl)
 		val cacheDir = File(context.cacheDir, CACHE_DIR)
 		okHttpClient = OkHttpClient.Builder()
 			.connectTimeout(10, TimeUnit.SECONDS)
@@ -112,17 +127,51 @@ class ApiGateway @Inject constructor(
 		call: suspend () -> Response<ApiResponse<T>>,
 		onSuccess: suspend (T) -> Unit,
 		onFailure: suspend (String) -> Unit = {}
-	) = execute({ apiCall { call() } }, onSuccess, onFailure)
+	) = execute({ withNetwork { apiCall { call() } } }, onSuccess, onFailure)
 
 	suspend fun <T> commonRequest(
 		call: suspend () -> Response<CommonResult<T>>,
 		onSuccess: suspend (T) -> Unit,
 		onFailure: suspend (String) -> Unit = {}
-	) = execute({ commonCall { call() } }, onSuccess, onFailure)
+	) = execute({ withNetwork { commonCall { call() } } }, onSuccess, onFailure)
 
-	suspend fun <T> apiResult(call: suspend () -> Response<ApiResponse<T>>): Result<T> = apiCall { call() }
-	suspend fun <T> commonResult(call: suspend () -> Response<CommonResult<T>>): Result<T> = commonCall { call() }
-	suspend fun apiUnitResult(call: suspend () -> Response<ApiResponse<Any>>): Result<Unit> = apiUnitCall { call() }
+	suspend fun <T> apiResult(call: suspend () -> Response<ApiResponse<T>>): Result<T> =
+		withNetwork { apiCall { call() } }
+
+	suspend fun <T> commonResult(call: suspend () -> Response<CommonResult<T>>): Result<T> =
+		withNetwork { commonCall { call() } }
+
+	suspend fun apiUnitResult(call: suspend () -> Response<ApiResponse<Any>>): Result<Unit> =
+		withNetwork { apiUnitCall { call() } }
+
+	/**
+	 * 断网快速失败：无网络时不再等连接/读超时（各 10s），直接给出明确文案。
+	 * 设备刚开机等瞬时状态先短等一次网络广播，避免误判。
+	 */
+	private suspend fun <T> withNetwork(block: suspend () -> Result<T>): Result<T> {
+		if (targetIsLocal || networkMonitor.isConnected) return block()
+		val connected = withTimeoutOrNull(NETWORK_WAIT_MS) {
+			networkMonitor.networkState.first { it }
+		} ?: false
+		if (!connected && !networkMonitor.isConnected) {
+			return Result.failure(
+				NetworkException(NetworkException.CODE_NET_ERROR, "网络未连接，请检查网络设置")
+			)
+		}
+		return block()
+	}
+
+	/** 本机 / 私有网段（10/8、172.16-31、192.168、169.254）判定 */
+	private fun isLocalHost(url: String): Boolean {
+		val host = runCatching { java.net.URI(url).host }.getOrNull()?.lowercase() ?: return false
+		if (host == "localhost" || host == "127.0.0.1" || host == "::1") return true
+		if (host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("169.254.")) return true
+		if (host.startsWith("172.")) {
+			val second = host.removePrefix("172.").substringBefore('.').toIntOrNull()
+			if (second != null && second in 16..31) return true
+		}
+		return false
+	}
 
 	private suspend fun <T> execute(
 		block: suspend () -> Result<T>,

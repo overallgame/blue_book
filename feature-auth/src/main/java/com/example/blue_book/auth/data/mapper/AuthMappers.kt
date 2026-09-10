@@ -25,7 +25,9 @@ fun UserProfile.toDomain(): UserAccount {
 		career = n(occupation),
 		region = n(region),
 		school = n(school),
-		background = abs(backgroundImage)
+		background = abs(background),
+		followerCount = followerCount,
+		followingCount = followingCount
 	)
 }
 

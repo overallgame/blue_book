@@ -31,4 +31,7 @@ data class AuthorProfileUiState(
 sealed interface AuthorProfileEffect : UiEffect {
 	data class ShowToast(val message: String) : AuthorProfileEffect
 	data class UpdateItem(val item: VideoCardInfo) : AuthorProfileEffect
+
+	/** 未登录点关注：弹登录引导卡片 */
+	data object ShowLoginGuide : AuthorProfileEffect
 }

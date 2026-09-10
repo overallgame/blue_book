@@ -15,11 +15,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blue_book.feature_video.databinding.FragmentCommentBinding
+import com.example.blue_book.network.CurrentUser
+import com.example.blue_book.widget.LoginGuideDialog
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class CommentBottomSheet : BottomSheetDialogFragment() {
@@ -28,6 +31,10 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 	private val binding get() = _binding!!
 
 	private val viewModel: CommentViewModel by viewModels()
+
+	/** 当前登录用户：游客可看评论，发送/回复需登录 */
+	@Inject
+	lateinit var currentUser: CurrentUser
 
 	private lateinit var commentAdapter: CommentAdapter
 
@@ -149,6 +156,11 @@ class CommentBottomSheet : BottomSheetDialogFragment() {
 
 	private fun setupInput() {
 		binding.commentSendBtn.setOnClickListener {
+			// 游客可看评论，发送/回复需登录
+			if (currentUser.userId == null) {
+				LoginGuideDialog.show(requireActivity())
+				return@setOnClickListener
+			}
 			val content = binding.commentInput.text.toString()
 			if (viewModel.uiState.value.replyToComment != null) {
 				viewModel.replyComment(content)

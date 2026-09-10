@@ -5,12 +5,47 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
 
-	<androidx.recyclerview.widget.RecyclerView
-		android:id="@+id/main_focus_recycleView"
+	<FrameLayout
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:background="@color/md_theme_surfaceContainer"
-		android:clipToPadding="false"
-		android:padding="4dp" />
+		android:layout_height="match_parent">
+
+		<androidx.recyclerview.widget.RecyclerView
+			android:id="@+id/main_focus_recycleView"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:background="@color/md_theme_surfaceContainer"
+			android:clipToPadding="false"
+			android:padding="4dp" />
+
+		<!-- 未登录空态：点击弹登录引导卡片 -->
+		<LinearLayout
+			android:id="@+id/home_focus_empty"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center"
+			android:gravity="center_horizontal"
+			android:orientation="vertical"
+			android:visibility="gone">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="登录后查看关注内容"
+				android:textColor="@color/md_theme_onSurfaceVariant"
+				android:textSize="14sp" />
+
+			<TextView
+				android:id="@+id/home_focus_empty_login"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="14dp"
+				android:background="?attr/selectableItemBackground"
+				android:paddingHorizontal="24dp"
+				android:paddingVertical="8dp"
+				android:text="去登录"
+				android:textColor="@color/md_theme_primary"
+				android:textSize="14sp" />
+		</LinearLayout>
+	</FrameLayout>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

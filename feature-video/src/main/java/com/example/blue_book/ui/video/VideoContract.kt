@@ -52,6 +52,9 @@ data class VideoUiState(
 sealed interface VideoUiEffect : UiEffect {
 	data class ShowToast(val message: String) : VideoUiEffect
 	data class UpdateItem(val item: VideoCardInfo) : VideoUiEffect
+
+	/** 未登录触发互动（点赞/收藏/评论/关注）时弹出登录引导卡片 */
+	data object ShowLoginGuide : VideoUiEffect
 }
 
 

@@ -20,6 +20,7 @@ import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.feature_video.databinding.VideoPageBinding
 import com.example.blue_book.ui.comment.CommentBottomSheet
+import com.example.blue_book.widget.LoginGuideDialog
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -248,6 +249,9 @@ class VideoFragment : Fragment() {
 							).show()
 
 							is VideoUiEffect.UpdateItem -> adapter.updateVideoList(it.item)
+
+							// 未登录触发互动：弹登录引导卡片
+							VideoUiEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
 						}
 					}
 				}

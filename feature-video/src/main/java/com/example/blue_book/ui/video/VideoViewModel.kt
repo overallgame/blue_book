@@ -210,6 +210,11 @@ class VideoViewModel @Inject constructor(
 	}
 
 	private suspend fun toggleLike(video: VideoCardInfo) {
+		// 游客可看视频，点赞需登录
+		if (currentUser.userId == null) {
+			sendEffect(VideoUiEffect.ShowLoginGuide)
+			return
+		}
 		if (video.aid in togglingAids) return
 		togglingAids.add(video.aid)
 		val newStatus = !video.isLike
@@ -237,6 +242,11 @@ class VideoViewModel @Inject constructor(
 	}
 
 	private suspend fun toggleCollect(video: VideoCardInfo) {
+		// 游客可看视频，收藏需登录
+		if (currentUser.userId == null) {
+			sendEffect(VideoUiEffect.ShowLoginGuide)
+			return
+		}
 		if (video.aid in togglingCollectAids) return
 		togglingCollectAids.add(video.aid)
 		val newStatus = !video.isCollect
@@ -267,7 +277,7 @@ class VideoViewModel @Inject constructor(
 	 */
 	private suspend fun toggleFollow(video: VideoCardInfo) {
 		val myId = currentUser.userId
-		if (myId == null) return sendEffect(VideoUiEffect.ShowToast("请先登录"))
+		if (myId == null) return sendEffect(VideoUiEffect.ShowLoginGuide)
 		if (video.uploaderId == myId || video.uploaderId == 0L) return
 		if (video.uploaderId in togglingFollowAids) return
 		togglingFollowAids.add(video.uploaderId)

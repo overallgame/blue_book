@@ -13,16 +13,18 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blue_book.feature_message.databinding.MessagePageBinding
+import com.example.blue_book.provider.IAuthProvider
 import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.widget.LoginGuideDialog
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** 消息中心：真实通知列表；点击标记已读并跳转（关注→作者主页，互动→对应视频） */
+/** 消息中心：需登录使用；未登录进入弹引导卡片且不加载，登录后自动加载 */
 @AndroidEntryPoint
 class MessageFragment : Fragment() {
 
@@ -30,6 +32,12 @@ class MessageFragment : Fragment() {
 	private val binding get() = _binding!!
 	private val viewModel: MessageViewModel by viewModels()
 	private lateinit var adapter: MessageAdapter
+
+	/** 游客状态（未登录） */
+	private var isGuest = false
+
+	/** 是否已按登录态初始化加载 */
+	private var initialized = false
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -45,7 +53,26 @@ class MessageFragment : Fragment() {
 		initRecyclerView()
 		initSwipeRefresh()
 		observeViewModel()
-		viewModel.dispatch(MessageIntent.Init)
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 每次可见：同步登录态；未登录弹引导卡片，登录后首次进入加载
+		viewLifecycleOwner.lifecycleScope.launch {
+			val logged = withContext(Dispatchers.IO) {
+				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
+			}
+			if (!isAdded) return@launch
+			isGuest = !logged
+			if (logged) {
+				if (!initialized) {
+					initialized = true
+					viewModel.dispatch(MessageIntent.Init)
+				}
+			} else {
+				LoginGuideDialog.show(requireActivity())
+			}
+		}
 	}
 
 	private fun initRecyclerView() {
@@ -69,6 +96,11 @@ class MessageFragment : Fragment() {
 
 	private fun initSwipeRefresh() {
 		binding.messageSwipeRefreshLayout.setOnRefreshListener {
+			if (isGuest) {
+				LoginGuideDialog.show(requireActivity())
+				binding.messageSwipeRefreshLayout.isRefreshing = false
+				return@setOnRefreshListener
+			}
 			viewModel.dispatch(MessageIntent.Refresh)
 		}
 	}

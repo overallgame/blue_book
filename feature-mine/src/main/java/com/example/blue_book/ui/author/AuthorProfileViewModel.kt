@@ -119,7 +119,7 @@ class AuthorProfileViewModel @Inject constructor(
 		val profile = uiState.value.profile ?: return
 		val myId = currentUser.userId
 		if (myId == null) {
-			sendEffect(AuthorProfileEffect.ShowToast("请先登录"))
+			sendEffect(AuthorProfileEffect.ShowLoginGuide)
 			return
 		}
 		if (profile.id == myId || uiState.value.isTogglingFollow) return

@@ -22,6 +22,7 @@ import com.example.blue_book.feature_mine.databinding.AuthorProfilePageBinding
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
 import com.therouter.TheRouter
@@ -171,16 +172,17 @@ class AuthorProfileFragment : Fragment() {
 						}
 					}
 				}
-				launch {
-					viewModel.uiEffect.collect { effect ->
-						when (effect) {
-							is AuthorProfileEffect.ShowToast -> Toast.makeText(
-								requireContext(), effect.message, Toast.LENGTH_SHORT
-							).show()
-							is AuthorProfileEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+					launch {
+						viewModel.uiEffect.collect { effect ->
+							when (effect) {
+								is AuthorProfileEffect.ShowToast -> Toast.makeText(
+									requireContext(), effect.message, Toast.LENGTH_SHORT
+								).show()
+								is AuthorProfileEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+								AuthorProfileEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
+							}
 						}
 					}
-				}
 			}
 		}
 	}

@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		radioGroup.setOnCheckedChangeListener { _, checkedId ->
-			// 拦截回退与重复选中（防递归导航）
+			// 拦截重复选中（防递归导航）
 			if (checkedId == currentCheckedId) return@setOnCheckedChangeListener
 			val targetPath = when (checkedId) {
 				R.id.tab_home -> RoutePath.HOME
@@ -62,12 +62,7 @@ class MainActivity : AppCompatActivity() {
 				R.id.tab_mine -> RoutePath.MINE
 				else -> return@setOnCheckedChangeListener
 			}
-			// 未登录：除首页外均拦截，回退选中并弹出登录引导卡片
-			if (loggedIn == false && checkedId != R.id.tab_home) {
-				radioGroup.check(currentCheckedId)
-				LoginGuideDialog.show(this)
-				return@setOnCheckedChangeListener
-			}
+			// 游客可自由浏览各 Tab；需要登录的功能在页面内触发时再引导
 			currentCheckedId = checkedId
 			navigateToTab(targetPath)
 		}

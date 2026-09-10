@@ -38,9 +38,13 @@ import com.therouter.TheRouter
 import com.example.blue_book.datastore.ThemeMode
 import com.example.blue_book.datastore.ThemeRepository
 import com.example.blue_book.network.CurrentUser
+import com.example.blue_book.provider.IAuthProvider
+import com.example.blue_book.widget.LoginGuideDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class MineFragment : Fragment() {
@@ -84,13 +88,32 @@ class MineFragment : Fragment() {
 
 	private var firstResume = true
 
-	/** 从资料编辑/播放页返回时刷新（首次由 Init 承担，跳过避免双请求） */
+	/** 游客状态（未登录）：浏览可，功能使用引导登录 */
+	private var isGuest = false
+
+	/** 从资料编辑/播放页返回时刷新；未登录进入弹登录引导卡片 */
 	override fun onResume() {
 		super.onResume()
-		if (firstResume) {
-			firstResume = false
+		viewLifecycleOwner.lifecycleScope.launch {
+			val logged = withContext(Dispatchers.IO) {
+				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
+			}
+			if (!isAdded) return@launch
+			isGuest = !logged
+			if (logged) {
+				if (firstResume) firstResume = false else viewModel.dispatch(MineIntent.Refresh)
+			} else {
+				LoginGuideDialog.show(requireActivity())
+			}
+		}
+	}
+
+	/** 未登录使用功能：弹登录引导卡片，不执行动作 */
+	private fun guardLogin(action: () -> Unit) {
+		if (isGuest) {
+			LoginGuideDialog.show(requireActivity())
 		} else {
-			viewModel.dispatch(MineIntent.Refresh)
+			action()
 		}
 	}
 
@@ -189,15 +212,19 @@ class MineFragment : Fragment() {
 
 	private fun initTopActions() {
 		binding.mineScan.setOnClickListener {
-			Toast.makeText(requireContext(), "扫一扫即将上线", Toast.LENGTH_SHORT).show()
+			guardLogin {
+				Toast.makeText(requireContext(), "扫一扫即将上线", Toast.LENGTH_SHORT).show()
+			}
 		}
 		binding.mineShare.setOnClickListener {
-			Toast.makeText(requireContext(), "分享即将上线", Toast.LENGTH_SHORT).show()
+			guardLogin {
+				Toast.makeText(requireContext(), "分享即将上线", Toast.LENGTH_SHORT).show()
+			}
 		}
-		binding.mineCopyId.setOnClickListener { copyXhsId() }
+		binding.mineCopyId.setOnClickListener { guardLogin { copyXhsId() } }
 		// 关注/粉丝列表入口：点击用户列表项进入作者主页
-		binding.mineFocus.setOnClickListener { navigateFollowList("following") }
-		binding.mineFan.setOnClickListener { navigateFollowList("followers") }
+		binding.mineFocus.setOnClickListener { guardLogin { navigateFollowList("following") } }
+		binding.mineFan.setOnClickListener { guardLogin { navigateFollowList("followers") } }
 	}
 
 	private fun navigateFollowList(type: String) {
@@ -250,16 +277,17 @@ class MineFragment : Fragment() {
 			}
 		}
 		binding.mineEditUserProfile.setOnClickListener {
-			(requireActivity() as MineActivity).navigateToProfileEdit()
+			guardLogin { (requireActivity() as MineActivity).navigateToProfileEdit() }
 		}
 	}
 
 	private fun initImagePickers() {
+		// 头像/背景替换属于登录后功能
 		binding.mineAvatar.setOnClickListener {
-			openCustomImagePicker("avatar")
+			guardLogin { openCustomImagePicker("avatar") }
 		}
 		binding.mineBackgroundImage.setOnClickListener {
-			openCustomImagePicker("backgroundImage")
+			guardLogin { openCustomImagePicker("backgroundImage") }
 		}
 	}
 

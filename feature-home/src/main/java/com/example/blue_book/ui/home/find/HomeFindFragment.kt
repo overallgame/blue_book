@@ -14,10 +14,15 @@ import com.example.blue_book.ui.home.HomeActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.feature_home.databinding.HomeFindPageBinding
+import com.example.blue_book.provider.IAuthProvider
+import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
+import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class HomeFindFragment : Fragment() {
@@ -29,6 +34,9 @@ class HomeFindFragment : Fragment() {
 
 	private var isLoading = false
 	private var noMoreToasted = false
+
+	/** 游客状态（未登录）：可浏览视频，点赞等互动需登录 */
+	private var isGuest = false
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -47,6 +55,25 @@ class HomeFindFragment : Fragment() {
 		viewModel.dispatch(HomeFindIntent.Init)
 	}
 
+	override fun onResume() {
+		super.onResume()
+		// 同步游客状态（用于互动守卫）
+		viewLifecycleOwner.lifecycleScope.launch {
+			isGuest = !withContext(Dispatchers.IO) {
+				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: true
+			}
+		}
+	}
+
+	/** 未登录触发点赞：弹登录引导卡片 */
+	private fun guardLike(v: com.example.blue_book.data.VideoCardInfo) {
+		if (isGuest) {
+			LoginGuideDialog.show(requireActivity())
+		} else {
+			viewModel.dispatch(HomeFindIntent.ToggleLike(v))
+		}
+	}
+
 	private fun initSwipeRefreshLayout() {
 		binding.mainFindPagerSwipeRefreshLayout.setOnRefreshListener {
 			noMoreToasted = false
@@ -56,7 +83,7 @@ class HomeFindFragment : Fragment() {
 
 	private fun initRecyclerView() {
 		adapter = PreVideoAdapter(
-			onClickLike = { v -> viewModel.dispatch(HomeFindIntent.ToggleLike(v)) },
+			onClickLike = { v -> guardLike(v) },
 			onClickItem = { v ->
 				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
 			}

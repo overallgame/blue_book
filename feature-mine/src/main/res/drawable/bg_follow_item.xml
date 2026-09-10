@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 关注/粉丝列表项容器：主题化底色 + 涟漪（浅色白底 / 深色深底，见夜版 md_theme_surface） -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item android:id="@android:id/mask">
+        <color android:color="#FFFFFF" />
+    </item>
+    <item>
+        <color android:color="@color/md_theme_surface" />
+    </item>
+</ripple>

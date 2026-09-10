@@ -1,4 +1,4 @@
-package com.example.blue_book.view
+package com.example.blue_book.widget
 
 import android.app.Activity
 import android.app.Dialog
@@ -7,15 +7,25 @@ import android.graphics.drawable.ColorDrawable
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import com.example.blue_book.R
+import com.example.blue_book.lib_base.R
 import com.example.blue_book.router.RoutePath
 import com.therouter.TheRouter
 
 /**
- * 未登录引导卡片：圆角卡片 + "去登录"/"暂不"。
- * 用于首页进入与底部导航拦截未登录用户使用其他页面功能。
+ * 未登录引导卡片（公共组件）：圆角卡片 + "去登录"/"暂不"。
+ * - [showIfNeeded]：进入 App 首页时引导，进程内仅一次
+ * - [show]：底部导航拦截等场景，每次调用都弹
  */
 object LoginGuideDialog {
+
+	private var shownInProcess = false
+
+	/** 进程内仅弹一次（进入 App 的首页引导） */
+	fun showIfNeeded(activity: Activity) {
+		if (shownInProcess) return
+		shownInProcess = true
+		show(activity)
+	}
 
 	fun show(activity: Activity) {
 		if (activity.isFinishing || activity.isDestroyed) return

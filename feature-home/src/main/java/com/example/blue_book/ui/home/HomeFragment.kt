@@ -6,14 +6,21 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.feature_home.R
 import com.example.blue_book.feature_home.databinding.HomePageBinding
+import com.example.blue_book.provider.IAuthProvider
 import com.example.blue_book.ui.home.find.HomeFindFragment
 import com.example.blue_book.ui.home.focus.HomeFocusFragment
 import com.example.blue_book.ui.home.local.HomeLocalFragment
+import com.example.blue_book.widget.LoginGuideDialog
+import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -37,6 +44,19 @@ class HomeFragment : Fragment() {
 		initNavigationView()
 		initViewPager()
 		initRadioGroup()
+		guideLoginIfNeeded()
+	}
+
+	/** 进入 App 首页时未登录则弹登录引导卡片（进程内仅一次；此层弹出可确保在首页之上可见） */
+	private fun guideLoginIfNeeded() {
+		viewLifecycleOwner.lifecycleScope.launch {
+			val logged = withContext(Dispatchers.IO) {
+				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: true
+			}
+			if (!logged && isAdded) {
+				LoginGuideDialog.showIfNeeded(requireActivity())
+			}
+		}
 	}
 
 	private fun initNavigationView() {

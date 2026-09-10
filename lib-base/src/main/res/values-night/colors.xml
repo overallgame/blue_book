@@ -3,4 +3,11 @@
     <!-- 公用卡片（pre_video_item_view）：跟随主题（深色） -->
     <color name="lib_card_background">#2B2A2A</color>
     <color name="lib_card_text_primary">#E6E1E2</color>
+
+    <!-- 登录引导卡片（深色：卡片与文字随夜，品牌蓝不变） -->
+    <color name="login_guide_primary">#2A6AF2</color>
+    <color name="login_guide_on_primary">#FFFFFF</color>
+    <color name="login_guide_card_background">#2B2A2A</color>
+    <color name="login_guide_title">#E6E1E2</color>
+    <color name="login_guide_desc">#938F95</color>
 </resources>

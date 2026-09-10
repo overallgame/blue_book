@@ -15,6 +15,7 @@ import com.example.blue_book.R
 import com.example.blue_book.provider.IAuthProvider
 import com.example.blue_book.provider.INotificationProvider
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.widget.LoginGuideDialog
 import com.therouter.TheRouter
 import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,9 +35,6 @@ class MainActivity : AppCompatActivity() {
 
 	/** 登录态：null=判断中（放行，避免误拦已登录用户） */
 	private var loggedIn: Boolean? = null
-
-	/** 每次进入主界面只弹一次登录引导 */
-	private var guideShown = false
 
 	private val locationPermissionLauncher =
 		registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -88,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 		resolveLoginState()
 	}
 
-	/** 登录态：已登录在首页先行申请定位权限；未登录弹出登录引导卡片 */
+	/** 登录态：已登录在首页先行申请定位权限（未登录引导由首页负责，避免 Dialog 被首页覆盖） */
 	private fun resolveLoginState() {
 		lifecycleScope.launch {
 			val logged = withContext(Dispatchers.IO) {
@@ -97,9 +95,6 @@ class MainActivity : AppCompatActivity() {
 			loggedIn = logged
 			if (logged) {
 				requestLocationPermission()
-			} else if (!guideShown) {
-				guideShown = true
-				LoginGuideDialog.show(this@MainActivity)
 			}
 		}
 	}

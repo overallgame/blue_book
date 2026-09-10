@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_permission_denied">需要相册权限才能选择图片</string>
+    <string name="gallery_empty">相册暂无图片</string>
+</resources>

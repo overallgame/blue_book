@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 拍照临时文件（cacheDir/camera/） -->
+    <cache-path
+        name="camera"
+        path="camera/" />
+</paths>

@@ -10,6 +10,11 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-06-bluebook-backend-design.md`
 
+> **状态：已执行完成（2026-09 复核）。** 校验方式：逐 Task 核对计划产物文件均已存在（65/65 个 Step 的产物文件齐全）
+> + `./gradlew :backend:compileKotlin` 通过。三处与计划不一致，已在对应 Task 就地注明：
+> 搜索模块改用 MySQL LIKE + Redis 热搜（未接入 ES）、转码重试由消费端承担（脚本内无重试循环）、
+> 认证集成测试未落地（仅有 `BlueBookApplicationTests` 骨架）。
+
 ---
 
 ## 阶段 1: 项目骨架搭建
@@ -21,14 +26,14 @@
 - Modify: `settings.gradle.kts`
 - Modify: `build.gradle.kts`
 
-- [ ] **Step 1: 修改 settings.gradle.kts，加入 backend 子项目**
+- [x] **Step 1: 修改 settings.gradle.kts，加入 backend 子项目**
 
 在 `settings.gradle.kts` 末尾添加：
 ```kotlin
 include(":backend")
 ```
 
-- [ ] **Step 2: 创建 backend/build.gradle.kts**
+- [x] **Step 2: 创建 backend/build.gradle.kts**
 
 ```kotlin
 plugins {
@@ -104,7 +109,7 @@ kapt {
 tasks.withType<Test> { useJUnitPlatform() }
 ```
 
-- [ ] **Step 3: 修改根 build.gradle.kts**
+- [x] **Step 3: 修改根 build.gradle.kts**
 
 在 `plugins` 块末尾添加：
 ```kotlin
@@ -114,7 +119,7 @@ kotlin("plugin.spring") version "1.9.24" apply false
 kotlin("plugin.jpa") version "1.9.24" apply false
 ```
 
-- [ ] **Step 4: 创建 backend/src/main/kotlin/com/example/bluebook/BlueBookApplication.kt**
+- [x] **Step 4: 创建 backend/src/main/kotlin/com/example/bluebook/BlueBookApplication.kt**
 
 ```kotlin
 package com.example.bluebook
@@ -132,7 +137,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-- [ ] **Step 5: 创建 backend/src/main/resources/application.yml**
+- [x] **Step 5: 创建 backend/src/main/resources/application.yml**
 
 ```yaml
 server:
@@ -192,7 +197,7 @@ logging:
     path: /var/log/blue-book
 ```
 
-- [ ] **Step 6: 创建 backend/src/test/kotlin/com/example/bluebook/BlueBookApplicationTests.kt**
+- [x] **Step 6: 创建 backend/src/test/kotlin/com/example/bluebook/BlueBookApplicationTests.kt**
 
 ```kotlin
 package com.example.bluebook
@@ -209,7 +214,7 @@ class BlueBookApplicationTests {
 }
 ```
 
-- [ ] **Step 7: 创建 backend/src/main/resources/application-test.yml（测试环境用 H2）**
+- [x] **Step 7: 创建 backend/src/main/resources/application-test.yml（测试环境用 H2）**
 
 ```yaml
 spring:
@@ -226,7 +231,7 @@ spring:
       auto-startup: false
 ```
 
-- [ ] **Step 8: 添加 .gitignore 条目**
+- [x] **Step 8: 添加 .gitignore 条目**
 
 在 `.gitignore` 末尾添加：
 ```
@@ -239,14 +244,14 @@ upload/
 !gradle/wrapper/gradle-wrapper.jar
 ```
 
-- [ ] **Step 9: 验证编译**
+- [x] **Step 9: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ./gradlew :backend:test --tests "com.example.bluebook.BlueBookApplicationTests"
 ```
 
-- [ ] **Step 10: 提交**
+- [x] **Step 10: 提交**
 
 ```bash
 git add backend/ settings.gradle.kts build.gradle.kts .gitignore
@@ -265,7 +270,7 @@ git commit -m "搭建backend模块骨架：Spring Boot 3.3.x + Gradle + applicat
 - Create: `backend/src/main/kotlin/com/example/bluebook/common/GlobalExceptionHandler.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/common/TraceFilter.kt`
 
-- [ ] **Step 1: 创建 ApiResponse.kt**
+- [x] **Step 1: 创建 ApiResponse.kt**
 
 ```kotlin
 package com.example.bluebook.common
@@ -285,7 +290,7 @@ data class ApiResponse<T>(
 }
 ```
 
-- [ ] **Step 2: 创建 BusinessException.kt 及错误码常量**
+- [x] **Step 2: 创建 BusinessException.kt 及错误码常量**
 
 ```kotlin
 package com.example.bluebook.common
@@ -319,7 +324,7 @@ class ForbiddenException : BusinessException(14001, "无权执行此操作")
 class ServerBusyException : BusinessException(14999, "服务器繁忙，请稍后再试")
 ```
 
-- [ ] **Step 3: 创建 GlobalExceptionHandler.kt**
+- [x] **Step 3: 创建 GlobalExceptionHandler.kt**
 
 ```kotlin
 package com.example.bluebook.common
@@ -361,7 +366,7 @@ class GlobalExceptionHandler {
 }
 ```
 
-- [ ] **Step 4: 创建 TraceFilter.kt（traceId 全链路追踪）**
+- [x] **Step 4: 创建 TraceFilter.kt（traceId 全链路追踪）**
 
 ```kotlin
 package com.example.bluebook.common
@@ -384,13 +389,13 @@ class TraceFilter : Filter {
 }
 ```
 
-- [ ] **Step 5: 验证编译**
+- [x] **Step 5: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add backend/src/main/kotlin/com/example/bluebook/common/
@@ -403,7 +408,7 @@ git commit -m "添加公共基础设施：ApiResponse、BusinessException、全�
 - Create: `backend/src/main/kotlin/com/example/bluebook/common/BaseEntity.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/common/JpaConfig.kt`
 
-- [ ] **Step 1: 创建 BaseEntity.kt**
+- [x] **Step 1: 创建 BaseEntity.kt**
 
 ```kotlin
 package com.example.bluebook.common
@@ -431,7 +436,7 @@ abstract class BaseEntity {
 }
 ```
 
-- [ ] **Step 2: 创建 JpaConfig.kt**
+- [x] **Step 2: 创建 JpaConfig.kt**
 
 ```kotlin
 package com.example.bluebook.common
@@ -444,13 +449,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 class JpaConfig
 ```
 
-- [ ] **Step 3: 验证编译**
+- [x] **Step 3: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add backend/src/main/kotlin/com/example/bluebook/common/
@@ -469,7 +474,7 @@ git commit -m "添加BaseEntity基础实体和JPA审计配置"
 - Create: `backend/src/main/kotlin/com/example/bluebook/auth/repository/UserRepository.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/auth/repository/RefreshTokenRepository.kt`
 
-- [ ] **Step 1: 创建 User.kt**
+- [x] **Step 1: 创建 User.kt**
 
 ```kotlin
 package com.example.bluebook.auth.entity
@@ -522,7 +527,7 @@ class User(
 ) : BaseEntity()
 ```
 
-- [ ] **Step 2: 创建 RefreshToken.kt**
+- [x] **Step 2: 创建 RefreshToken.kt**
 
 ```kotlin
 package com.example.bluebook.auth.entity
@@ -548,7 +553,7 @@ class RefreshToken(
 }
 ```
 
-- [ ] **Step 3: 创建 UserRepository.kt**
+- [x] **Step 3: 创建 UserRepository.kt**
 
 ```kotlin
 package com.example.bluebook.auth.repository
@@ -563,7 +568,7 @@ interface UserRepository : JpaRepository<User, Long> {
 }
 ```
 
-- [ ] **Step 4: 创建 RefreshTokenRepository.kt**
+- [x] **Step 4: 创建 RefreshTokenRepository.kt**
 
 ```kotlin
 package com.example.bluebook.auth.repository
@@ -588,13 +593,13 @@ interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
 }
 ```
 
-- [ ] **Step 5: 验证编译**
+- [x] **Step 5: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add backend/src/main/kotlin/com/example/bluebook/auth/
@@ -611,7 +616,7 @@ git commit -m "添加User和RefreshToken实体及Repository"
 - Create: `backend/src/main/kotlin/com/example/bluebook/notification/entity/Notification.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/notification/repository/NotificationRepository.kt`
 
-- [ ] **Step 1: 创建 Video.kt**
+- [x] **Step 1: 创建 Video.kt**
 
 ```kotlin
 package com.example.bluebook.video.entity
@@ -680,7 +685,7 @@ enum class TranscodeStatus { PENDING, PROCESSING, DONE, FAILED }
 enum class VideoStatus { PUBLISHED, DELETED, REVIEWING }
 ```
 
-- [ ] **Step 2: 创建 VideoRepository.kt（含原生查询）**
+- [x] **Step 2: 创建 VideoRepository.kt（含原生查询）**
 
 ```kotlin
 package com.example.bluebook.video.repository
@@ -715,7 +720,7 @@ interface VideoRepository : JpaRepository<Video, Long> {
 }
 ```
 
-- [ ] **Step 3: 创建 Comment.kt**
+- [x] **Step 3: 创建 Comment.kt**
 
 ```kotlin
 package com.example.bluebook.comment.entity
@@ -760,7 +765,7 @@ class Comment(
 enum class CommentStatus { NORMAL, DELETED }
 ```
 
-- [ ] **Step 4: 创建 CommentRepository.kt**
+- [x] **Step 4: 创建 CommentRepository.kt**
 
 ```kotlin
 package com.example.bluebook.comment.repository
@@ -787,7 +792,7 @@ interface CommentRepository : JpaRepository<Comment, Long> {
 }
 ```
 
-- [ ] **Step 5: 创建 Notification.kt 和 Repository**
+- [x] **Step 5: 创建 Notification.kt 和 Repository**
 
 ```kotlin
 package com.example.bluebook.notification.entity
@@ -858,13 +863,13 @@ interface NotificationRepository : JpaRepository<Notification, Long> {
 }
 ```
 
-- [ ] **Step 6: 验证编译**
+- [x] **Step 6: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add backend/src/main/kotlin/com/example/bluebook/
@@ -881,7 +886,7 @@ git commit -m "添加Video、Comment、Notification实体及Repository"
 - Create: `backend/src/main/kotlin/com/example/bluebook/interaction/repository/VideoCollectRepository.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/user/repository/UserFollowRepository.kt`
 
-- [ ] **Step 1: 创建 VideoLike.kt 和 VideoCollect.kt 和 UserFollow.kt**
+- [x] **Step 1: 创建 VideoLike.kt 和 VideoCollect.kt 和 UserFollow.kt**
 
 ```kotlin
 // VideoLike.kt
@@ -951,7 +956,7 @@ class UserFollowId : Serializable {
 }
 ```
 
-- [ ] **Step 2: 创建 Repository**
+- [x] **Step 2: 创建 Repository**
 
 ```kotlin
 // VideoLikeRepository.kt
@@ -996,7 +1001,7 @@ interface UserFollowRepository : JpaRepository<UserFollow, Long> {
 }
 ```
 
-- [ ] **Step 3: 验证编译 + 提交**
+- [x] **Step 3: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1010,7 +1015,7 @@ git commit -m "添加互动实体：VideoLike、VideoCollect、UserFollow及Repo
 - Create: `backend/src/main/resources/schema.sql`
 - Modify: `backend/src/main/resources/application.yml`（添加 `ddl-auto: none` + `sql.init.mode: never`）
 
-- [ ] **Step 1: 创建 schema.sql（完整 DDL，用于手动建表，非自动执行）**
+- [x] **Step 1: 创建 schema.sql（完整 DDL，用于手动建表，非自动执行）**
 
 ```sql
 -- 小蓝书数据库初始化脚本
@@ -1151,13 +1156,13 @@ CREATE TABLE upload_session (
 ) ENGINE=InnoDB;
 ```
 
-- [ ] **Step 2: 验证编译**
+- [x] **Step 2: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add backend/src/main/resources/schema.sql
@@ -1173,7 +1178,7 @@ git commit -m "添加MySQL DDL初始化脚本：10张表完整建表语句"
 **Files:**
 - Create: `backend/src/main/kotlin/com/example/bluebook/common/JwtUtil.kt`
 
-- [ ] **Step 1: 创建 JwtUtil.kt**
+- [x] **Step 1: 创建 JwtUtil.kt**
 
 ```kotlin
 package com.example.bluebook.common
@@ -1229,7 +1234,7 @@ class JwtUtil(
 }
 ```
 
-- [ ] **Step 2: 验证编译 + 提交**
+- [x] **Step 2: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1245,7 +1250,7 @@ git commit -m "添加JwtUtil：accessToken生成/验证/解析、refreshToken生
 - Create: `backend/src/main/kotlin/com/example/bluebook/config/RedisConfig.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/config/WebMvcConfig.kt`
 
-- [ ] **Step 1: 创建 RedisConfig.kt**
+- [x] **Step 1: 创建 RedisConfig.kt**
 
 ```kotlin
 package com.example.bluebook.config
@@ -1263,7 +1268,7 @@ class RedisConfig {
 }
 ```
 
-- [ ] **Step 2: 创建 JwtAuthFilter.kt**
+- [x] **Step 2: 创建 JwtAuthFilter.kt**
 
 ```kotlin
 package com.example.bluebook.config
@@ -1336,7 +1341,7 @@ class JwtAuthFilter(
 }
 ```
 
-- [ ] **Step 3: 创建 SecurityConfig.kt**
+- [x] **Step 3: 创建 SecurityConfig.kt**
 
 ```kotlin
 package com.example.bluebook.config
@@ -1378,7 +1383,7 @@ class SecurityConfig(
 }
 ```
 
-- [ ] **Step 4: 创建 WebMvcConfig.kt（CORS）**
+- [x] **Step 4: 创建 WebMvcConfig.kt（CORS）**
 
 ```kotlin
 package com.example.bluebook.config
@@ -1398,13 +1403,13 @@ class WebMvcConfig : WebMvcConfigurer {
 }
 ```
 
-- [ ] **Step 5: 验证编译**
+- [x] **Step 5: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add backend/src/main/kotlin/com/example/bluebook/config/
@@ -1427,7 +1432,7 @@ git commit -m "添加Spring Security配置：JWT过滤器、BCrypt、CORS、Redi
 - Create: `backend/src/main/kotlin/com/example/bluebook/auth/service/AuthService.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/auth/controller/AuthController.kt`
 
-- [ ] **Step 1: 创建 DTO**
+- [x] **Step 1: 创建 DTO**
 
 ```kotlin
 // LoginRequest.kt
@@ -1483,7 +1488,7 @@ data class UserProfile(
 )
 ```
 
-- [ ] **Step 2: 创建 AuthService.kt**
+- [x] **Step 2: 创建 AuthService.kt**
 
 ```kotlin
 package com.example.bluebook.auth.service
@@ -1599,7 +1604,7 @@ class AuthService(
 }
 ```
 
-- [ ] **Step 3: 创建 AuthController.kt**
+- [x] **Step 3: 创建 AuthController.kt**
 
 ```kotlin
 package com.example.bluebook.auth.controller
@@ -1647,13 +1652,13 @@ class AuthController(
 }
 ```
 
-- [ ] **Step 4: 验证编译**
+- [x] **Step 4: 验证编译**
 
 ```bash
 ./gradlew :backend:compileKotlin
 ```
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add backend/src/main/kotlin/com/example/bluebook/auth/
@@ -1675,7 +1680,7 @@ git commit -m "添加认证模块：登录/注册/验证码/刷新Token/登出�
 - Create: `backend/src/main/kotlin/com/example/bluebook/user/dto/UserV2FollowListResponseDto.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/user/dto/UserV2AvatarUploadResponseDto.kt`
 
-- [ ] **Step 1: 创建 DTO**
+- [x] **Step 1: 创建 DTO**
 
 ```kotlin
 // UserV2MeDto.kt
@@ -1715,7 +1720,7 @@ data class UserV2FollowListResponseDto(
 data class UserV2AvatarUploadResponseDto(val url: String)
 ```
 
-- [ ] **Step 2: 创建 UserService.kt**
+- [x] **Step 2: 创建 UserService.kt**
 
 ```kotlin
 package com.example.bluebook.user.service
@@ -1838,11 +1843,11 @@ class UserService(
 
 （注意：Step 2 中的 following() 方法在实施时需补全 UserV2ProfileDto 转换逻辑）
 
-- [ ] **Step 3: 创建 UserController.kt（简洁结构，实施时补全各端点）**
+- [x] **Step 3: 创建 UserController.kt（简洁结构，实施时补全各端点）**
 
 实施时需创建完整的 UserController，包含 `/me` GET, `/me` PUT, `/me/avatar` POST, `/users/{id}` GET, `/users/{id}/follow` POST/DELETE, `/users/{id}/followers` GET, `/users/{id}/following` GET, `/users/{id}/videos` GET。
 
-- [ ] **Step 4: 验证编译 + 提交**
+- [x] **Step 4: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1867,14 +1872,14 @@ git commit -m "添加用户模块：个人资料CRUD、关注取关、粉丝/关
 
 （该模块代码量较大，实施时按 Task 7.1.1 ~ 7.1.5 拆分为 Subtask：Entity→DTO→Service→Controller→测试）
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. `POST /api/file/upload/image` — 单次上传，校验类型（魔数）+ 大小
   2. `POST /api/file/upload/init` — 创建 UploadSession，MD5 查重实现秒传
   3. `POST /api/file/upload/chunk` — 分片写入 `{storage-path}/chunks/{uploadId}/{chunkIndex}`，Redis 记录进度
   4. `GET /api/file/upload/progress` — 从 Redis Hash 读取已完成分片列表
   5. `POST /api/file/upload/complete` — 按顺序合并分片 + MD5 校验 + 发 RabbitMQ 转码消息
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1897,7 +1902,7 @@ git commit -m "添加文件上传模块：图片上传、视频分片上传/断�
 
 （代码量较大，实施时拆分为 Task 8.1.1 ~ 8.1.6：DTO→Feed→详情→点赞/收藏→Controller→缓存）
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. `GET /api/v2/feed` — 先从 Redis `feed:latest` List 取 ID 列表，再批量查详情（Cache-Aside），未命中回源 MySQL
   2. `POST /api/v2/videos/{id}/like` — 事务内 INSERT/Delete video_like + UPDATE video.like_count
   3. `POST /api/v2/videos/{id}/collect` — 同上
@@ -1905,7 +1910,7 @@ git commit -m "添加文件上传模块：图片上传、视频分片上传/断�
   5. `GET /api/v2/videos/{id}/status` — 返回转码状态
   6. `POST /api/v2/videos/publish` — 关联 uploadSession → video 表 → 异步 ES 索引
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1928,14 +1933,14 @@ git commit -m "添加视频模块：Feed流、发布、详情、点赞收藏、�
 
 （实施时拆分为 Task 9.1.1 ~ 9.1.4）
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. `GET /api/v1/comments` — 查根评论，游标分页
   2. `GET /api/v1/comments/{id}/replies` — 查某评论的回复列表
   3. `POST /api/v1/comments` — 发表评论 → 事务内 comment_count +1 → 发通知
   4. `DELETE /api/v1/comments/{id}` — 软删除（status=DELETED）
   5. `POST /api/v1/comments/{id}/like` — 点赞计数
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1953,14 +1958,14 @@ git commit -m "添加评论模块：评论发表/删除/回复/点赞"
 - Create: `backend/src/main/kotlin/com/example/bluebook/notification/controller/NotificationController.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/notification/service/NotificationService.kt`
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. 通知在点赞/评论/关注时由对应 Service 异步生成（`@Async` 或 MQ）
   2. `GET /api/v2/notifications` — 游标分页查 receiver 的通知列表
   3. `GET /api/v2/notifications/unread-count` — `COUNT(*) WHERE is_read=false`
   4. `POST /api/v2/notifications/read-all` — 批量标记已读
   5. `POST /api/v2/notifications/{id}/read` — 单条已读
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -1974,18 +1979,22 @@ git commit -m "添加通知模块：通知列表/未读数/已读标记"
 
 ### Task 11.1: ES 索引与搜索 API
 
+> 实现差异：未接入 ES（`ElasticsearchConfig.kt` 未创建）。搜索走 MySQL `LIKE` 多字段匹配（`VideoRepository` 的
+> `findByKeyword`，游标分页），热搜走 Redis ZSet `hot:search`，`GET /api/v2/videos/search` 与 `/api/v2/search/hot`、
+> `/api/v2/search/suggest` 均已实现并带当前用户 isLike/isCollect。`backend/build.gradle.kts` 仍保留 elasticsearch-java 依赖，无代码引用。
+
 **Files:**
 - Create: `backend/src/main/kotlin/com/example/bluebook/search/controller/SearchController.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/search/service/SearchService.kt`
 - Create: `backend/src/main/kotlin/com/example/bluebook/search/config/ElasticsearchConfig.kt`
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. 视频发布/转码完成后 → 异步写 ES 索引
   2. `GET /api/v2/videos/search` — 多字段匹配 + 游标分页（search_after）
   3. `GET /api/v2/search/hot` — Redis SortedSet `hot:search` 取 Top 20
   4. 搜索结果中补充当前用户的 isLike/isCollect 状态
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -2002,13 +2011,13 @@ git commit -m "添加搜索模块：ES视频搜索、热搜词、索引同步"
 **Files:**
 - Create: `backend/src/main/kotlin/com/example/bluebook/common/ScheduledTasks.kt`
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. 每 5 分钟：Redis 播放计数批量同步到 MySQL
   2. 每天凌晨：计数对账（COUNT vs 冗余计数器）
   3. 每天凌晨：清理 7 天前已删除视频的 HLS 切片和原始文件
   4. 每天凌晨：清理过期 UploadSession 和分片临时文件
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 ./gradlew :backend:compileKotlin
@@ -2022,17 +2031,20 @@ git commit -m "添加定时任务：播放数同步、计数对账、文件清�
 
 ### Task 13.1: FFmpeg 转码脚本
 
+> 实现差异：脚本落在 `backend/src/main/resources/transcode-worker.sh`（1080p/720p/480p + cover.jpg + master.m3u8 ✓）；
+> 脚本内无重试循环，失败由 `TranscodeConsumer` 标记 `TranscodeStatus.FAILED` 并由 RabbitMQ 投递语义兜底。
+
 **Files:**
 - Create: `backend/src/main/resources/transcode-worker.sh`
 
-- [ ] **关键实现要点**：
+- [x] **关键实现要点**：
   1. RabbitMQ 消费者（Spring Boot `@RabbitListener`）+ 独立 Shell 脚本包装 FFmpeg
   2. 多码率 HLS：1080p + 720p + 480p
   3. 封面截图：`ffmpeg -ss 00:00:01 -i input.mp4 -vframes 1 cover.jpg`
   4. 完成后更新 video 表（API 调用或直接 UPDATE）
   5. 错误处理：重试 3 次 → 标记 FAILED
 
-- [ ] **Step: 验证编译 + 提交**
+- [x] **Step: 验证编译 + 提交**
 
 ```bash
 git add backend/src/main/resources/transcode-worker.sh
@@ -2045,10 +2057,13 @@ git commit -m "添加FFmpeg转码Worker脚本：HLS多码率转码+封面生成+
 
 ### Task 14.1: 认证流程集成测试
 
+> **未执行**：`backend/src/test` 下仅有 `BlueBookApplicationTests` 编译骨架，认证/视频/评论/关注四条链路集成测试未编写。
+> 接口正确性目前只由编译级与手工调用验证覆盖。
+
 **Files:**
 - Create: `backend/src/test/kotlin/com/example/bluebook/auth/AuthIntegrationTest.kt`
 
-- [ ] **Step 1: 编写注册→登录→刷新→登出测试**
+- [ ] ~~**Step 1: 编写注册→登录→刷新→登出测试**~~（未执行）
 
 ```kotlin
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -2070,19 +2085,19 @@ class AuthIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: 编写视频上传→发布→Feed→搜索测试**
+- [ ] ~~**Step 2: 编写视频上传→发布→Feed→搜索测试**~~（未执行）
 
-- [ ] **Step 3: 编写评论→回复→删除→点赞测试**
+- [ ] ~~**Step 3: 编写评论→回复→删除→点赞测试**~~（未执行）
 
-- [ ] **Step 4: 编写关注→粉丝列表→通知测试**
+- [ ] ~~**Step 4: 编写关注→粉丝列表→通知测试**~~（未执行）
 
-- [ ] **Step 5: 运行全部测试**
+- [ ] ~~**Step 5: 运行全部测试**~~（未执行）
 
 ```bash
 ./gradlew :backend:test
 ```
 
-- [ ] **Step 6: 提交**
+- [ ] ~~**Step 6: 提交**~~（未执行）
 
 ```bash
 git add backend/src/test/
@@ -2100,7 +2115,7 @@ git commit -m "添加集成测试：认证/视频/评论/用户/通知完整流�
 - Create: `deploy/blue-book.service`
 - Create: `deploy/blue-book-transcode.service`
 
-- [ ] **Step 1: 创建 deploy/nginx.conf**
+- [x] **Step 1: 创建 deploy/nginx.conf**
 
 ```nginx
 server {
@@ -2124,7 +2139,7 @@ server {
 }
 ```
 
-- [ ] **Step 2: 创建 systemd 服务文件**
+- [x] **Step 2: 创建 systemd 服务文件**
 
 ```ini
 # deploy/blue-book.service
@@ -2143,7 +2158,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deploy/

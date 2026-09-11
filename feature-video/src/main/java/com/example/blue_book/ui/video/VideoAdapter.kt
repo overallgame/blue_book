@@ -5,7 +5,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.GestureDetector
 import android.view.LayoutInflater
-import java.util.LinkedHashMap
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -16,18 +15,17 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.blue_book.feature_video.R
-import com.example.blue_book.data.VideoCardInfo
-import com.example.blue_book.feature_video.databinding.VideoItemViewBinding
+import com.example.blue_book.core.player.ExoPlayerEngine
 import com.example.blue_book.core.player.PlayerEngine
 import com.example.blue_book.core.player.PlayerEnginePool
-import com.example.blue_book.core.player.ExoPlayerEngine
 import com.example.blue_book.core.player.PlayerEvents
+import com.example.blue_book.data.VideoCardInfo
+import com.example.blue_book.feature_video.R
+import com.example.blue_book.feature_video.databinding.VideoItemViewBinding
 
 @UnstableApi
 class VideoAdapter(

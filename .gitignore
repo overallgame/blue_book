@@ -1,25 +1,62 @@
-*.iml
+# ==================== 构建产物（Gradle / Android） ====================
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
 build/
-/captures
+.kotlin/
 .externalNativeBuild
 .cxx
-local.properties
-.idea
-.zcode
+/captures
+captures
+app/release/
 
-# Backend
-backend/build/
-backend/.gradle/
-backend/out/
-upload/
+# 打包产物与中间文件（AGP 默认输出在 build/ 内，这里兜住自定义输出目录）
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
 *.jar
+# Gradle Wrapper 的 jar 必须入库，否则 clone 后无法构建
 !gradle/wrapper/gradle-wrapper.jar
+
+# ==================== 日志与崩溃转储 ====================
+*.log
+hs_err_pid*
+replay_pid*
+*.hprof
+logs/
+backend/logs/
+
+# ==================== IDE / 编辑器 ====================
+.idea
+*.iml
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================== 本地配置与密钥（绝不入库） ====================
+# Android SDK 路径等机器相关配置
+local.properties
+/local.properties
+# 签名与证书
+*.jks
+*.keystore
+*.p12
+*.pem
+signing.properties
+secrets.properties
+# 环境变量文件（DB/JWT/Redis 口令走环境变量，见 backend/src/main/resources/application.yml）
+.env
+.env.*
+
+# ==================== 运行时数据（后端） ====================
+# 上传文件、HLS 转码产物、封面
+upload/
+# 内嵌数据库文件（H2 等）
+*.mv.db
+*.trace.db
+
+# ==================== 工具目录 ====================
+.zcode

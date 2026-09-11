@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily BlueBook backup
+
+[Timer]
+# 每天 04:30 执行；Persistent=true 让虚拟机当时关机的情况下开机后补跑一次
+OnCalendar=*-*-* 04:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

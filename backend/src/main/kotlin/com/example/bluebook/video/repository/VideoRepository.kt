@@ -6,9 +6,18 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDateTime
 
 interface VideoRepository : JpaRepository<Video, Long> {
     fun findByIdAndStatus(id: Long, status: VideoStatus): Video?
+
+    /**
+     * 卡在转码中的视频：doTranscode 会先置 PROCESSING 再执行外部进程，
+     * 若进程重启/被杀，该行会永久停在 PROCESSING，而 feed 只显示 DONE 的视频，
+     * 于是视频永远不出现且无人修正——由定时任务据此兜底重投。
+     */
+    @Query("SELECT v FROM Video v WHERE v.transcodeStatus = 'PROCESSING' AND v.updatedAt < :threshold")
+    fun findStaleProcessing(threshold: LocalDateTime): List<Video>
 
     fun findByUploaderIdAndStatus(uploaderId: Long, status: VideoStatus, pageable: Pageable): List<Video>
 

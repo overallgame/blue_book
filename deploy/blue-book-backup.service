@@ -1,0 +1,11 @@
+[Unit]
+Description=BlueBook backup (database + uploaded media)
+After=mysql.service
+
+[Service]
+Type=oneshot
+User=bluebook
+ExecStart=/opt/blue-book/backup.sh
+# 备份失败时留下明确记录，便于事后发现（默认 silent 失败很容易被忽略）
+StandardOutput=append:/var/log/blue-book/backup.log
+StandardError=append:/var/log/blue-book/backup.log

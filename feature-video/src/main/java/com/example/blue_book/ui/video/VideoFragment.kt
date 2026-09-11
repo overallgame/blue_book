@@ -215,15 +215,10 @@ class VideoFragment : Fragment() {
 		keyword: String = "",
 		userId: Long = 0L
 	) {
-		if (firstVideo == null) {
-			// 无点击项时退化为全量模式
-			when (mode) {
-				VideoUiState.Mode.Search -> viewModel.dispatch(VideoIntent.InitSearch(keyword))
-				else -> viewModel.dispatch(VideoIntent.InitRandom)
-			}
-			return
-		}
-		adapter.addFirstVideo(firstVideo)
+		// 无点击项（缺参数/参数丢失）时保留来源模式，仅退化为"从第一页开始拉取"。
+		// 不能退化成随机流：否则"我的喜欢/收藏/作品"会静默变成不相关内容，
+		// 且 UserVideos 还会丢掉 userId。
+		firstVideo?.let { adapter.addFirstVideo(it) }
 		viewModel.dispatch(VideoIntent.InitFromSource(mode, firstVideo, keyword, userId))
 	}
 

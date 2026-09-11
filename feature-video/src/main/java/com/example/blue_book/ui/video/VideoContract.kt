@@ -28,11 +28,13 @@ sealed interface VideoIntent : UiIntent {
 
 	/**
 	 * 从来源列表进入播放页：首屏为用户点击的那条视频，
-	 * 后续 loadMore 按 [VideoUiState.Mode] 用来源游标续拉
+	 * 后续 loadMore 按 [VideoUiState.Mode] 用来源游标续拉。
+	 * [firstVideo] 为 null 表示无点击项（参数缺失/解析失败），此时按 mode 从第一页开始拉取，
+	 * 不能退化成随机流。
 	 */
 	data class InitFromSource(
 		val mode: VideoUiState.Mode,
-		val firstVideo: VideoCardInfo,
+		val firstVideo: VideoCardInfo? = null,
 		val keyword: String = "",
 		val userId: Long = 0L
 	) : VideoIntent

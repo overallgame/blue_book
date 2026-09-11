@@ -78,7 +78,7 @@ class VideoViewModel @Inject constructor(
 		sourceUserId = intent.userId
 		setState {
 			copy(
-				items = listOf(intent.firstVideo),
+				items = intent.firstVideo?.let { listOf(it) } ?: emptyList(),
 				isLoading = false,
 				message = null,
 				mode = intent.mode,
@@ -92,9 +92,16 @@ class VideoViewModel @Inject constructor(
 	/** 空态重试：按当前模式重新初始化数据 */
 	fun retryInit() {
 		val state = uiState.value
+		if (state.isLoading) return
 		when (state.mode) {
 			VideoUiState.Mode.Search -> dispatch(VideoIntent.InitSearch(state.keyword))
-			else -> dispatch(VideoIntent.InitRandom)
+			else -> {
+				// 保留 mode / keyword / sourceUserId，只清空列表与游标后按原模式重拉。
+				// 不能走 InitRandom —— 那会把 mode 覆写为 Random 且清空 keyword，
+				// 使"我的喜欢/收藏/作品"点重试跳到随机流。
+				setState { copy(items = emptyList(), hasMore = true, message = null) }
+				dispatch(VideoIntent.LoadMore)
+			}
 		}
 	}
 

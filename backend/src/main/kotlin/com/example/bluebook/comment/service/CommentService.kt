@@ -8,6 +8,8 @@ import com.example.bluebook.comment.entity.Comment
 import com.example.bluebook.comment.entity.CommentStatus
 import com.example.bluebook.comment.repository.CommentRepository
 import com.example.bluebook.common.CommentNotFoundException
+import com.example.bluebook.common.BusinessException
+import com.example.bluebook.common.UnauthorizedException
 import com.example.bluebook.common.assetUrl
 import com.example.bluebook.common.ForbiddenException
 import com.example.bluebook.interaction.entity.CommentLike
@@ -48,8 +50,13 @@ class CommentService(
 
     @Transactional
     fun postComment(userId: Long, request: PostCommentRequestDto): CommentDto {
+        if (userId <= 0) throw UnauthorizedException()
         // 楼中楼拍平：回复的目标统一挂到根评论下，replyToUserId 指向被回复的那条评论作者
         val parent = request.parentId?.let { commentRepository.findById(it).orElse(null) }
+        // 回复目标必须与被评论的视频一致，否则会把回复挂到别的视频下，破坏回复树
+        if (parent != null && parent.videoId != request.videoId) {
+            throw BusinessException(12002, "回复目标不存在")
+        }
         val effectiveParentId = parent?.parentId ?: request.parentId
         val replyToUserId = request.replyToUserId ?: parent?.userId
         val comment = Comment(

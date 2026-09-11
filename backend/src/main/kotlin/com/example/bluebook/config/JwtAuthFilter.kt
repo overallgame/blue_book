@@ -17,10 +17,13 @@ class JwtAuthFilter(
     private val redisTemplate: StringRedisTemplate
 ) : OncePerRequestFilter() {
     companion object {
+        // 注意：不要在此加入 "/api/v1/comments"。GET 请求由下面的 request.method == "GET"
+        // 分支放行（可选鉴权，供游客读评论与展开回复）；POST/DELETE 必须走强制鉴权分支，
+        // 否则 currentUserId() 会得到 0，评论以 userId = 0 落库。
         val PUBLIC_PATHS = setOf(
             "/api/v2/auth/login", "/api/v2/auth/register", "/api/v2/auth/code",
             "/api/v2/auth/refresh", "/actuator/health", "/api/v2/feed",
-            "/api/v2/videos/search", "/api/v1/comments"
+            "/api/v2/videos/search"
         )
     }
 

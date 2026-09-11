@@ -5,6 +5,7 @@ import com.example.bluebook.comment.dto.CommentListDto
 import com.example.bluebook.comment.dto.PostCommentRequestDto
 import com.example.bluebook.comment.service.CommentService
 import com.example.bluebook.common.ApiResponse
+import com.example.bluebook.common.UnauthorizedException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -12,11 +13,11 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/comments")
 class CommentController(private val commentService: CommentService) {
 
-    private fun currentUserId(): Long =
-        SecurityContextHolder.getContext().authentication?.principal as? Long ?: 0
-
     private fun optionalUserId(): Long? =
         (SecurityContextHolder.getContext().authentication?.principal as? Long)?.takeIf { it > 0 }
+
+    /** 写接口专用：必须已登录。避免以 userId = 0 落库成"无作者评论" */
+    private fun requireUserId(): Long = optionalUserId() ?: throw UnauthorizedException()
 
     @GetMapping
     fun getComments(
@@ -36,17 +37,17 @@ class CommentController(private val commentService: CommentService) {
 
     @PostMapping
     fun postComment(@RequestBody request: PostCommentRequestDto): ApiResponse<CommentDto> =
-        ApiResponse.ok(commentService.postComment(currentUserId(), request))
+        ApiResponse.ok(commentService.postComment(requireUserId(), request))
 
     @DeleteMapping("/{id}")
     fun deleteComment(@PathVariable id: Long): ApiResponse<Any> {
-        commentService.deleteComment(currentUserId(), id)
+        commentService.deleteComment(requireUserId(), id)
         return ApiResponse.ok()
     }
 
     @PostMapping("/{id}/like")
     fun likeComment(@PathVariable id: Long, @RequestParam liked: Boolean): ApiResponse<Any> {
-        commentService.likeComment(currentUserId(), id, liked)
+        commentService.likeComment(requireUserId(), id, liked)
         return ApiResponse.ok()
     }
 }

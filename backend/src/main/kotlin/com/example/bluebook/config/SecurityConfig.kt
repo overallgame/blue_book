@@ -2,6 +2,7 @@ package com.example.bluebook.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -25,10 +26,15 @@ class SecurityConfig(
                     "/api/v2/auth/**", "/actuator/health", "/actuator/info",
                     "/api/v2/feed", "/api/v2/videos/search", "/api/v2/videos/*/dto",
                     "/api/v2/videos/*/playUrl",
-                    "/api/v1/comments",
                     "/api/v2/users/*", "/api/v2/users/*/followers",
                     "/api/v2/users/*/following", "/api/v2/users/*/videos",
                     "/api/v2/search/hot"
+                ).permitAll()
+                // 评论：仅放开读接口（游客可看评论与展开回复）。
+                // 写接口（POST/DELETE）必须登录，否则会以 userId = 0 落库成"无作者评论"。
+                // 注意 /replies 此前不在任何白名单里，游客展开回复拿到的是空 body 的裸 403。
+                auth.requestMatchers(
+                    HttpMethod.GET, "/api/v1/comments", "/api/v1/comments/**"
                 ).permitAll()
                 auth.anyRequest().authenticated()
             }

@@ -51,8 +51,17 @@ class HomeFindFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		initSwipeRefreshLayout()
 		initRecyclerView()
+		initErrorState()
 		observeViewModel()
 		viewModel.dispatch(HomeFindIntent.Init)
+	}
+
+	/** 加载失败空态：显示原因并提供重试入口（此前失败时是永久白屏） */
+	private fun initErrorState() {
+		binding.homeFindErrorRetry.setOnClickListener {
+			noMoreToasted = false
+			viewModel.dispatch(HomeFindIntent.Refresh)
+		}
 	}
 
 	override fun onResume() {
@@ -120,6 +129,10 @@ class HomeFindFragment : Fragment() {
 						adapter.submitAppend(state.items)
 						isLoading = state.isLoading
 						binding.mainFindPagerSwipeRefreshLayout.isRefreshing = false
+						// 列表为空、不在加载中、且带错误信息 → 展示失败原因与重试入口
+						val failed = !state.isLoading && state.items.isEmpty() && state.message != null
+						binding.homeFindError.visibility = if (failed) View.VISIBLE else View.GONE
+						if (failed) binding.homeFindErrorText.text = state.message
 					}
 				}
 					launch {

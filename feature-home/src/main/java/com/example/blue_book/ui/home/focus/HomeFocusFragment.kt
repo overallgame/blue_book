@@ -100,6 +100,11 @@ class HomeFocusFragment : Fragment() {
 		binding.homeFocusEmptyLogin.setOnClickListener {
 			LoginGuideDialog.show(requireActivity())
 		}
+		// 加载失败重试（未登录态下的空态见 onResume）
+		binding.homeFocusErrorRetry.setOnClickListener {
+			noMoreToasted = false
+			viewModel.dispatch(HomeFocusIntent.Refresh)
+		}
 	}
 
 	private fun initRecyclerView() {
@@ -150,6 +155,11 @@ class HomeFocusFragment : Fragment() {
 						adapter.submitAppend(state.items)
 						isLoading = state.isLoading
 						binding.mainFocusPagerSwipeRefreshLayout.isRefreshing = false
+						// 登录态下加载失败且列表为空 → 展示原因与重试入口（与未登录空态互斥）
+						val failed = !isGuest && !state.isLoading &&
+							state.items.isEmpty() && state.message != null
+						binding.homeFocusError.visibility = if (failed) View.VISIBLE else View.GONE
+						if (failed) binding.homeFocusErrorText.text = state.message
 					}
 				}
 				launch {

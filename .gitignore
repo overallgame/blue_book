@@ -27,7 +27,13 @@ logs/
 backend/logs/
 
 # ==================== IDE / 编辑器 ====================
-.idea
+# 忽略 IDE 本机状态（workspace.xml / dbnavigator.xml / misc.xml 等），只保留项目级配置。
+# 注意：反向例外必须配合 "/.idea/*"（忽略目录内容）才生效；
+# 若写成 ".idea"（忽略整个目录），后面的 !/.idea/xxx 全部无效。
+/.idea/*
+!/.idea/inspectionProfiles/
+!/.idea/codeStyles/
+!/.idea/vcs.xml
 *.iml
 .vscode/
 *.swp

@@ -49,6 +49,9 @@ class CommentViewModel @Inject constructor(
 	/** 正在展开回复的根评论 id，防止连点重复拉取 */
 	private val loadingRepliesIds = mutableSetOf<Long>()
 
+	/** 点赞在途去重：同一评论在请求返回前忽略再次点击（与 VideoViewModel 的 togglingAids 同义） */
+	private val togglingLikeIds = mutableSetOf<Long>()
+
 	/** 最多连续抓取的回复页数（每页 20 条），避免异常数据导致死循环 */
 	private companion object {
 		const val MAX_REPLY_PAGES = 10
@@ -210,7 +213,10 @@ class CommentViewModel @Inject constructor(
 
 	fun likeComment(commentId: Long) {
 		val current = findCommentById(commentId) ?: return
+		// 在途防重：请求返回前忽略再次点击。缺这一层时，双击 + 一次失败会让计数永久漂移
+		if (!togglingLikeIds.add(commentId)) return
 		val newLiked = current.isLiked.not()
+		val prevLiked = current.isLiked
 
 		// 乐观更新 — 先改 UI
 		_uiState.update { state ->
@@ -218,16 +224,26 @@ class CommentViewModel @Inject constructor(
 		}
 
 		viewModelScope.launch {
-			likeCommentUseCase(commentId, newLiked)
-				.onFailure { e ->
-					// 失败回滚：只把该条翻回去，不覆盖期间的其他并发变更
-					_uiState.update { state ->
-						state.copy(
-							error = e.message ?: "操作失败",
-							comments = updateCommentLike(state.comments, commentId, !newLiked)
-						)
+			try {
+				likeCommentUseCase(commentId, newLiked)
+					.onFailure { e ->
+						// 失败回滚：仅当该条仍处于本次乐观值时才恢复原值。
+						// 若期间被刷新或其它操作改过，则放弃回滚（盲目取反会把计数再改坏一次）
+						_uiState.update { state ->
+							val now = findIn(state.comments, commentId)
+							if (now != null && now.isLiked == newLiked) {
+								state.copy(
+									error = e.message ?: "操作失败",
+									comments = updateCommentLike(state.comments, commentId, prevLiked)
+								)
+							} else {
+								state.copy(error = e.message ?: "操作失败")
+							}
+						}
 					}
-				}
+			} finally {
+				togglingLikeIds.remove(commentId)
+			}
 		}
 	}
 
@@ -269,15 +285,15 @@ class CommentViewModel @Inject constructor(
 		_uiState.update { it.copy(error = null) }
 	}
 
-	private fun findCommentById(commentId: Long): Comment? {
-		fun search(list: List<Comment>): Comment? {
-			for (comment in list) {
-				if (comment.id == commentId) return comment
-				search(comment.replies)?.let { return it }
-			}
-			return null
+	private fun findCommentById(commentId: Long): Comment? = findIn(_uiState.value.comments, commentId)
+
+	/** 递归查找（含回复层级）。回滚时需针对传入的列表查找，故与 findCommentById 分开 */
+	private fun findIn(list: List<Comment>, commentId: Long): Comment? {
+		for (comment in list) {
+			if (comment.id == commentId) return comment
+			findIn(comment.replies, commentId)?.let { return it }
 		}
-		return search(_uiState.value.comments)
+		return null
 	}
 
 	/** 找到 commentId 所属根评论 id；自身就是根评论时返回自身 id，找不到返回 null */
@@ -298,7 +314,8 @@ class CommentViewModel @Inject constructor(
 			when {
 				comment.id == commentId -> comment.copy(
 					isLiked = isLiked,
-					likeCount = if (isLiked) comment.likeCount + 1 else comment.likeCount - 1
+					likeCount = if (isLiked) comment.likeCount + 1
+								else (comment.likeCount - 1).coerceAtLeast(0)
 				)
 				else -> comment.copy(replies = updateCommentLike(comment.replies, commentId, isLiked))
 			}

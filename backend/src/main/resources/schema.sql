@@ -95,7 +95,9 @@ CREATE TABLE notification (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     receiver_id BIGINT NOT NULL,
     sender_id BIGINT NOT NULL,
-    type ENUM('LIKE','COMMENT','FOLLOW','SYSTEM'),
+    -- 新增值必须追加在末尾：ENUM 的顺序决定内部序号，
+    -- 插在中间会触发整表重建（ALGORITHM=COPY）来重排序号
+    type ENUM('LIKE','COMMENT','FOLLOW','SYSTEM','COLLECT'),
     video_id BIGINT,
     comment_id BIGINT,
     content VARCHAR(500),

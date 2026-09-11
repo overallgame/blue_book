@@ -129,13 +129,15 @@ class MineFragment : Fragment() {
 				val tag = result.data?.getStringExtra("tag")
 				when (tag) {
 					"avatar" -> {
-						binding.mineAvatar.setImageURI(uri)
+						// 用 Glide 而非 setImageURI：后者会按原始尺寸同步解码
+						// （12MP 照片在 ARGB_8888 下约 48MB），且 URI 不可读时会抛异常崩溃
+						Glide.with(requireContext()).load(uri).into(binding.mineAvatar)
 						viewLifecycleOwner.lifecycleScope.launch {
 							viewModel.dispatch(MineIntent.UpdateAvatar(uri.toString()))
 						}
 					}
 					"backgroundImage" -> {
-						binding.mineBackgroundImage.setImageURI(uri)
+						Glide.with(requireContext()).load(uri).into(binding.mineBackgroundImage)
 						viewLifecycleOwner.lifecycleScope.launch {
 							viewModel.dispatch(MineIntent.UpdateBackground(uri.toString()))
 						}

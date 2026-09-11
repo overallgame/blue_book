@@ -3,7 +3,8 @@ package com.example.blue_book.core.player
 /**
 * 播放器对象池。非线程安全，必须在同一线程访问（当前为 UI 线程）。
 *
-* `maxSize` 约束 **总** 实例数（active + available），超过上限时回收最旧的 active 播放器。
+* `maxSize` 约束 **总** 实例数（active + available）。超上限时只回收空闲实例，
+* 不会释放仍被 ViewHolder 持有的活跃实例（详见 [acquire]）。
 */
 class PlayerEnginePool(
 	private val maxSize: Int,
@@ -16,11 +17,13 @@ class PlayerEnginePool(
 		active[key]?.let { return it }
 		val engine = if (available.isNotEmpty()) available.removeFirst() else factory()
 		active[key] = engine
-		// 总实例数超过上限，回收最旧的 active
-		while (active.size + available.size > maxSize) {
-			val oldest = active.entries.firstOrNull() ?: break
-			oldest.value.release()
-			active.remove(oldest.key)
+		// 超上限时只回收空闲实例，绝不释放仍被 ViewHolder 持有的活跃实例：
+		// 释放活跃实例会让持有者的播放器变成静默空操作（isReleased 后所有调用都是 no-op），
+		// 表现为该页黑屏且永远无法恢复，且 key 被移出池后再次 acquire 会重复建实例。
+		// 若当前全是活跃实例则允许暂时超额——数量受可见/预加载的 holder 数自然约束，
+		// 页面销毁时由 releaseAll() 统一释放。
+		while (active.size + available.size > maxSize && available.isNotEmpty()) {
+			available.removeFirst().release()
 		}
 		return engine
 	}

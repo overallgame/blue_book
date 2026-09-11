@@ -65,11 +65,13 @@ class UserProfileEditFragment : Fragment() {
 			val uri = result.data?.data ?: return@registerForActivityResult
 			when (result.data?.getStringExtra("tag")) {
 				"avatar" -> {
-					binding.userInfoAvatar.setImageURI(uri)
+					// 用 Glide 而非 setImageURI：后者会按原始尺寸同步解码
+					// （12MP 照片在 ARGB_8888 下约 48MB），且 URI 不可读时会抛异常崩溃
+					Glide.with(requireContext()).load(uri).into(binding.userInfoAvatar)
 					viewModel.dispatch(UserProfileIntent.UploadAvatar(uri.toString()))
 				}
 				"backgroundImage" -> {
-					binding.userInfoBackgroundImage.setImageURI(uri)
+					Glide.with(requireContext()).load(uri).into(binding.userInfoBackgroundImage)
 					viewModel.dispatch(UserProfileIntent.UploadBackground(uri.toString()))
 				}
 			}

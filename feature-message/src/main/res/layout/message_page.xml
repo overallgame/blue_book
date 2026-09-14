@@ -33,6 +33,7 @@
 				android:src="@drawable/ic_message_empty" />
 
 			<TextView
+				android:id="@+id/message_emptyTitle"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:text="暂无消息"
@@ -41,6 +42,7 @@
 				android:textStyle="bold" />
 
 			<TextView
+				android:id="@+id/message_emptyHint"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_marginTop="8dp"

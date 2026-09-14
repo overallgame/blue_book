@@ -169,6 +169,12 @@ class MessageFragment : Fragment() {
 						val hasItems = state.items.isNotEmpty()
 						binding.messageRecycleView.visibility = if (hasItems) View.VISIBLE else View.GONE
 						binding.messageEmptyLayout.visibility = if (hasItems) View.GONE else View.VISIBLE
+						if (!hasItems) {
+							// 首次加载失败时不能显示「暂无消息」——那等于把请求失败说成没有消息
+							val failed = !state.isLoading && state.message != null
+							binding.messageEmptyTitle.text = if (failed) state.message else "暂无消息"
+							binding.messageEmptyHint.visibility = if (failed) View.GONE else View.VISIBLE
+						}
 					}
 				}
 				launch {

@@ -70,6 +70,9 @@ class VideoAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         private var currentUrl: String? = null
+
+        /** 引擎池的键（视频身份）。不能复用 currentUrl：release 时 currentVideo 已切到新条目 */
+        private var currentAid: Long = 0L
         private var engine: PlayerEngine? = null
         private var eventBridge: PlayerEvents? = null
         private var currentVideo: VideoCardInfo? = null
@@ -151,6 +154,9 @@ class VideoAdapter(
             val url = currentUrl
             val e = engine
             if (url.isNullOrBlank() || e == null) {
+                // 提前返回也必须复位倍速提示：长按的 Runnable 可能已把提示条置为可见，
+                // 而 bind() 不会重置该视图的可见性，holder 复用后会残留一个「2x」角标
+                resetSpeed()
                 engine = null
                 currentUrl = null
                 return
@@ -161,9 +167,10 @@ class VideoAdapter(
             eventBridge = null
             e.setSurfaceProvider(null)
             binding.videoItemVideoPlayer.player = null
-            enginePool.release(url)
+            enginePool.release(currentAid)
             engine = null
             currentUrl = null
+            currentAid = 0L
         }
 
         fun bind(videoInfo: VideoCardInfo) {
@@ -271,13 +278,14 @@ class VideoAdapter(
                 return
             }
             if (isNewUrl) {
-                engine = enginePool.acquire(url).apply {
+                engine = enginePool.acquire(videoInfo.aid).apply {
                     attachEvents(this)
                     bindTo(binding.videoItemVideoPlayer)
                     prepare(url)
                     savedPositions[url]?.takeIf { it > 0 }?.let { seekTo(it) }
                     pause()
                 }
+                currentAid = videoInfo.aid
             }
         }
 
@@ -394,7 +402,7 @@ class VideoAdapter(
         val next = position + 1
         if (next < itemCount) {
             val nv = getItem(next)
-            if (nv.playUrl.isNotBlank()) enginePool.preload(nv.playUrl, nv.playUrl)
+            if (nv.playUrl.isNotBlank()) enginePool.preload(nv.aid, nv.playUrl)
         }
     }
 
@@ -432,8 +440,8 @@ class VideoAdapter(
 
     fun preloadByPosition(pos: Int) {
         if (pos in 0 until itemCount) {
-            val url = getItem(pos).playUrl
-            if (url.isNotBlank()) enginePool.preload(url, url)
+            val item = getItem(pos)
+            if (item.playUrl.isNotBlank()) enginePool.preload(item.aid, item.playUrl)
         }
     }
 

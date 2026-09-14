@@ -118,22 +118,28 @@ class ImageCropFragment : Fragment() {
 		// 裁剪本身（读 drawMatrix/cropRect）留在主线程，编码 + 写盘移到 IO：
 		// 1440px 位图的 JPEG 压缩是数百毫秒级的主线程阻塞
 		val bitmap = crop.getCroppedBitmap() ?: return
+		val host = activity ?: return
 		setSaving(true)
-		viewLifecycleOwner.lifecycleScope.launch {
+		// 用 Activity 的作用域而不是 viewLifecycleOwner：后者在 onDestroyView 被取消，
+		// 会导致「JPEG 已写盘、但 finishWithResult 永不触发」——用户旋转屏幕或离开页面时
+		// 裁剪结果静默丢失、按钮保持禁用。Activity 作用域保证结果一定回传。
+		host.lifecycleScope.launch {
 			val saved = withContext(Dispatchers.IO) {
 				runCatching {
-					val context = requireContext()
-					val file = File(context.cacheDir, "custom_crop_${System.currentTimeMillis()}.jpg")
-					FileOutputStream(file).use { out ->
+					// 不依赖 fragment 的 context/视图，因此视图销毁后依然安全
+					val file = File(host.applicationContext.cacheDir, "custom_crop_${System.currentTimeMillis()}.jpg")
+					val ok = FileOutputStream(file).use { out ->
 						bitmap.compress(Bitmap.CompressFormat.JPEG, CropImageView.OUTPUT_QUALITY, out)
 					}
+					// compress 返回 false 时会留下一个空/截断的文件，若不检查就会把它当成功上传
+					if (!ok) error("图片编码失败")
 					file
 				}
 			}
 			setSaving(false)
 			saved
-				.onSuccess { file -> (activity as? ImagePickerActivity)?.finishWithResult(Uri.fromFile(file), tag) }
-				.onFailure { Toast.makeText(requireContext(), "保存失败，请重试", Toast.LENGTH_SHORT).show() }
+				.onSuccess { file -> (host as? ImagePickerActivity)?.finishWithResult(Uri.fromFile(file), tag) }
+				.onFailure { Toast.makeText(host, "保存失败，请重试", Toast.LENGTH_SHORT).show() }
 		}
 	}
 

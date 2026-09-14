@@ -59,6 +59,10 @@ abstract class UdfViewModel<I : UiIntent, S : UiState, E : UiEffect>(
 			} else {
 				onFailure(result.exceptionOrNull() ?: IllegalStateException("Unknown error"))
 			}
+		} catch (e: kotlinx.coroutines.CancellationException) {
+			// 取消必须透传：否则协程会被「正常完成」，父作用域（join/await/repeatOnLifecycle）
+			// 观察不到取消，而且取消会被当成业务失败走 onFailure。清理仍由 finally 负责。
+			throw e
 		} catch (t: Throwable) {
 			onFailure(t)
 		} finally {

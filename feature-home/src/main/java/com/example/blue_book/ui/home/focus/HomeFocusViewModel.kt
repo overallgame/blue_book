@@ -35,12 +35,22 @@ class HomeFocusViewModel @Inject constructor(
 		}
 	}
 
+	/**
+	 * 失败处理：列表为空时由页面的错误浮层承接（带重试入口），列表非空时补一个提示——
+	 * 否则下拉刷新/加载更多失败只会默默停掉转圈，用户无法判断是否刷新成功。
+	 */
+	private suspend fun notifyFailure(e: Throwable) {
+		val msg = e.message ?: "请先登录"
+		setState { copy(isLoading = false, message = msg) }
+		if (uiState.value.items.isNotEmpty()) sendEffect(HomeFocusEffect.ShowToast(msg))
+	}
+
 	private suspend fun initLoad() {
 		runResult(
 			onStart = { setState { copy(items = emptyList(), isLoading = true, message = null, cursorId = null, hasMore = true) } },
 			call = { videoProvider.fetchFollowingFeed(cursorId = null, size = uiState.value.pageSize) },
 			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "请先登录") } }
+			onFailure = { e -> notifyFailure(e) }
 		)
 	}
 
@@ -49,7 +59,7 @@ class HomeFocusViewModel @Inject constructor(
 			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
 			call = { videoProvider.fetchFollowingFeed(cursorId = null, size = uiState.value.pageSize) },
 			onSuccess = { list -> setState { copy(items = list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "请先登录") } }
+			onFailure = { e -> notifyFailure(e) }
 		)
 	}
 
@@ -60,7 +70,7 @@ class HomeFocusViewModel @Inject constructor(
 			onStart = { setState { copy(isLoading = true, message = null) } },
 			call = { videoProvider.fetchFollowingFeed(state.cursorId, state.pageSize) },
 			onSuccess = { list -> setState { copy(items = items + list, isLoading = false, cursorId = list.lastOrNull()?.aid, hasMore = list.size >= pageSize) } },
-			onFailure = { e -> setState { copy(isLoading = false, message = e.message ?: "请先登录") } }
+			onFailure = { e -> notifyFailure(e) }
 		)
 	}
 

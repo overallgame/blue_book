@@ -81,7 +81,19 @@ class HomeFocusFragment : Fragment() {
 				binding.homeFocusEmpty.visibility = View.VISIBLE
 				LoginGuideDialog.show(requireActivity())
 			}
+			// 登录态刚变化，错误浮层的条件依赖 isGuest，必须重算：
+			// 只靠状态收集器的话，上一轮（已登录时）加载失败留下的浮层会一直盖在
+			// 游客的空态上，而游客点重试必然 403
+			renderError()
 		}
+	}
+
+	/** 错误浮层可见性：登录态下加载失败且列表为空时展示。登录态变化后也要重算 */
+	private fun renderError() {
+		val state = viewModel.uiState.value
+		val failed = !isGuest && !state.isLoading && state.items.isEmpty() && state.message != null
+		binding.homeFocusError.visibility = if (failed) View.VISIBLE else View.GONE
+		if (failed) binding.homeFocusErrorText.text = state.message
 	}
 
 	private fun initSwipeRefresh() {
@@ -155,11 +167,7 @@ class HomeFocusFragment : Fragment() {
 						adapter.submitAppend(state.items)
 						isLoading = state.isLoading
 						binding.mainFocusPagerSwipeRefreshLayout.isRefreshing = false
-						// 登录态下加载失败且列表为空 → 展示原因与重试入口（与未登录空态互斥）
-						val failed = !isGuest && !state.isLoading &&
-							state.items.isEmpty() && state.message != null
-						binding.homeFocusError.visibility = if (failed) View.VISIBLE else View.GONE
-						if (failed) binding.homeFocusErrorText.text = state.message
+						renderError()
 					}
 				}
 				launch {

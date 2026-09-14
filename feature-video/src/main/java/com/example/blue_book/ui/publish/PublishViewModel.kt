@@ -86,15 +86,18 @@ class PublishViewModel @Inject constructor(
 	}
 
 	/**
-	 * 分块上传视频文件并提交发布，返回是否成功。
+	 * 上传视频文件并提交发布。
 	 *
-	 * 失败后**续传**：带同一 fileMd5 重新 initUpload，服务端会返回已落盘的分片
-	 * （`uploadedChunks`），`uploadChunks` 按偏移跳过它们继续传——
-	 * 此前任何一步失败都会中断整条链并丢弃 uploadId，2GB 视频传到 95% 断网就得从零重来。
+	 * 关键约束：**只重试上传部分，绝不重试 `publish`**。
+	 * `initUpload` / `uploadChunk` / `completeUpload` 都是可重入的（同一 fileMd5 命中服务端
+	 * 已落盘的分片；`completeUpload` 对 DONE 会话幂等），所以失败后带同一 fileMd5 重新 init
+	 * 就能续传——此前任何一步失败都会中断整条链并丢弃 uploadId，2GB 视频传到 95% 断网就得
+	 * 从零重来。而 `publish` 每次调用都会新插一行，一旦把它放进重试循环，响应丢失时重试会
+	 * 再发布一次，同一条视频出现两条记录且无人对账。
 	 */
 	private suspend fun uploadThenPublish(title: String, description: String): Result<Unit> {
 		return withContext(Dispatchers.IO) {
-			runCatching {
+			try {
 				// 大小读不到时必须失败：按 -1 会算出 1 块，只上传首块导致视频残缺
 				val size = queryFileSize(publishFileUri) ?: error("无法读取视频文件信息，请重新选择")
 				val fileName = queryFileName(publishFileUri)
@@ -105,43 +108,62 @@ class PublishViewModel @Inject constructor(
 					fileName = fileName, fileSize = size, fileMd5 = md5, totalChunks = totalChunks
 				)
 
-				var lastError: Throwable? = null
-				for (attempt in 0 until MAX_RESUME) {
-					try {
-						val init = publishRemote.initUpload(initRequest).getOrThrow()
-						// 秒传命中（skipUpload=true）：服务端已有完整文件，跳过逐块上传直接 complete
-						val uploaded =
-							if (init.skipUpload) (0 until totalChunks).toSet() else init.uploadedChunks.toSet()
-						// 续传时把进度回填到实际已传比例，避免进度条从 0 重新开始
-						if (attempt > 0 && uploaded.isNotEmpty()) {
-							setState { copy(progress = (uploaded.size * 100 / totalChunks).coerceIn(0, 100)) }
-						}
-						uploadChunks(init.uploadId, fileName, totalChunks, uploaded)
+				val filePath = uploadWithResume(initRequest, fileName, totalChunks)
 
-						val filePath = publishRemote.completeUpload(init.uploadId).getOrThrow()
-						// 发布时定位城市（未授权/失败为 null，"本地"流按此过滤）
-						val region = runCatching {
-							com.example.blue_book.util.LocationHelper.currentCity(appContext)
-						}.getOrNull()
-						publishRemote.publish(
-							PublishRequestDto(
-								title = title,
-								description = description.ifBlank { null },
-								filePath = filePath,
-								region = region
-							)
-						).getOrThrow()
-						return@runCatching Unit
-					} catch (t: Throwable) {
-						// 取消必须透传，否则会把"用户离开页面"当成可重试的失败
-						if (t is CancellationException) throw t
-						lastError = t
-						if (attempt < MAX_RESUME - 1) delay(RETRY_BASE_DELAY_MS * (attempt + 1))
-					}
-				}
-				throw lastError ?: IllegalStateException("上传失败")
+				// 发布时定位城市（未授权/失败为 null，"本地"流按此过滤）
+				val region = runCatching {
+					com.example.blue_book.util.LocationHelper.currentCity(appContext)
+				}.getOrNull()
+				publishRemote.publish(
+					PublishRequestDto(
+						title = title,
+						description = description.ifBlank { null },
+						filePath = filePath,
+						region = region
+					)
+				).getOrThrow()
+				Result.success(Unit)
+			} catch (t: Throwable) {
+				// 取消必须透传（不能把"用户离开页面"报成发布失败）。
+				// 注意：这里用显式 try/catch 而不是 runCatching —— 后者也捕 Throwable，
+				// 会把上面这行重抛重新包成 Result.failure，等于没写。
+				if (t is CancellationException) throw t
+				Result.failure(t)
 			}
 		}
+	}
+
+	/**
+	 * init → 分块 → complete，失败后退避并带同一 fileMd5 重新 init 续传。
+	 * 返回服务端确认的 filePath。
+	 */
+	private suspend fun uploadWithResume(
+		initRequest: UploadInitRequestDto,
+		fileName: String,
+		totalChunks: Int
+	): String {
+		var lastError: Throwable? = null
+		for (attempt in 0 until MAX_RESUME) {
+			try {
+				val init = publishRemote.initUpload(initRequest).getOrThrow()
+				// 秒传命中（skipUpload=true）：服务端已有完整文件，跳过逐块上传直接 complete
+				val uploaded =
+					if (init.skipUpload) (0 until totalChunks).toSet() else init.uploadedChunks.toSet()
+				// 续传时把进度回填到实际已传比例。只增不减：uploadedChunks 不保证是前缀
+				// （如 {0..49, 60..99}），直接用比例会让进度条往回跳，观感上像丢了数据
+				if (attempt > 0 && uploaded.isNotEmpty()) {
+					val percent = (uploaded.size * 100 / totalChunks).coerceIn(0, 100)
+					setState { copy(progress = maxOf(progress, percent)) }
+				}
+				uploadChunks(init.uploadId, fileName, totalChunks, uploaded)
+				return publishRemote.completeUpload(init.uploadId).getOrThrow()
+			} catch (t: Throwable) {
+				if (t is CancellationException) throw t
+				lastError = t
+				if (attempt < MAX_RESUME - 1) delay(RETRY_BASE_DELAY_MS * (attempt + 1))
+			}
+		}
+		throw lastError ?: IllegalStateException("上传失败")
 	}
 
 	/**

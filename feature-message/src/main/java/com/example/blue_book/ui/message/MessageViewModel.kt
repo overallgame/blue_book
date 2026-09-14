@@ -45,7 +45,10 @@ class MessageViewModel @Inject constructor(
 				}
 			},
 			onFailure = { e ->
-				setState { copy(isLoading = false, message = e.message ?: "加载失败") }
+				val msg = e.message ?: "加载失败"
+				setState { copy(isLoading = false, message = msg) }
+				// 列表非空时页面不会显示空态，刷新失败必须靠提示，否则只有转圈停下、毫无反馈
+				if (uiState.value.items.isNotEmpty()) sendEffect(MessageEffect.ShowToast(msg))
 			}
 		)
 	}
@@ -69,6 +72,8 @@ class MessageViewModel @Inject constructor(
 			},
 			onFailure = { e ->
 				setState { copy(isLoading = false, message = e.message ?: "加载失败") }
+				// 加载更多失败会导致列表在底部被静默截断，必须提示
+				sendEffect(MessageEffect.ShowToast(e.message ?: "加载失败"))
 			}
 		)
 	}

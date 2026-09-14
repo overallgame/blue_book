@@ -76,10 +76,16 @@ class CropImageView @JvmOverloads constructor(
 	 * 设置源图（主线程调用）。替换时回收旧位图——连续旋转会不断产生全尺寸副本
 	 * （2560 长边下每张约 26MB），不回收会在低端机上累积到 OOM。
 	 * 解码本身由调用方放在后台线程完成（见 decodeSampledForCrop）。
+	 *
+	 * **必须同时交给 ImageView 绘制**：本类的 onDraw 只画遮罩/九宫格/裁剪框，
+	 * 图片是 `super.onDraw`（ImageView 的 drawable）画的。此前只赋给私有字段、
+	 * 从未设置 drawable，于是裁剪页完全没有图片——用户是在看不见照片的情况下裁剪的。
+	 * 顺序上先设置 drawable 再回收旧图，避免出现「drawable 指向已回收位图」的中间态。
 	 */
 	fun setBitmap(newBitmap: Bitmap?) {
 		val old = bitmap
 		bitmap = newBitmap
+		setImageBitmap(newBitmap)
 		if (old != null && old !== newBitmap && !old.isRecycled) old.recycle()
 		if (newBitmap != null && width > 0) {
 			updateCropRect()

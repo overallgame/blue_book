@@ -2,17 +2,14 @@ package com.example.blue_book.ui.image
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.net.Uri
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.exifinterface.media.ExifInterface
 
 /**
  * 裁剪控件（小红书风格）：
@@ -20,6 +17,8 @@ import androidx.exifinterface.media.ExifInterface
  * - 暗化遮罩 + 九宫格 + 白色裁剪框
  * - 边界约束：图片始终覆盖裁剪框，不可拖出/缩小于框
  * - 比例由外部指定（头像 1:1 / 背景 16:9），输出长边限制 + 支持旋转
+ *
+ * 源图由调用方在后台线程解码后经 [setBitmap] 传入；本类不读磁盘。
  */
 class CropImageView @JvmOverloads constructor(
 	context: Context,
@@ -62,7 +61,7 @@ class CropImageView @JvmOverloads constructor(
 		setOnTouchListener { _, event -> handleTouch(event) }
 	}
 
-	/** 设置裁剪比例（在 setImageUri 前后皆可） */
+	/** 设置裁剪比例（在 setBitmap 前后皆可） */
 	fun setAspectRatio(ratio: Float) {
 		if (ratio <= 0f || ratio == aspectRatio) return
 		aspectRatio = ratio
@@ -73,23 +72,28 @@ class CropImageView @JvmOverloads constructor(
 		}
 	}
 
-	fun setImageUri(uri: Uri) {
-		bitmap = decodeSampled(uri)
-		if (width > 0) {
+	/**
+	 * 设置源图（主线程调用）。替换时回收旧位图——连续旋转会不断产生全尺寸副本
+	 * （2560 长边下每张约 26MB），不回收会在低端机上累积到 OOM。
+	 * 解码本身由调用方放在后台线程完成（见 decodeSampledForCrop）。
+	 */
+	fun setBitmap(newBitmap: Bitmap?) {
+		val old = bitmap
+		bitmap = newBitmap
+		if (old != null && old !== newBitmap && !old.isRecycled) old.recycle()
+		if (newBitmap != null && width > 0) {
 			updateCropRect()
 			applyInitialMatrix()
 		}
 		invalidate()
 	}
 
-	/** 旋转 90°（重建位图与矩阵） */
+	/** 旋转 90°（重建位图与矩阵，旧位图由 setBitmap 回收） */
 	fun rotate90() {
 		val bmp = bitmap ?: return
+		if (bmp.isRecycled) return
 		val matrix = Matrix().apply { postRotate(90f) }
-		bitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
-		updateCropRect()
-		applyInitialMatrix()
-		invalidate()
+		setBitmap(Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true))
 	}
 
 	override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -248,57 +252,7 @@ class CropImageView @JvmOverloads constructor(
 		}
 	}
 
-	/** 采样解码（长边目标 = 屏幕长边×2，上限 2560）+ EXIF 方向校正 */
-	private fun decodeSampled(uri: Uri): Bitmap? {
-		val resolver = context.contentResolver
-		val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-		resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-		if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-
-		val dm = context.resources.displayMetrics
-		val target = minOf(maxOf(dm.widthPixels, dm.heightPixels) * 2, 2560)
-		var sample = 1
-		while (bounds.outWidth / sample > target || bounds.outHeight / sample > target) {
-			sample *= 2
-		}
-
-		val opts = BitmapFactory.Options().apply { inSampleSize = sample }
-		val decoded = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) } ?: return null
-		return applyExifOrientation(decoded, uri)
-	}
-
-	/** EXIF 方向校正：竖拍照片不躺倒 */
-	private fun applyExifOrientation(bmp: Bitmap, uri: Uri): Bitmap {
-		val orientation = try {
-			context.contentResolver.openInputStream(uri)?.use { input ->
-				ExifInterface(input).getAttributeInt(
-					ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL
-				)
-			} ?: ExifInterface.ORIENTATION_NORMAL
-		} catch (_: Throwable) {
-			ExifInterface.ORIENTATION_NORMAL
-		}
-		val matrix = Matrix()
-		when (orientation) {
-			ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-			ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-			ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-			ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
-			ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
-			ExifInterface.ORIENTATION_TRANSPOSE -> {
-				matrix.postRotate(90f)
-				matrix.postScale(-1f, 1f)
-			}
-
-			ExifInterface.ORIENTATION_TRANSVERSE -> {
-				matrix.postRotate(270f)
-				matrix.postScale(-1f, 1f)
-			}
-
-			else -> return bmp
-		}
-		return Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
-	}
+	/** 采样解码与 EXIF 校正已移至 ImageDecoder.kt（可在后台线程调用） */
 
 	/** 输出裁剪位图：按矩阵逆映射裁剪框，长边限制 1440px */
 	fun getCroppedBitmap(): Bitmap? {

@@ -32,7 +32,17 @@ class PublishFragment : Fragment() {
 
 	private val pickVideoLauncher = registerForActivityResult(
 		ActivityResultContracts.OpenDocument()
-	) { uri -> uri?.let { viewModel.dispatch(PublishIntent.SelectMedia(it)) } }
+	) { uri ->
+		uri ?: return@registerForActivityResult
+		// 取持久化读权限：上传耗时长（大文件可达数分钟），期间进程可能被回收，
+		// 拿不到持久权限的话恢复后 URI 已失效，续传会直接失败
+		runCatching {
+			requireContext().contentResolver.takePersistableUriPermission(
+				uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+			)
+		}
+		viewModel.dispatch(PublishIntent.SelectMedia(uri))
+	}
 
 	/** 定位权限：拒绝不阻塞发布，仅使视频不带地区 */
 	private val locationPermissionLauncher = registerForActivityResult(

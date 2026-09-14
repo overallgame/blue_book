@@ -17,21 +17,15 @@ class TranscodeConsumer(
     @RabbitListener(queues = ["video.transcode"])
     fun handleTranscode(videoId: Long) {
         log.info("收到转码任务: videoId={}", videoId)
-        val video = findVideo(videoId) ?: return
-        doTranscode(video)
-    }
-
-    private fun findVideo(videoId: Long): Video? {
-        videoRepository.findById(videoId).orElse(null)?.let { return it }
-        // 事务可能尚未提交，等待后重试
-        log.info("事务未提交，等待重试...")
-        Thread.sleep(2000)
-        return videoRepository.findById(videoId).orElse(null)?.also {
-            log.info("重试成功")
-        } ?: run {
-            log.error("视频不存在: {}", videoId)
-            null
+        // 任务由 TranscodeTaskPublisher 在 publish 事务提交后才投递，
+        // 因此这里必然能读到该行，不需要再 sleep 等待事务提交
+        val video = videoRepository.findById(videoId).orElse(null)
+        if (video == null) {
+            // 极端情况（行被删除等）：消息只能丢弃，定时兜底任务不会再找到它
+            log.error("视频不存在，转码任务丢弃: videoId={}", videoId)
+            return
         }
+        doTranscode(video)
     }
 
     private fun doTranscode(video: Video) {

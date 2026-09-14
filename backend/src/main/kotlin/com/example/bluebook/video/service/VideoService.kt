@@ -14,9 +14,10 @@ import com.example.bluebook.user.repository.UserFollowRepository
 import com.example.bluebook.video.dto.*
 import com.example.bluebook.video.entity.Video
 import com.example.bluebook.video.entity.VideoStatus
+import com.example.bluebook.video.event.VideoPublishedEvent
 import com.example.bluebook.video.repository.VideoRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,7 +32,8 @@ class VideoService(
     private val redisTemplate: StringRedisTemplate,
     private val notificationService: NotificationService,
     private val followRepository: UserFollowRepository,
-    private val rabbitTemplate: RabbitTemplate? = null
+    /** 转码任务改为在事务提交后投递，见 TranscodeTaskPublisher */
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     fun feed(cursorId: Long?, size: Int, currentUserId: Long?): FeedResponseDto {
         val pageable = PageRequest.of(0, size)
@@ -89,9 +91,8 @@ class VideoService(
             transcodeStatus = com.example.bluebook.video.entity.TranscodeStatus.PENDING
         )
         videoRepository.save(video)
-        if (rabbitTemplate != null) {
-            rabbitTemplate.convertAndSend("video.transcode", video.id)
-        }
+        // 提交后投递（TranscodeTaskPublisher 上是 AFTER_COMMIT），避免消费者先于提交而查不到该行
+        eventPublisher.publishEvent(VideoPublishedEvent(video.id))
         return toDto(video, uploaderId)
     }
 

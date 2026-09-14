@@ -1,6 +1,7 @@
 package com.example.bluebook.common
 
 import com.example.bluebook.auth.repository.RefreshTokenRepository
+import com.example.bluebook.auth.repository.UserRepository
 import com.example.bluebook.file.entity.UploadStatus
 import com.example.bluebook.file.repository.UploadSessionRepository
 import com.example.bluebook.video.entity.TranscodeStatus
@@ -22,6 +23,7 @@ class ScheduledTasks(
     private val redisTemplate: StringRedisTemplate,
     private val videoRepository: VideoRepository,
     private val uploadSessionRepository: UploadSessionRepository,
+    private val userRepository: UserRepository,
     private val rabbitTemplate: RabbitTemplate? = null,
     @Value("\${app.upload.storage-path}") private val storagePath: String
 ) {
@@ -56,28 +58,37 @@ class ScheduledTasks(
 
     /**
      * Daily reconciliation: compare counter tables with redundant counters.
-     * Runs at 3:00 AM every day.
+     * 冗余计数（video.like_count 等）平时走原子自增，增量本身正确，但历史脏数据、
+     * 异常中断仍会造成漂移，此前这个任务是空的、漂移永不自愈。
+     * 这里以互动表为唯一事实来源重算；只记录**实际改动的行数**，便于发现异常。
      */
+    @Transactional
     @Scheduled(cron = "0 0 3 * * ?")
     fun dailyReconciliation() {
         log.info("开始每日数据对账...")
-        // Compare COUNT of video_like with video.like_count
-        // Compare COUNT of video_collect with video.collect_count
-        // Compare COUNT of user_follow with user.follower/following_count
-        // Auto-correct mismatches
-        log.info("每日数据对账完成")
+        val likes = videoRepository.reconcileLikeCounts()
+        val collects = videoRepository.reconcileCollectCounts()
+        val comments = videoRepository.reconcileCommentCounts()
+        val followers = userRepository.reconcileFollowerCounts()
+        val following = userRepository.reconcileFollowingCounts()
+        log.info(
+            "每日数据对账完成：点赞校正 {} 行、收藏 {} 行、评论 {} 行、粉丝数 {} 行、关注数 {} 行",
+            likes, collects, comments, followers, following
+        )
     }
 
     /**
-     * 转码兜底：doTranscode 先置 PROCESSING 再执行外部进程，进程重启/被杀后该行不会自愈，
-     * 而 feed 只显示 transcodeStatus = DONE 的视频——视频会永远不出现。
-     * 这里把长时间停在 PROCESSING 的任务重新投递一次。
+     * 转码兜底：两种卡死形态都不会自愈，需要重新投递。
+     * - PROCESSING：doTranscode 先置该状态再执行外部进程，进程重启/被杀后永久停留
+     * - PENDING：发布时消息投递失败/被丢弃（事务提交竞态已由 TranscodeTaskPublisher 修掉，
+     *   但投递本身仍可能失败），视频会「上传成功却永远不出现」
+     * 阈值取 30 分钟：正常转码远快于此，而重复投递的代价只是多跑一次 ffmpeg。
      */
     @Scheduled(fixedRate = 600000)
     fun requeueStaleTranscodes() {
         // 捕获到局部变量：成员属性在 lambda 内无法智能转换
         val rabbit = rabbitTemplate ?: return
-        val stale = videoRepository.findStaleProcessing(
+        val stale = videoRepository.findStaleTranscodes(
             LocalDateTime.now().minusMinutes(STALE_TRANSCODE_MINUTES)
         )
         if (stale.isEmpty()) return

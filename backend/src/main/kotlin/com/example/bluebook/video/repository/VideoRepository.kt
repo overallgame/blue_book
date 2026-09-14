@@ -12,12 +12,38 @@ interface VideoRepository : JpaRepository<Video, Long> {
     fun findByIdAndStatus(id: Long, status: VideoStatus): Video?
 
     /**
-     * 卡在转码中的视频：doTranscode 会先置 PROCESSING 再执行外部进程，
-     * 若进程重启/被杀，该行会永久停在 PROCESSING，而 feed 只显示 DONE 的视频，
-     * 于是视频永远不出现且无人修正——由定时任务据此兜底重投。
+     * 卡住的转码任务，两种形态都不会自愈：
+     * - PROCESSING：doTranscode 先置该状态再跑外部进程，进程重启/被杀后永久停留
+     * - PENDING：发布时事务尚未提交就投递了 MQ 消息，消费者查不到行会丢弃消息
+     * 而 feed 只显示 transcodeStatus = DONE 的视频，所以这些视频会「上传成功却永远不出现」。
      */
-    @Query("SELECT v FROM Video v WHERE v.transcodeStatus = 'PROCESSING' AND v.updatedAt < :threshold")
-    fun findStaleProcessing(threshold: LocalDateTime): List<Video>
+    @Query("SELECT v FROM Video v WHERE v.transcodeStatus IN ('PENDING','PROCESSING') AND v.updatedAt < :threshold")
+    fun findStaleTranscodes(threshold: LocalDateTime): List<Video>
+
+    // ========== 每日对账：按互动表重算冗余计数 ==========
+    // 这些计数走原子自增（增量正确），但历史脏数据、异常中断仍可能造成漂移，
+    // 且没有任何地方会自动修正，故由每日任务以互动表为唯一事实来源重算。
+
+    @Modifying
+    @Query(
+        value = "UPDATE video v SET v.like_count = (SELECT COUNT(*) FROM video_like l WHERE l.video_id = v.id)",
+        nativeQuery = true
+    )
+    fun reconcileLikeCounts(): Int
+
+    @Modifying
+    @Query(
+        value = "UPDATE video v SET v.collect_count = (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = v.id)",
+        nativeQuery = true
+    )
+    fun reconcileCollectCounts(): Int
+
+    @Modifying
+    @Query(
+        value = "UPDATE video v SET v.comment_count = (SELECT COUNT(*) FROM comment c WHERE c.video_id = v.id AND c.status = 'NORMAL')",
+        nativeQuery = true
+    )
+    fun reconcileCommentCounts(): Int
 
     fun findByUploaderIdAndStatus(uploaderId: Long, status: VideoStatus, pageable: Pageable): List<Video>
 

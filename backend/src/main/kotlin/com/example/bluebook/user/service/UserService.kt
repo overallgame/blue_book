@@ -122,25 +122,20 @@ class UserService(
     fun follow(followerId: Long, followeeId: Long) {
         if (followerId == followeeId) throw BusinessException(14001, "不能关注自己")
         if (followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId)) return
+        // 保留存在性校验：关注不存在的用户应当回滚（与改动前一致）
+        findUser(followeeId)
         followRepository.save(UserFollow(followerId = followerId, followeeId = followeeId))
-        val follower = findUser(followerId)
-        val followee = findUser(followeeId)
-        follower.followingCount++
-        followee.followerCount++
-        userRepository.save(follower)
-        userRepository.save(followee)
+        // 原子自增，避免并发关注时丢失更新
+        userRepository.incrementFollowingCount(followerId, 1)
+        userRepository.incrementFollowerCount(followeeId, 1)
     }
 
     @Transactional
     fun unfollow(followerId: Long, followeeId: Long) {
         val deleted = followRepository.deleteByFollowerIdAndFolloweeId(followerId, followeeId)
         if (deleted > 0) {
-            val follower = findUser(followerId)
-            val followee = findUser(followeeId)
-            follower.followingCount--
-            followee.followerCount--
-            userRepository.save(follower)
-            userRepository.save(followee)
+            userRepository.incrementFollowingCount(followerId, -1)
+            userRepository.incrementFollowerCount(followeeId, -1)
         }
     }
 

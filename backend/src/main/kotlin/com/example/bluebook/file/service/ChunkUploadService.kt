@@ -83,7 +83,12 @@ class ChunkUploadService(
         // 不刷新会导致（a）续传超过 24 小时的会话被删掉，下一次分片报 13002；
         // （b）用户在 24 小时后重传时 uploadedChunks 为空、续传退化为全量重传。
         // 用定向 touch 而非 save：整行写会把读取时的 status 快照写回。
-        uploadSessionRepository.touch(uploadId)
+        // 返回 0 说明会话已被过期清理删掉——此时不能再写分片，
+        // 否则会留下一个 chunks/{uploadId} 目录，而它对应的会话行已不存在、
+        // 每小时的分片清理再也看不到它，成为永久垃圾。
+        if (uploadSessionRepository.touch(uploadId) == 0) {
+            throw BusinessException(13002, "上传会话不存在或已过期")
+        }
     }
 
     private fun getProgress(uploadId: String): List<Int> {

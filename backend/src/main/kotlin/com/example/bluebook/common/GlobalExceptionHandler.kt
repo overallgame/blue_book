@@ -65,6 +65,8 @@ class GlobalExceptionHandler {
         // 若服务端真的抛了 IAE（断言、类型不匹配、URL 解析等）也会走到这里，
         // 不留痕迹的话真实缺陷会以 400 的形式彻底消失
         log.warn("请求参数异常（若为服务端抛出请按缺陷排查）: {}", ex.toString())
+        // 堆栈放 debug：客户端入参错误会很多，但排查服务端 IAE 时需要调用点
+        log.debug("请求参数异常堆栈", ex)
         return ResponseEntity.badRequest().body(ApiResponse.fail(14003, "请求参数有误"))
     }
 

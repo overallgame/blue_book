@@ -44,19 +44,24 @@ class PlayerEnginePool(
 	 * key 已被持有或已预加载时直接返回：否则 prepare() 会把在用引擎的位置清零、缓冲丢弃，
 	 * 造成"滑回去从头播"以及预加载完全失效。
 	 *
-	 * 预算已满时**回收最旧的那个预加载并复用它的实例**（不新建、不浪费）：
-	 * 直接放弃会让过期的预加载长期占住名额，之后所有预加载都失效；
-	 * 而"新建一个再淘汰另一个"则是每次翻页都构造并销毁一个 ExoPlayer。
-	 * 被回收的是没人使用的预加载实例，重新 prepare 没有副作用（位置恢复只对在用引擎才重要）。
+	 * 取用实例的顺序很重要：**先看预算、再看能否复用**。
+	 * - 预算还有余量 → 新建
+	 * - 预算已满 → 回收最旧的预加载并复用它的实例（不新建、不浪费）
+	 *
+	 * 顺序反了会毁掉预加载：`VideoFragment` 每次都连续调 `preload(n+1)` 和 `preload(n+2)`，
+	 * 若"复用最旧预加载"排在"预算检查"之前，第二次调用就会把刚为 n+1 准备好的实例
+	 * 重新 prepare 成 n+2——用户真正要滑到的 n+1 页永远没有预加载。
+	 * 预算满时复用而不是新建，是为了避免"构造一个再销毁另一个"的翻页抖动；
+	 * 被复用的是没人使用的预加载实例，重新 prepare 无副作用。
 	 */
 	fun preload(key: Long, url: String) {
 		if (owned.containsKey(key) || preloaded.containsKey(key)) return
 		val engine: PlayerEngine = when {
 			idle.isNotEmpty() -> idle.removeFirst()
-			// 复用最旧的预加载实例，同时把它从表中移除
+			// 先看预算：还有余量就新建，不要动已有的预加载
+			owned.size + preloaded.size < maxSize -> factory()
+			// 预算已满：回收最旧的预加载，复用它
 			preloaded.isNotEmpty() -> preloaded.remove(preloaded.keys.first()) ?: return
-			// 没有被持有的实例，且预算还有余量时才新建
-			owned.size < maxSize -> factory()
 			else -> return
 		}
 		preloaded[key] = engine

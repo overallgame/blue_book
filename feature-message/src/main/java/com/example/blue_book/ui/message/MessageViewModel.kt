@@ -31,6 +31,9 @@ class MessageViewModel @Inject constructor(
 			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
 			call = { remote.list(cursorId = null, size = uiState.value.pageSize) },
 			onSuccess = { dto ->
+				// 复位加载更多的失败提示标记：刷新成功意味着分页状态已经重置，
+				// 之后第一次加载更多失败必须重新提示，不能被上一轮的标记吞掉
+				loadMoreErrorNotified = false
 				val items = dto.items.map { it.toUi() }
 				setState {
 					copy(

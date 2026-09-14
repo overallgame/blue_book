@@ -1,5 +1,6 @@
 package com.example.blue_book.ui.video
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -64,6 +65,7 @@ class VideoAdapter(
         viewHolderMap.values.forEach { it.applyFullscreen(enabled) }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     inner class ViewHolder(private val binding: VideoItemViewBinding) :
         RecyclerView.ViewHolder(binding.root) {
 

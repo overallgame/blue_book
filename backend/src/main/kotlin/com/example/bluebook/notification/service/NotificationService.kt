@@ -10,7 +10,7 @@ import com.example.bluebook.notification.repository.NotificationRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 @Service
 class NotificationService(
@@ -34,7 +34,9 @@ class NotificationService(
                 commentId = n.commentId,
                 content = n.content ?: "",
                 isRead = n.isRead,
-                createdAt = n.createdAt.toEpochSecond(ZoneOffset.UTC) * 1000
+                // 同 CommentService：createdAt 是本地墙钟时间，不能按 UTC 解释，
+                // 否则非 UTC 的 JVM 上时间戳落在未来，客户端恒显示「刚刚」
+                createdAt = n.createdAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             )
         }
         return NotificationListDto(items = items, hasMore = notifications.size == size)

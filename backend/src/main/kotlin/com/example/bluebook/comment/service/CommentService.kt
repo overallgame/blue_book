@@ -20,7 +20,7 @@ import com.example.bluebook.video.repository.VideoRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 @Service
 class CommentService(
@@ -93,6 +93,9 @@ class CommentService(
         val comment = commentRepository.findById(commentId)
             .orElseThrow { CommentNotFoundException() }
         if (comment.userId != userId) throw ForbiddenException()
+        // 已删除则幂等返回，不再递减计数：客户端重试或响应丢失后的重发会重复 DELETE，
+        // 而 comment_count 每调一次就减 1，会让计数在只删一条评论的情况下持续下降
+        if (comment.status == CommentStatus.DELETED) return
         comment.status = CommentStatus.DELETED
         commentRepository.save(comment)
         videoRepository.incrementCommentCount(comment.videoId, -1L)
@@ -135,7 +138,10 @@ class CommentService(
             content = comment.content,
             likeCount = comment.likeCount,
             isLiked = isLiked,
-            createTime = comment.createdAt.toEpochSecond(ZoneOffset.UTC) * 1000,
+            // createdAt 来自 LocalDateTime.now()，是宿主机本地墙钟时间；
+            // 按 UTC 换算会让非 UTC 的 JVM 得到「未来」的时间戳，客户端算出的差值为负 →
+            // 恒显示「刚刚」。必须按 JVM 默认时区解释。
+            createTime = comment.createdAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
             parentId = comment.parentId,
             replyToUserId = comment.replyToUserId,
             replyToNickname = replyToUser?.nickname,

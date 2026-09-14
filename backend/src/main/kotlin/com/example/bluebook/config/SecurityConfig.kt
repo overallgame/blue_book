@@ -28,7 +28,8 @@ class SecurityConfig(
                     "/api/v2/videos/*/playUrl",
                     "/api/v2/users/*", "/api/v2/users/*/followers",
                     "/api/v2/users/*/following", "/api/v2/users/*/videos",
-                    "/api/v2/search/hot"
+                    // 与 /search/hot 同类的只读接口，游客的「猜你想搜」此前始终回退到静态兜底
+                    "/api/v2/search/hot", "/api/v2/search/suggest"
                 ).permitAll()
                 // 评论：仅放开读接口（游客可看评论与展开回复）。
                 // 写接口（POST/DELETE）必须登录，否则会以 userId = 0 落库成"无作者评论"。

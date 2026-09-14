@@ -1,11 +1,13 @@
 package com.example.bluebook.video.repository
 
+import com.example.bluebook.video.entity.TranscodeStatus
 import com.example.bluebook.video.entity.Video
 import com.example.bluebook.video.entity.VideoStatus
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 interface VideoRepository : JpaRepository<Video, Long> {
@@ -20,27 +22,71 @@ interface VideoRepository : JpaRepository<Video, Long> {
     @Query("SELECT v FROM Video v WHERE v.transcodeStatus IN ('PENDING','PROCESSING') AND v.updatedAt < :threshold")
     fun findStaleTranscodes(threshold: LocalDateTime): List<Video>
 
+    /**
+     * 把卡住的转码任务重置为 PENDING 并刷新 updatedAt（否则下一轮又会命中）。
+     * 带状态复查：返回 0 表示该行已被其它路径处理（例如重复消息刚把它跑完），
+     * 此时调用方不应再投递消息。用定向 UPDATE 而非 save(detached 实体)，
+     * 避免把读取时的整行快照写回、回退期间累计的计数。
+     */
+    @Transactional
+    @Modifying
+    @Query("UPDATE Video v SET v.transcodeStatus = 'PENDING', v.updatedAt = CURRENT_TIMESTAMP WHERE v.id = :id AND v.transcodeStatus IN ('PENDING','PROCESSING')")
+    fun markStaleTranscodePending(id: Long): Int
+
+    /** 转码开始/失败只改状态，不动 hlsUrl/coverUrl */
+    @Transactional
+    @Modifying
+    @Query("UPDATE Video v SET v.transcodeStatus = :status, v.updatedAt = CURRENT_TIMESTAMP WHERE v.id = :id")
+    fun updateTranscodeStatus(id: Long, status: TranscodeStatus): Int
+
+    /** 转码成功：一次写入状态与产物地址 */
+    @Transactional
+    @Modifying
+    @Query("UPDATE Video v SET v.transcodeStatus = :status, v.hlsUrl = :hlsUrl, v.coverUrl = :coverUrl, v.updatedAt = CURRENT_TIMESTAMP WHERE v.id = :id")
+    fun updateTranscodeDone(id: Long, status: TranscodeStatus, hlsUrl: String?, coverUrl: String?): Int
+
     // ========== 每日对账：按互动表重算冗余计数 ==========
     // 这些计数走原子自增（增量正确），但历史脏数据、异常中断仍可能造成漂移，
     // 且没有任何地方会自动修正，故由每日任务以互动表为唯一事实来源重算。
+    //
+    // 三点关键设计：
+    // 1) WHERE 只匹配**确实漂移**的行。这样返回的行数就是漂移行数（可直接用于告警），
+    //    同时避免给全表加锁、也避免把未变化的行的 updatedAt 顶掉
+    //    （updatedAt 还被转码卡死检测使用）。
+    // 2) 每个方法各自 @Transactional：五条语句分开提交，任一条失败不会让其它四条一起回滚，
+    //    也把锁持有时间从「五条语句的总和」缩到单条语句。
+    // 3) SET 子句里的列不加表别名限定（`SET like_count = ...` 而非 `SET v.like_count = ...`），
+    //    这是最保守的 MySQL 语法形式。
 
+    @Transactional
     @Modifying
     @Query(
-        value = "UPDATE video v SET v.like_count = (SELECT COUNT(*) FROM video_like l WHERE l.video_id = v.id)",
+        value = """
+            UPDATE video SET like_count = (SELECT COUNT(*) FROM video_like l WHERE l.video_id = video.id)
+            WHERE like_count <> (SELECT COUNT(*) FROM video_like l WHERE l.video_id = video.id)
+        """,
         nativeQuery = true
     )
     fun reconcileLikeCounts(): Int
 
+    @Transactional
     @Modifying
     @Query(
-        value = "UPDATE video v SET v.collect_count = (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = v.id)",
+        value = """
+            UPDATE video SET collect_count = (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = video.id)
+            WHERE collect_count <> (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = video.id)
+        """,
         nativeQuery = true
     )
     fun reconcileCollectCounts(): Int
 
+    @Transactional
     @Modifying
     @Query(
-        value = "UPDATE video v SET v.comment_count = (SELECT COUNT(*) FROM comment c WHERE c.video_id = v.id AND c.status = 'NORMAL')",
+        value = """
+            UPDATE video SET comment_count = (SELECT COUNT(*) FROM comment c WHERE c.video_id = video.id AND c.status = 'NORMAL')
+            WHERE comment_count <> (SELECT COUNT(*) FROM comment c WHERE c.video_id = video.id AND c.status = 'NORMAL')
+        """,
         nativeQuery = true
     )
     fun reconcileCommentCounts(): Int

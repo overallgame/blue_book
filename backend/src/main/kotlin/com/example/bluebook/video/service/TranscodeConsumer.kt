@@ -8,42 +8,58 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component
 import java.io.File
 
+/**
+ * 转码消费者。
+ *
+ * 两点关键约定：
+ * 1. 任务由 `TranscodeTaskPublisher` 在发布事务**提交后**投递，因此这里必然能读到该行，
+ *    不需要再 sleep 等事务提交。
+ * 2. 转码期间的每一次状态写入都用**定向 UPDATE**，不用 `save(entity)`：实体是在 ffmpeg
+ *    开始前读出的，而 `Video` 没有 `@DynamicUpdate`，`save` 会把整行快照写回，
+ *    抹掉转码期间用户产生的点赞/评论/播放计数（PENDING 视频是可以被点赞和观看的）。
+ */
 @Component
 class TranscodeConsumer(
-    private val videoRepository: VideoRepository
+    private val videoRepository: VideoRepository,
+    private val registry: TranscodeRegistry
 ) {
     private val log = LoggerFactory.getLogger(TranscodeConsumer::class.java)
 
     @RabbitListener(queues = ["video.transcode"])
     fun handleTranscode(videoId: Long) {
         log.info("收到转码任务: videoId={}", videoId)
-        // 任务由 TranscodeTaskPublisher 在 publish 事务提交后才投递，
-        // 因此这里必然能读到该行，不需要再 sleep 等待事务提交
         val video = videoRepository.findById(videoId).orElse(null)
         if (video == null) {
-            // 极端情况（行被删除等）：消息只能丢弃，定时兜底任务不会再找到它
+            // 极端情况（行被删除等）：消息只能丢弃，定时兜底也不会再找到它
             log.error("视频不存在，转码任务丢弃: videoId={}", videoId)
             return
         }
-        doTranscode(video)
+        if (video.transcodeStatus == TranscodeStatus.DONE) {
+            log.info("该视频已转码完成，跳过重复任务: videoId={}", videoId)
+            return
+        }
+        // 标记为运行中：兜底任务据此区分「正在跑」与「已被杀」
+        registry.markRunning(videoId)
+        try {
+            doTranscode(videoId, video.originalUrl)
+        } finally {
+            registry.markFinished(videoId)
+        }
     }
 
-    private fun doTranscode(video: Video) {
-        video.transcodeStatus = TranscodeStatus.PROCESSING
-        videoRepository.save(video)
+    private fun doTranscode(videoId: Long, originalUrl: String?) {
+        videoRepository.updateTranscodeStatus(videoId, TranscodeStatus.PROCESSING)
 
         val storagePath = System.getenv("UPLOAD_PATH") ?: "/opt/blue-book/upload"
-        val inputFile = File("$storagePath/videos/${video.originalUrl}")
+        val inputFile = File("$storagePath/videos/$originalUrl")
 
         if (!inputFile.exists()) {
             log.error("原文件不存在: {}", inputFile.absolutePath)
-            video.transcodeStatus = TranscodeStatus.FAILED
-            videoRepository.save(video)
+            videoRepository.updateTranscodeStatus(videoId, TranscodeStatus.FAILED)
             return
         }
 
         val outputDir = "/opt/blue-book/hls"
-        val videoId = video.id
 
         try {
             val script = arrayOf(
@@ -61,18 +77,19 @@ class TranscodeConsumer(
             val exitCode = process.waitFor()
 
             if (exitCode == 0) {
-                video.hlsUrl = "$videoId/master.m3u8"
-                video.coverUrl = "$videoId/cover.jpg"
-                video.transcodeStatus = TranscodeStatus.DONE
-                log.info("转码完成: videoId={}, hlsUrl={}", videoId, video.hlsUrl)
+                videoRepository.updateTranscodeDone(
+                    videoId, TranscodeStatus.DONE,
+                    hlsUrl = "$videoId/master.m3u8",
+                    coverUrl = "$videoId/cover.jpg"
+                )
+                log.info("转码完成: videoId={}, hlsUrl={}/master.m3u8", videoId, videoId)
             } else {
                 log.error("转码失败: videoId={}, exitCode={}, output={}", videoId, exitCode, output)
-                video.transcodeStatus = TranscodeStatus.FAILED
+                videoRepository.updateTranscodeStatus(videoId, TranscodeStatus.FAILED)
             }
         } catch (e: Exception) {
             log.error("转码异常: videoId={}", videoId, e)
-            video.transcodeStatus = TranscodeStatus.FAILED
+            videoRepository.updateTranscodeStatus(videoId, TranscodeStatus.FAILED)
         }
-        videoRepository.save(video)
     }
 }

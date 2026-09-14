@@ -4,11 +4,15 @@ import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.core.AuthenticationException
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.ServletRequestBindingException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import java.time.format.DateTimeParseException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -43,6 +47,21 @@ class GlobalExceptionHandler {
     fun handleAuth(ex: AuthenticationException): ResponseEntity<ApiResponse<Any>> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(ApiResponse.fail(10005, "请先登录"))
+
+    /**
+     * 客户端入参错误统一映射为 400。
+     * 这些异常原先全部落到 handleUnknown 变成 500「服务器繁忙」，用户看到误导性文案，
+     * 而服务端日志被这些噪音淹没（缺参数、类型不匹配、请求体畸形、分页参数越界等）。
+     */
+    @ExceptionHandler(
+        ServletRequestBindingException::class,          // 缺少必填查询参数
+        MethodArgumentTypeMismatchException::class,     // ?size=abc / ?liked=xyz
+        HttpMessageNotReadableException::class,         // 请求体畸形或必填字段为 null
+        IllegalArgumentException::class,                // PageRequest.of(size<=0)、List.take(-1) 等
+        DateTimeParseException::class                   // 日期字符串无法解析
+    )
+    fun handleBadRequest(ex: Exception): ResponseEntity<ApiResponse<Any>> =
+        ResponseEntity.badRequest().body(ApiResponse.fail(14003, "请求参数有误"))
 
     @ExceptionHandler(Exception::class)
     fun handleUnknown(ex: Exception): ResponseEntity<ApiResponse<Any>> {

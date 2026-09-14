@@ -37,6 +37,10 @@ class ChunkUploadService(
             )
         if (pending.isPresent) {
             val session = pending.get()
+            // 续传也算一次活动：刷新 updatedAt，否则 24 小时的过期清理会把
+            // 正在续传的会话连同已传分片一起删掉
+            session.updatedAt = LocalDateTime.now()
+            uploadSessionRepository.save(session)
             return UploadInitResponse(
                 uploadId = session.id,
                 uploadedChunks = uploadedChunks(session.id)
@@ -75,6 +79,12 @@ class ChunkUploadService(
         // Track progress in Redis
         val hashOps = redisTemplate.opsForHash<String, String>()
         hashOps.put("upload:$uploadId", "chunk_$chunkIndex", "1")
+
+        // 刷新 updatedAt：这一列被 cleanExpiredUploads 当作「最后活动时间」判断过期。
+        // 不刷新会导致（a）续传超过 24 小时的会话被删掉，下一次分片报 13002；
+        // （b）用户在 24 小时后重传时 uploadedChunks 为空、续传退化为全量重传。
+        session.updatedAt = LocalDateTime.now()
+        uploadSessionRepository.save(session)
     }
 
     private fun getProgress(uploadId: String): List<Int> {

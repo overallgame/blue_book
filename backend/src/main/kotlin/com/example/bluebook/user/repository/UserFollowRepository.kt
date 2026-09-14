@@ -4,11 +4,24 @@ import com.example.bluebook.user.entity.UserFollow
 import com.example.bluebook.user.entity.UserFollowId
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 interface UserFollowRepository : JpaRepository<UserFollow, UserFollowId> {
     fun existsByFollowerIdAndFolloweeId(followerId: Long, followeeId: Long): Boolean
-    fun deleteByFollowerIdAndFolloweeId(followerId: Long, followeeId: Long): Int
+
+    /**
+     * 取消关注。用批量 DELETE 而不是派生删除 `deleteByFollowerIdAndFolloweeId`：
+     * 派生删除先 getResultList() 再逐条 em.remove，返回的是**查到**的行数而非删除数，
+     * 并发下两个请求都会认为删掉了一行，于是各发出一次计数递减。
+     * 批量语句返回的是真实的受影响行数。
+     */
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM UserFollow uf WHERE uf.followerId = :followerId AND uf.followeeId = :followeeId")
+    fun deleteFollow(followerId: Long, followeeId: Long): Int
+
     fun countByFollowerId(followerId: Long): Long
     fun countByFolloweeId(followeeId: Long): Long
 

@@ -48,8 +48,10 @@ class UserService(
                 v /= 36
             }
         }
+        // 定向写回：整行 save 会把读取时的快照覆盖回去，而本方法被允许匿名访问的
+        // GET /api/v2/users/{id} 触达，会回退并发的资料编辑
+        userRepository.assignXhsIdIfAbsent(user.id, id)
         user.xhsId = id
-        userRepository.save(user)
         return id
     }
 
@@ -126,16 +128,17 @@ class UserService(
         findUser(followeeId)
         followRepository.save(UserFollow(followerId = followerId, followeeId = followeeId))
         // 原子自增，避免并发关注时丢失更新
-        userRepository.incrementFollowingCount(followerId, 1)
-        userRepository.incrementFollowerCount(followeeId, 1)
+        userRepository.incrementFollowingCount(followerId)
+        userRepository.incrementFollowerCount(followeeId)
     }
 
     @Transactional
     fun unfollow(followerId: Long, followeeId: Long) {
-        val deleted = followRepository.deleteByFollowerIdAndFolloweeId(followerId, followeeId)
-        if (deleted > 0) {
-            userRepository.incrementFollowingCount(followerId, -1)
-            userRepository.incrementFollowerCount(followeeId, -1)
+        // 批量 DELETE 返回真实受影响行数（派生删除返回的是「查到」的行数，并发下会重复递减）；
+        // 递减本身带下限保护，见 UserRepository
+        if (followRepository.deleteFollow(followerId, followeeId) > 0) {
+            userRepository.decrementFollowingCount(followerId)
+            userRepository.decrementFollowerCount(followeeId)
         }
     }
 

@@ -67,14 +67,18 @@ CREATE TABLE video_like (
     user_id BIGINT NOT NULL,
     video_id BIGINT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, video_id)
+    PRIMARY KEY (user_id, video_id),
+    -- 主键以 user_id 为前导列，按 video_id 聚合（每日对账的 COUNT(*)）用不上，
+    -- 缺这个索引时对账要对 video_like 做全表扫描
+    INDEX idx_video_id (video_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE video_collect (
     user_id BIGINT NOT NULL,
     video_id BIGINT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, video_id)
+    PRIMARY KEY (user_id, video_id),
+    INDEX idx_video_id (video_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE comment_like (

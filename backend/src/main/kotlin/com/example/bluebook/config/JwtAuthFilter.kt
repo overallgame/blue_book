@@ -19,7 +19,8 @@ class JwtAuthFilter(
     companion object {
         // 注意：不要在此加入 "/api/v1/comments"。GET 请求由下面的 request.method == "GET"
         // 分支放行（可选鉴权，供游客读评论与展开回复）；POST/DELETE 必须走强制鉴权分支，
-        // 否则 currentUserId() 会得到 0，评论以 userId = 0 落库。
+        // 否则 controller 里的 requireUserId() 拿不到 principal 会抛 401，
+        // 而更早的写法（currentUserId() 返回 0）会让评论以 userId = 0 落库。
         val PUBLIC_PATHS = setOf(
             "/api/v2/auth/login", "/api/v2/auth/register", "/api/v2/auth/code",
             "/api/v2/auth/refresh", "/actuator/health", "/api/v2/feed",

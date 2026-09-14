@@ -4,8 +4,8 @@ import com.example.bluebook.auth.repository.RefreshTokenRepository
 import com.example.bluebook.auth.repository.UserRepository
 import com.example.bluebook.file.entity.UploadStatus
 import com.example.bluebook.file.repository.UploadSessionRepository
-import com.example.bluebook.video.entity.TranscodeStatus
 import com.example.bluebook.video.repository.VideoRepository
+import com.example.bluebook.video.service.TranscodeRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -24,16 +24,21 @@ class ScheduledTasks(
     private val videoRepository: VideoRepository,
     private val uploadSessionRepository: UploadSessionRepository,
     private val userRepository: UserRepository,
+    private val transcodeRegistry: TranscodeRegistry,
     private val rabbitTemplate: RabbitTemplate? = null,
     @Value("\${app.upload.storage-path}") private val storagePath: String
 ) {
     private val log = LoggerFactory.getLogger(ScheduledTasks::class.java)
 
     private companion object {
-        /** 转码中超过该时长未更新，视为卡死 */
-        const val STALE_TRANSCODE_MINUTES = 30L
+        /**
+         * 转码卡死的判定阈值。取 2 小时而不是 30 分钟：它必须**远大于**任何合理的转码耗时，
+         * 因为进程重启后 [TranscodeRegistry] 的内存记录会丢失，此时可能对仍在运行的
+         * 孤儿 ffmpeg 重复投递。2 小时下这种情况基本不会发生，而真正的卡死也能在 2 小时内恢复。
+         */
+        const val STALE_TRANSCODE_MINUTES = 120L
 
-        /** 未完成上传会话的保留时长 */
+        /** 未完成上传会话的保留时长（按最后活动时间计，见 ChunkUploadService） */
         const val EXPIRED_UPLOAD_HOURS = 24L
     }
 
@@ -57,12 +62,16 @@ class ScheduledTasks(
     }
 
     /**
-     * Daily reconciliation: compare counter tables with redundant counters.
-     * 冗余计数（video.like_count 等）平时走原子自增，增量本身正确，但历史脏数据、
-     * 异常中断仍会造成漂移，此前这个任务是空的、漂移永不自愈。
-     * 这里以互动表为唯一事实来源重算；只记录**实际改动的行数**，便于发现异常。
+     * 每日数据对账：以互动表为唯一事实来源重算冗余计数。
+     *
+     * **刻意不加 `@Transactional`**：五个 `@Modifying` 方法各自带 `@Transactional`，
+     * 于是五条语句分别提交——任一条失败不会把其它四条一起回滚，锁的持有时间也从
+     * 「五条语句之和」缩到单条语句。原先放在一个大事务里会在凌晨锁住整张 video 表。
+     *
+     * 日志里的数字是**实际漂移（并已修正）的行数**：每个对账语句都带
+     * `WHERE 计数 <> 重算值`，只匹配真正不一致的行，因此无论 Connector/J 的
+     * `useAffectedRows` 如何设置，返回的都是漂移行数。
      */
-    @Transactional
     @Scheduled(cron = "0 0 3 * * ?")
     fun dailyReconciliation() {
         log.info("开始每日数据对账...")
@@ -71,18 +80,28 @@ class ScheduledTasks(
         val comments = videoRepository.reconcileCommentCounts()
         val followers = userRepository.reconcileFollowerCounts()
         val following = userRepository.reconcileFollowingCounts()
-        log.info(
-            "每日数据对账完成：点赞校正 {} 行、收藏 {} 行、评论 {} 行、粉丝数 {} 行、关注数 {} 行",
-            likes, collects, comments, followers, following
-        )
+        val total = likes + collects + comments + followers + following
+        if (total == 0) {
+            log.info("每日数据对账完成：无漂移")
+        } else {
+            // 有漂移时用 warn，便于在日志里被注意到
+            log.warn(
+                "每日数据对账完成：点赞 {}、收藏 {}、评论 {}、粉丝数 {}、关注数 {}（共 {} 行漂移已修正）",
+                likes, collects, comments, followers, following, total
+            )
+        }
     }
 
     /**
-     * 转码兜底：两种卡死形态都不会自愈，需要重新投递。
-     * - PROCESSING：doTranscode 先置该状态再执行外部进程，进程重启/被杀后永久停留
-     * - PENDING：发布时消息投递失败/被丢弃（事务提交竞态已由 TranscodeTaskPublisher 修掉，
-     *   但投递本身仍可能失败），视频会「上传成功却永远不出现」
-     * 阈值取 30 分钟：正常转码远快于此，而重复投递的代价只是多跑一次 ffmpeg。
+     * 转码兜底：把已经死掉的任务重新投递。
+     *
+     * 两种卡死形态都不会自愈：
+     *  - PROCESSING 且 worker 已被杀（进程重启/崩溃）
+     *  - PENDING 且消息投递失败或被丢弃
+     *
+     * **绝不能重投仍在运行的任务**：`transcode-worker.sh` 用 `-y` 写同一组 HLS 切片，
+     * 两个 ffmpeg 并发写会产出损坏的播放列表。因此这里用 [TranscodeRegistry]
+     * 排掉本进程正在处理的 id——数据库状态本身无法区分「在跑」与「已死」。
      */
     @Scheduled(fixedRate = 600000)
     fun requeueStaleTranscodes() {
@@ -91,11 +110,19 @@ class ScheduledTasks(
         val stale = videoRepository.findStaleTranscodes(
             LocalDateTime.now().minusMinutes(STALE_TRANSCODE_MINUTES)
         )
-        if (stale.isEmpty()) return
-        log.warn("发现 {} 条卡住的转码任务，重新投递", stale.size)
-        stale.forEach { video ->
-            video.transcodeStatus = TranscodeStatus.PENDING
-            videoRepository.save(video)
+        // 排掉本进程正在运行的（这些是「慢」不是「死」）
+        val dead = stale.filterNot { transcodeRegistry.isRunning(it.id) }
+        if (dead.isEmpty()) return
+
+        log.warn("发现 {} 条卡住的转码任务，重新投递", dead.size)
+        dead.forEach { video ->
+            // 定向更新 + 状态复查：返回 0 表示该行已被其它路径处理（例如重复消息刚跑完），
+            // 此时不能再投递，否则会对一个已 DONE 的视频重复起 ffmpeg
+            val updated = videoRepository.markStaleTranscodePending(video.id)
+            if (updated == 0) {
+                log.info("转码任务已被其它路径处理，跳过重投: videoId={}", video.id)
+                return@forEach
+            }
             runCatching { rabbit.convertAndSend("video.transcode", video.id) }
                 .onFailure { log.error("重新投递失败: videoId={}", video.id, it) }
         }
@@ -104,6 +131,7 @@ class ScheduledTasks(
     /**
      * 清理过期上传会话与遗留分片。
      * 分片目录 chunks/{uploadId} 此前只在合并成功时删除，中断的上传会永久占盘。
+     * 过期按 `updated_at`（最后活动时间）判断——`uploadChunk` 与续传分支都会刷新它。
      */
     @Transactional
     @Scheduled(fixedRate = 3600000)

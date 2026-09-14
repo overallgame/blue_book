@@ -60,8 +60,13 @@ class GlobalExceptionHandler {
         IllegalArgumentException::class,                // PageRequest.of(size<=0)、List.take(-1) 等
         DateTimeParseException::class                   // 日期字符串无法解析
     )
-    fun handleBadRequest(ex: Exception): ResponseEntity<ApiResponse<Any>> =
-        ResponseEntity.badRequest().body(ApiResponse.fail(14003, "请求参数有误"))
+    fun handleBadRequest(ex: Exception): ResponseEntity<ApiResponse<Any>> {
+        // 必须留日志：这个处理器同时兜住 IllegalArgumentException 这类宽泛类型，
+        // 若服务端真的抛了 IAE（断言、类型不匹配、URL 解析等）也会走到这里，
+        // 不留痕迹的话真实缺陷会以 400 的形式彻底消失
+        log.warn("请求参数异常（若为服务端抛出请按缺陷排查）: {}", ex.toString())
+        return ResponseEntity.badRequest().body(ApiResponse.fail(14003, "请求参数有误"))
+    }
 
     @ExceptionHandler(Exception::class)
     fun handleUnknown(ex: Exception): ResponseEntity<ApiResponse<Any>> {

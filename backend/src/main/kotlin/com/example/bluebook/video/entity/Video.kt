@@ -2,6 +2,7 @@ package com.example.bluebook.video.entity
 
 import com.example.bluebook.common.BaseEntity
 import jakarta.persistence.*
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "video", indexes = [
@@ -30,6 +31,14 @@ class Video(
     @Enumerated(EnumType.STRING)
     @Column(name = "transcode_status", nullable = false, length = 20)
     var transcodeStatus: TranscodeStatus = TranscodeStatus.PENDING,
+
+    /**
+     * 转码专用时间戳，只由转码路径写入（发布、开始、完成、兜底重投）。
+     * 不能复用 BaseEntity.updatedAt：点赞/播放/评论都会顶掉 updatedAt，
+     * 卡死的转码任务就会永远不满足"超过阈值"，兜底形同失效。
+     */
+    @Column(name = "transcode_updated_at")
+    var transcodeUpdatedAt: LocalDateTime? = LocalDateTime.now(),
 
     @Column(name = "duration")
     var duration: Int? = null,

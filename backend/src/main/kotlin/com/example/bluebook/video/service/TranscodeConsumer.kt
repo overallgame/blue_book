@@ -38,6 +38,12 @@ class TranscodeConsumer(
             log.info("该视频已转码完成，跳过重复任务: videoId={}", videoId)
             return
         }
+        // 本进程正在跑同一个视频：重复投递（MQ 重投、消息重复）绝不能起第二个 ffmpeg，
+        // 否则两个进程会用 -y 并发写同一组 HLS 切片
+        if (registry.isRunning(videoId)) {
+            log.info("该视频正在本进程转码中，跳过重复任务: videoId={}", videoId)
+            return
+        }
         // 标记为运行中：兜底任务据此区分「正在跑」与「已被杀」
         registry.markRunning(videoId)
         try {

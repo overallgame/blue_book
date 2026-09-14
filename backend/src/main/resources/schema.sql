@@ -33,6 +33,10 @@ CREATE TABLE video (
     original_url VARCHAR(500),
     hls_url VARCHAR(500),
     transcode_status ENUM('PENDING','PROCESSING','DONE','FAILED') DEFAULT 'PENDING',
+    -- 转码专用时间戳：只由转码路径写入。不能复用 updated_at —— 点赞/播放/评论都会把
+    -- updated_at 顶掉（MySQL ON UPDATE CURRENT_TIMESTAMP），于是卡死的任务永远不"过期"。
+    -- 历史行可为 NULL，判定时回退到 created_at。
+    transcode_updated_at DATETIME,
     duration INT,
     width INT,
     height INT,
@@ -92,7 +96,9 @@ CREATE TABLE user_follow (
     follower_id BIGINT NOT NULL,
     followee_id BIGINT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (follower_id, followee_id)
+    PRIMARY KEY (follower_id, followee_id),
+    -- 主键以 follower_id 为前导列，按 followee_id 聚合（每日对账的 COUNT(*)）用不上
+    INDEX idx_followee_id (followee_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE notification (

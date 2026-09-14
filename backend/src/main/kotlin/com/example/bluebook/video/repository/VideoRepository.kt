@@ -14,35 +14,65 @@ interface VideoRepository : JpaRepository<Video, Long> {
     fun findByIdAndStatus(id: Long, status: VideoStatus): Video?
 
     /**
-     * 卡住的转码任务，两种形态都不会自愈：
-     * - PROCESSING：doTranscode 先置该状态再跑外部进程，进程重启/被杀后永久停留
-     * - PENDING：发布时事务尚未提交就投递了 MQ 消息，消费者查不到行会丢弃消息
-     * 而 feed 只显示 transcodeStatus = DONE 的视频，所以这些视频会「上传成功却永远不出现」。
+     * 卡住的转码任务，按状态取不同阈值：
+     * - `PENDING` 用短阈值（消息投递失败/被丢弃，恢复不需要任何保护）
+     * - `PROCESSING` 用长阈值（必须大于任何合理的转码耗时，否则会与仍在运行的 ffmpeg 并发写）
+     *
+     * 判定依据是 `transcodeUpdatedAt`（只由转码路径写入）而不是 `updatedAt`：
+     * 点赞/播放/评论都会顶掉 `updatedAt`，用它做判据会让卡死的任务永远不"过期"。
+     * 历史行的该列为 NULL，回退到 `createdAt`。
      */
-    @Query("SELECT v FROM Video v WHERE v.transcodeStatus IN ('PENDING','PROCESSING') AND v.updatedAt < :threshold")
-    fun findStaleTranscodes(threshold: LocalDateTime): List<Video>
+    @Query(
+        """
+        SELECT v FROM Video v
+        WHERE (v.transcodeStatus = 'PENDING'
+               AND COALESCE(v.transcodeUpdatedAt, v.createdAt) < :pendingThreshold)
+           OR (v.transcodeStatus = 'PROCESSING'
+               AND COALESCE(v.transcodeUpdatedAt, v.createdAt) < :processingThreshold)
+        """
+    )
+    fun findStaleTranscodes(
+        pendingThreshold: LocalDateTime,
+        processingThreshold: LocalDateTime
+    ): List<Video>
 
     /**
-     * 把卡住的转码任务重置为 PENDING 并刷新 updatedAt（否则下一轮又会命中）。
+     * 把卡住的转码任务重置为 PENDING 并推进 transcodeUpdatedAt（否则下一轮又会命中）。
      * 带状态复查：返回 0 表示该行已被其它路径处理（例如重复消息刚把它跑完），
      * 此时调用方不应再投递消息。用定向 UPDATE 而非 save(detached 实体)，
      * 避免把读取时的整行快照写回、回退期间累计的计数。
      */
     @Transactional
     @Modifying
-    @Query("UPDATE Video v SET v.transcodeStatus = 'PENDING', v.updatedAt = CURRENT_TIMESTAMP WHERE v.id = :id AND v.transcodeStatus IN ('PENDING','PROCESSING')")
+    @Query(
+        """
+        UPDATE Video v SET v.transcodeStatus = 'PENDING', v.transcodeUpdatedAt = CURRENT_TIMESTAMP
+        WHERE v.id = :id AND v.transcodeStatus IN ('PENDING','PROCESSING')
+        """
+    )
     fun markStaleTranscodePending(id: Long): Int
 
     /** 转码开始/失败只改状态，不动 hlsUrl/coverUrl */
     @Transactional
     @Modifying
-    @Query("UPDATE Video v SET v.transcodeStatus = :status, v.updatedAt = CURRENT_TIMESTAMP WHERE v.id = :id")
+    @Query(
+        """
+        UPDATE Video v SET v.transcodeStatus = :status, v.transcodeUpdatedAt = CURRENT_TIMESTAMP
+        WHERE v.id = :id
+        """
+    )
     fun updateTranscodeStatus(id: Long, status: TranscodeStatus): Int
 
     /** 转码成功：一次写入状态与产物地址 */
     @Transactional
     @Modifying
-    @Query("UPDATE Video v SET v.transcodeStatus = :status, v.hlsUrl = :hlsUrl, v.coverUrl = :coverUrl, v.updatedAt = CURRENT_TIMESTAMP WHERE v.id = :id")
+    @Query(
+        """
+        UPDATE Video v SET v.transcodeStatus = :status, v.hlsUrl = :hlsUrl, v.coverUrl = :coverUrl,
+               v.transcodeUpdatedAt = CURRENT_TIMESTAMP
+        WHERE v.id = :id
+        """
+    )
     fun updateTranscodeDone(id: Long, status: TranscodeStatus, hlsUrl: String?, coverUrl: String?): Int
 
     // ========== 每日对账：按互动表重算冗余计数 ==========
@@ -63,7 +93,8 @@ interface VideoRepository : JpaRepository<Video, Long> {
     @Query(
         value = """
             UPDATE video SET like_count = (SELECT COUNT(*) FROM video_like l WHERE l.video_id = video.id)
-            WHERE like_count <> (SELECT COUNT(*) FROM video_like l WHERE l.video_id = video.id)
+            WHERE like_count IS NULL
+               OR like_count <> (SELECT COUNT(*) FROM video_like l WHERE l.video_id = video.id)
         """,
         nativeQuery = true
     )
@@ -74,7 +105,8 @@ interface VideoRepository : JpaRepository<Video, Long> {
     @Query(
         value = """
             UPDATE video SET collect_count = (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = video.id)
-            WHERE collect_count <> (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = video.id)
+            WHERE collect_count IS NULL
+               OR collect_count <> (SELECT COUNT(*) FROM video_collect c WHERE c.video_id = video.id)
         """,
         nativeQuery = true
     )
@@ -85,7 +117,8 @@ interface VideoRepository : JpaRepository<Video, Long> {
     @Query(
         value = """
             UPDATE video SET comment_count = (SELECT COUNT(*) FROM comment c WHERE c.video_id = video.id AND c.status = 'NORMAL')
-            WHERE comment_count <> (SELECT COUNT(*) FROM comment c WHERE c.video_id = video.id AND c.status = 'NORMAL')
+            WHERE comment_count IS NULL
+               OR comment_count <> (SELECT COUNT(*) FROM comment c WHERE c.video_id = video.id AND c.status = 'NORMAL')
         """,
         nativeQuery = true
     )

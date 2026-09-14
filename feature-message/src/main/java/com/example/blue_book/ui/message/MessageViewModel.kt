@@ -12,6 +12,9 @@ class MessageViewModel @Inject constructor(
 	private val remote: MessageRemoteDataSource
 ) : UdfViewModel<MessageIntent, MessageUiState, MessageEffect>(MessageUiState()) {
 
+	/** 加载更多失败是否已提示过（成功时复位），避免一次失败弹一串 toast */
+	private var loadMoreErrorNotified = false
+
 	override suspend fun handleIntent(intent: MessageIntent) {
 		when (intent) {
 			MessageIntent.Init -> refresh()
@@ -60,6 +63,7 @@ class MessageViewModel @Inject constructor(
 			onStart = { setState { copy(isLoading = true, message = null) } },
 			call = { remote.list(cursorId = state.cursorId, size = state.pageSize) },
 			onSuccess = { dto ->
+				loadMoreErrorNotified = false
 				val mapped = dto.items.map { it.toUi() }
 				setState {
 					copy(
@@ -72,8 +76,13 @@ class MessageViewModel @Inject constructor(
 			},
 			onFailure = { e ->
 				setState { copy(isLoading = false, message = e.message ?: "加载失败") }
-				// 加载更多失败会导致列表在底部被静默截断，必须提示
-				sendEffect(MessageEffect.ShowToast(e.message ?: "加载失败"))
+				// 加载更多失败会导致列表在底部被静默截断，必须提示。
+				// 但加去重：失败后 hasMore 仍为 true，列表短时每次滑动都会重试，
+				// 不去重会变成一次失败弹一串 toast；成功后复位
+				if (!loadMoreErrorNotified) {
+					loadMoreErrorNotified = true
+					sendEffect(MessageEffect.ShowToast(e.message ?: "加载失败"))
+				}
 			}
 		)
 	}

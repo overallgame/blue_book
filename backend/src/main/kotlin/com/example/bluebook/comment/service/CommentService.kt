@@ -118,7 +118,7 @@ class CommentService(
                 )
             }
         } else {
-            val deleted = commentLikeRepository.deleteByUserIdAndCommentId(userId, commentId)
+            val deleted = commentLikeRepository.deleteLike(userId, commentId)
             if (deleted > 0) commentRepository.incrementLikeCount(commentId, -1)
         }
     }

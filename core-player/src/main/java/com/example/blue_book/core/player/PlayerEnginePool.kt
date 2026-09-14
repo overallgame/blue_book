@@ -44,16 +44,20 @@ class PlayerEnginePool(
 	 * key 已被持有或已预加载时直接返回：否则 prepare() 会把在用引擎的位置清零、缓冲丢弃，
 	 * 造成"滑回去从头播"以及预加载完全失效。
 	 *
-	 * 预算已满时**放弃本次预加载**，而不是"先建一个再淘汰另一个"：后者会让每次翻页都
-	 * 构造一个 ExoPlayer（并发出网络请求）又立刻销毁它，同时相邻页的预加载永远不存在
-	 * ——正是预加载要解决的问题。放弃时没有额外开销，`bind()` 会在真正需要时再构造。
+	 * 预算已满时**回收最旧的那个预加载并复用它的实例**（不新建、不浪费）：
+	 * 直接放弃会让过期的预加载长期占住名额，之后所有预加载都失效；
+	 * 而"新建一个再淘汰另一个"则是每次翻页都构造并销毁一个 ExoPlayer。
+	 * 被回收的是没人使用的预加载实例，重新 prepare 没有副作用（位置恢复只对在用引擎才重要）。
 	 */
 	fun preload(key: Long, url: String) {
 		if (owned.containsKey(key) || preloaded.containsKey(key)) return
-		val engine = when {
+		val engine: PlayerEngine = when {
 			idle.isNotEmpty() -> idle.removeFirst()
-			owned.size + preloaded.size >= maxSize -> return
-			else -> factory()
+			// 复用最旧的预加载实例，同时把它从表中移除
+			preloaded.isNotEmpty() -> preloaded.remove(preloaded.keys.first()) ?: return
+			// 没有被持有的实例，且预算还有余量时才新建
+			owned.size < maxSize -> factory()
+			else -> return
 		}
 		preloaded[key] = engine
 		engine.setPlayWhenReady(false)

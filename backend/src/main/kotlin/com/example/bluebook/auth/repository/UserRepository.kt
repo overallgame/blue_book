@@ -55,7 +55,8 @@ interface UserRepository : JpaRepository<User, Long> {
     @Query(
         value = """
             UPDATE `user` u SET follower_count = (SELECT COUNT(*) FROM user_follow f WHERE f.followee_id = u.id)
-            WHERE follower_count <> (SELECT COUNT(*) FROM user_follow f WHERE f.followee_id = u.id)
+            WHERE follower_count IS NULL
+               OR follower_count <> (SELECT COUNT(*) FROM user_follow f WHERE f.followee_id = u.id)
         """,
         nativeQuery = true
     )
@@ -66,7 +67,8 @@ interface UserRepository : JpaRepository<User, Long> {
     @Query(
         value = """
             UPDATE `user` u SET following_count = (SELECT COUNT(*) FROM user_follow f WHERE f.follower_id = u.id)
-            WHERE following_count <> (SELECT COUNT(*) FROM user_follow f WHERE f.follower_id = u.id)
+            WHERE following_count IS NULL
+               OR following_count <> (SELECT COUNT(*) FROM user_follow f WHERE f.follower_id = u.id)
         """,
         nativeQuery = true
     )

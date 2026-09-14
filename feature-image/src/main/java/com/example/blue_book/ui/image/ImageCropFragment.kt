@@ -62,6 +62,9 @@ class ImageCropFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+		// 重置保存态：若上一次保存过程中屏幕被旋转/重建，标志会随旧实例一起消失的只有
+		// 视图；这里显式复位，避免重建后按钮看起来可点、但每次点击都被 isSaving 拦成空操作
+		setSaving(false)
 		val crop = view.findViewById<CropImageView>(R.id.cropImageView)
 		cropView = crop
 

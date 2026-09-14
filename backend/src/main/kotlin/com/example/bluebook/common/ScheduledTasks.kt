@@ -32,11 +32,16 @@ class ScheduledTasks(
 
     private companion object {
         /**
-         * 转码卡死的判定阈值。取 2 小时而不是 30 分钟：它必须**远大于**任何合理的转码耗时，
-         * 因为进程重启后 [TranscodeRegistry] 的内存记录会丢失，此时可能对仍在运行的
-         * 孤儿 ffmpeg 重复投递。2 小时下这种情况基本不会发生，而真正的卡死也能在 2 小时内恢复。
+         * PENDING 卡死（消息投递失败/被丢弃）：恢复不需要任何保护，短阈值即可。
          */
-        const val STALE_TRANSCODE_MINUTES = 120L
+        const val STALE_PENDING_MINUTES = 30L
+
+        /**
+         * PROCESSING 卡死：必须**远大于**任何合理的转码耗时。因为进程重启后
+         * [TranscodeRegistry] 的内存记录会丢失，此时可能对仍在运行的孤儿 ffmpeg
+         * 重复投递——两个 ffmpeg 会用 `-y` 并发写同一组 HLS 切片。
+         */
+        const val STALE_PROCESSING_MINUTES = 120L
 
         /** 未完成上传会话的保留时长（按最后活动时间计，见 ChunkUploadService） */
         const val EXPIRED_UPLOAD_HOURS = 24L
@@ -107,8 +112,10 @@ class ScheduledTasks(
     fun requeueStaleTranscodes() {
         // 捕获到局部变量：成员属性在 lambda 内无法智能转换
         val rabbit = rabbitTemplate ?: return
+        val now = LocalDateTime.now()
         val stale = videoRepository.findStaleTranscodes(
-            LocalDateTime.now().minusMinutes(STALE_TRANSCODE_MINUTES)
+            pendingThreshold = now.minusMinutes(STALE_PENDING_MINUTES),
+            processingThreshold = now.minusMinutes(STALE_PROCESSING_MINUTES)
         )
         // 排掉本进程正在运行的（这些是「慢」不是「死」）
         val dead = stale.filterNot { transcodeRegistry.isRunning(it.id) }

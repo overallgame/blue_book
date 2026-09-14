@@ -104,8 +104,9 @@ class VideoFragment : Fragment() {
 				if (position == adapter.itemCount - 1) {
 					viewModel.dispatch(VideoIntent.LoadMore)
 				}
-				// 预加载窗口：position+1，position+2；释放 position-2
-				adapter.releaseByPosition(position - 2)
+				// 预加载窗口：position+1，position+2
+				// （不再释放 position-2：那会在持有者存活时归还引擎，导致 surface 被他人解绑；
+				//   引擎回收现由 onViewRecycled 与换 URL 触发，池按所有权淘汰）
 				adapter.preloadByPosition(position + 1)
 				adapter.preloadByPosition(position + 2)
 			}

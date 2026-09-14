@@ -437,12 +437,11 @@ class VideoAdapter(
         }
     }
 
-    fun releaseByPosition(pos: Int) {
-        if (pos in 0 until itemCount) {
-            val url = getItem(pos).playUrl
-            if (url.isNotBlank()) enginePool.release(url)
-        }
-    }
+    // 注意：这里曾有 releaseByPosition(pos)，用于回收"滑过去的位置"的引擎。
+    // 它会在持有者仍存活时把引擎归还对象池，于是该实例可能被另一个 ViewHolder
+    // acquire 走，旧持有者随后的回收动作就会解绑**他人**的 surface（黑屏且无报错）。
+    // 引擎回收现在只发生在持有者作用域内：onViewRecycled → holder.release()，
+    // 以及 bind() 换 URL 时；池自身负责按所有权淘汰（见 PlayerEnginePool）。
 
     private fun formatCount(v: Int): String = when {
         v >= 10000 -> "%.1fw".format(v / 10000.0)

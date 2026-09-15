@@ -5,12 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application>
-        <activity
-            android:name="com.example.blue_book.ui.video.VideoActivity"
-            android:launchMode="singleTask"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden" />
-
+        <!-- 视频页已改为 MainActivity 内的 Tab Fragment（全屏相关的 configChanges
+             也随之下移到 MainActivity）；发布页仍是独立页面 -->
         <activity
             android:name="com.example.blue_book.ui.publish.PublishActivity"
             android:exported="false" />

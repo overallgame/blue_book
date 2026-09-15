@@ -3,25 +3,17 @@ package com.example.blue_book.router
 /**
 * TheRouter 路由路径常量
 * 格式：/模块/页面
+*
+* 注意：底部四个 Tab（首页/视频/消息/我的）**不再是路由**。
+* 它们已从「各自一个 Activity」改为 MainActivity 内的 Fragment，
+* 切换走 [com.example.blue_book.host.IMainHost]，路由表中也不再登记这四条路径。
 */
 object RoutePath {
 	/** 主页面（底部 Tab 容器） */
 	const val MAIN = "/app/main"
 
-	/** 首页 */
-	const val HOME = "/home/main"
-
-	/** 视频页 */
-	const val VIDEO = "/video/main"
-
 	/** 视频发布页（独立入口，底部导航栏正中） */
 	const val PUBLISH = "/video/publish"
-
-	/** 消息页 */
-	const val MESSAGE = "/message/main"
-
-	/** 我的页 */
-	const val MINE = "/mine/main"
 
 	/** 作者主页（他人用户主页） */
 	const val USER_PROFILE = "/mine/user_profile"

@@ -87,7 +87,10 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 
 - `core-network` → `core-datastore`（TokenHolder 注入 IDataStore）
 - feature 模块互不依赖，通过 TheRouter `@ServiceProvider` 服务发现
-- `feature-home` / `feature-message` / `feature-image` 仅依赖 `lib-base`
+- 各 feature 的实际依赖（构建文件为准）：
+  `feature-image` 仅 `lib-base`；`feature-message` 为 `lib-base` + `core-network`；
+  `feature-home` 为 `lib-base` + `core-datastore` + `core-network`
+- Tab 宿主能力（`IMainHost`）定义在 `lib-base`，feature 通过它回调宿主，不依赖 `:app`
 
 ### 跨模块服务发现（TheRouter）
 
@@ -186,31 +189,68 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 跨模块服务（IAuthProvider、IUserStore、IVideoProvider）通过 TheRouter `@ServiceProvider` + Hilt `@EntryPoint` 暴露，不经过 Hilt DI。
 
-## 导航（TheRouter 1.3.0）
+## 导航与 Tab 结构
 
-多 Activity 架构，使用 TheRouter 路径导航替代 Intent 字符串。
+**底部四个 Tab 是 Fragment，不是 Activity**（2026-09 重构）。宿主是 `:app` 的 `MainActivity`：
 
 ```
-MainActivity（底部 4 个 Tab，RadioGroup）
-  /app/main
-  ├─ tab_home    → /home/main   (首页：瀑布流 + 搜索)
-  ├─ tab_video   → /video/main  (视频 Tab + 全屏播放器)
-  ├─ tab_message → /message/main (消息占位)
-  └─ tab_mine    → /mine/main   (个人中心 + 资料编辑)
+MainActivity（/app/main）
+├─ 内容容器 main_content（FrameLayout）+ 底部导航 RadioGroup（常驻，切 Tab 不消失）
+├─ tab_home    → HomeFragment     (首页：关注/发现/本地 三个子 Tab + 搜索)
+├─ tab_video   → VideoFragment    (视频：竖向翻页播放器 + 全屏)
+├─ tab_message → MessageFragment  (消息：通知列表)
+└─ tab_mine    → MineFragment     (我的：个人中心 + 作品/收藏/喜欢)
 
-AuthActivity（登录/注册入口）
-  /auth/entry
-  ├─ AuthEntryFragment → 登录/注册 → /app/main
-  ├─ LoginFragment → /app/main
-  └─ RegisterFragment → /app/main
-
-图片选择器：/image/picker
+独立 Activity（非 Tab，是详情页/独立流程）：
+  /auth/entry        AuthActivity       登录注册（AuthEntry/Login/Register 三个 Fragment）
+  /video/publish     PublishActivity    发布页
+  /image/picker      ImagePickerActivity 图片选择
+  /mine/user_profile AuthorProfileActivity 作者主页
+  /mine/follow_list  FollowListActivity 关注/粉丝列表
 ```
 
-**跨模块跳转**：`TheRouter.build(RoutePath.XXX).navigation(context)`
-**模块内跳转**：Fragment 通过 `(requireActivity() as XxxActivity).navigateToXxx()` 调用宿主 Activity 的公共方法。
-**底部 Tab**：`FLAG_ACTIVITY_REORDER_TO_FRONT`，每个 Tab 只有一个 Activity 实例。
-**路由常量**：`lib-base/router/RoutePath.kt` 集中管理。
+### Tab 切换机制（改动前请先读这段）
+
+- **四个 Tab 在 `MainActivity.onCreate` 一次性 `add` 进 `main_content`，用 `show/hide` 切换**，
+  不用 `replace`：保留各自的视图状态（滚动位置、播放进度）。
+- **非当前 Tab 用 `setMaxLifecycle(STARTED)` 压住**：这会触发 `onPause`，
+  于是视频 Tab 切走时自动暂停（`VideoFragment.foreground` 依赖这个时机），
+  且视图不销毁、切回来能接着播。
+- **二级页（搜索结果、资料编辑、字段编辑）用 `add` 叠在当前 Tab 之上**并压住它，
+  返回时弹出即恢复 Tab。二级页覆盖内容区，底部导航保持可见。
+- **返回键**（`MainActivity` 的 `OnBackPressedCallback`）：有二级页→弹二级页；
+  否则非首页 Tab→回首页；否则退出。
+- **换视频要重建 VideoFragment**（`showVideoWith`）：这是原 `VideoActivity.onNewIntent` 的
+  等价物，复用旧实例会出现「点了另一个视频却还在播上一个」。
+- **`MainActivity` 声明了 `configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden"`**：
+  全屏播放要改 `requestedOrientation`，不声明会重建整个 Tab 图。
+- **全面屏**：`MainActivity` 调 `setDecorFitsSystemWindows(false)`，底部导航按 `bars.bottom`
+  抬高；各页面自己避让状态栏（首页顶栏、消息列表、我的页顶栏各有 insets 处理）。
+
+### 跨模块导航：用 `IMainHost`，不要强转宿主
+
+feature 模块不能依赖 `:app`（反向依赖），所以宿主的导航能力由
+`lib-base/host/IMainHost.kt` 定义，`MainActivity` 实现它：
+
+```kotlin
+// 页面内取宿主（可空，宿主未实现时返回 null，不抛 ClassCastException）
+mainHost?.navigateToVideoPlayer(item, source = "liked")
+mainHost?.navigateToSearch()
+mainHost?.navigateToProfileEdit()
+mainHost?.enterFullscreen()
+```
+
+`IMainHost` 的方法**默认抛 `UnsupportedOperationException`**：实现方只声明自己具备的能力，
+未实现的能力被误调用会响亮失败而不是静默无效。当前只有 `MainActivity` 实现它。
+
+**跨模块跳转到独立页面**仍用 TheRouter：`TheRouter.build(RoutePath.XXX).navigation(context)`
+**路由常量**：`lib-base/router/RoutePath.kt`（注意：Tab 的四条路径已不再是路由，路由表见
+`app/src/main/assets/therouter/routeMap.json`——**该文件是手工维护的输入，不是构建产物**，
+新增/删除路由时需手工同步）。
+
+> 历史说明：本轮重构前是「每个 Tab 一个 Activity + `FLAG_ACTIVITY_REORDER_TO_FRONT`」，
+> Tab 页面用 `(requireActivity() as HomeActivity).navigateToXxx()` 调宿主。四个 Tab Activity
+> （HomeActivity / VideoActivity / MessageActivity / MineActivity）已全部删除。
 
 ## 播放器（`:core-player`）
 

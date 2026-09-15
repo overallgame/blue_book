@@ -4,10 +4,5 @@
     <!-- 本地流定位（仅取城市，粗略定位即可） -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <application>
-        <activity
-            android:name="com.example.blue_book.ui.home.HomeActivity"
-            android:launchMode="singleTask"
-            android:exported="false" />
-    </application>
+    <!-- 首页已改为 MainActivity 内的 Tab Fragment，本模块不再声明 Activity -->
 </manifest>

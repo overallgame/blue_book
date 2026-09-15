@@ -7,13 +7,6 @@
     "params": {}
   },
   {
-    "path": "/video/main",
-    "className": "com.example.blue_book.ui.video.VideoActivity",
-    "action": "",
-    "description": "",
-    "params": {}
-  },
-  {
     "path": "/video/publish",
     "className": "com.example.blue_book.ui.publish.PublishActivity",
     "action": "",
@@ -21,29 +14,8 @@
     "params": {}
   },
   {
-    "path": "/mine/main",
-    "className": "com.example.blue_book.ui.mine.MineActivity",
-    "action": "",
-    "description": "",
-    "params": {}
-  },
-  {
-    "path": "/message/main",
-    "className": "com.example.blue_book.ui.message.MessageActivity",
-    "action": "",
-    "description": "",
-    "params": {}
-  },
-  {
     "path": "/image/picker",
     "className": "com.example.blue_book.ui.image.ImagePickerActivity",
-    "action": "",
-    "description": "",
-    "params": {}
-  },
-  {
-    "path": "/home/main",
-    "className": "com.example.blue_book.ui.home.HomeActivity",
     "action": "",
     "description": "",
     "params": {}

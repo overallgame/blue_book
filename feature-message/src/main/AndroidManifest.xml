@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application>
-        <activity
-            android:name="com.example.blue_book.ui.message.MessageActivity"
-            android:launchMode="singleTask"
-            android:exported="false" />
-    </application>
+    <!-- 消息页已改为 MainActivity 内的 Tab Fragment，本模块不再声明 Activity -->
 </manifest>

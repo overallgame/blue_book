@@ -1,5 +1,6 @@
 package com.example.blue_book.ui.author
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -78,11 +79,15 @@ class AuthorProfileFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(AuthorProfileIntent.ToggleLike(v)) },
 			onClickItem = { v ->
-				// 从作者主页进入播放页：以点击视频为首条，按 user_videos 来源续拉该作者作品
-				TheRouter.build(RoutePath.VIDEO)
+				// 从作者主页进入播放页：以点击视频为首条，按 user_videos 来源续拉该作者作品。
+				// 作者主页是独立 Activity（非 Tab），所以路由回 MAIN 交给视频 Tab 播放；
+				// CLEAR_TOP|SINGLE_TOP 让 MainActivity 提前并弹掉作者主页，
+				// 参数由 MainActivity.onNewIntent 消费。
+				TheRouter.build(RoutePath.MAIN)
 					.withParcelable(ExtraKeys.EXTRA_VIDEO, v)
 					.withString(ExtraKeys.EXTRA_SOURCE, "user_videos")
 					.withLong(ExtraKeys.EXTRA_SOURCE_USER_ID, userId)
+					.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 					.navigation(requireContext())
 			}
 		)

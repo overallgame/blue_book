@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <activity
-            android:name="com.example.blue_book.ui.mine.MineActivity"
-            android:launchMode="singleTask"
-            android:exported="false" />
-
+        <!-- 「我的」已改为 MainActivity 内的 Tab Fragment；以下两个仍是独立页面（非 Tab） -->
         <activity
             android:name="com.example.blue_book.ui.author.AuthorProfileActivity"
             android:exported="false" />

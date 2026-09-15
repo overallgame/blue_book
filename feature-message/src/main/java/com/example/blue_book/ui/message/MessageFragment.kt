@@ -16,6 +16,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blue_book.feature_message.databinding.MessagePageBinding
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.provider.IAuthProvider
 import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.router.ExtraKeys
@@ -166,9 +167,8 @@ class MessageFragment : Fragment() {
 				TheRouter.get(IVideoProvider::class.java)?.fetchVideoById(videoId)?.getOrNull()
 			}
 			if (card != null) {
-				TheRouter.build(RoutePath.VIDEO)
-					.withParcelable(ExtraKeys.EXTRA_VIDEO, card)
-					.navigation(requireContext())
+				// 本页已是 Tab，交给宿主切到视频 Tab 播放
+				mainHost?.navigateToVideoPlayer(card)
 			} else {
 				Toast.makeText(requireContext(), "视频不存在或已删除", Toast.LENGTH_SHORT).show()
 			}

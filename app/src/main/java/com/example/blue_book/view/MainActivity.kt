@@ -134,9 +134,15 @@ class MainActivity : AppCompatActivity(), IMainHost {
 			}
 		}
 
-		// 二级页全部退出后恢复当前 Tab（Tab 在压二级页时被 hide 了）
+		// 二级页全部退出后恢复当前 Tab（Tab 在压二级页时被 hide 了）。
+		// 必须延后到下一个主线程消息：本回调在 FragmentManager 执行事务期间被调用，
+		// 此时提交事务会抛 "already executing transactions"；
+		// 延后还能保证事务是按**最新**的 currentCheckedId 构建的
+		// （用异步 commit 会在回调时就固化选中项，可能被之后的切换覆盖回去）
 		supportFragmentManager.addOnBackStackChangedListener {
-			if (supportFragmentManager.backStackEntryCount == 0) applyTabVisibility()
+			if (supportFragmentManager.backStackEntryCount == 0) {
+				contentContainer.post { applyTabVisibility() }
+			}
 		}
 
 		setupBackHandling()
@@ -200,22 +206,27 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	/**
 	 * 只对当前 Tab 用 RESUMED，其余上限压到 STARTED。
 	 * 压到 STARTED 会触发 onPause —— 视频 Tab 切走后自动暂停，且视图不销毁（保留进度）。
+	 *
+	 * **不要在返回栈变化回调里直接调用**：那个回调发生在 FragmentManager 执行事务的过程中，
+	 * `commitNow()` 会抛 `IllegalStateException: FragmentManager is already executing transactions`。
+	 * 那里的用法见 `addOnBackStackChangedListener`（延后到下一个主线程消息）。
 	 */
 	private fun applyTabVisibility() {
 		val fm = supportFragmentManager
-		fm.commitNow {
-			setReorderingAllowed(true)
-			tabTags.forEach { (id, tag) ->
-				val fragment = fm.findFragmentByTag(tag) ?: return@forEach
-				if (id == currentCheckedId) {
-					show(fragment)
-					setMaxLifecycle(fragment, Lifecycle.State.RESUMED)
-				} else {
-					hide(fragment)
-					setMaxLifecycle(fragment, Lifecycle.State.STARTED)
-				}
+		// 已销毁或状态已保存时提交事务会抛异常；这两种情况也不需要切可见性
+		if (fm.isDestroyed || fm.isStateSaved) return
+		val transaction = fm.beginTransaction().setReorderingAllowed(true)
+		tabTags.forEach { (id, tag) ->
+			val fragment = fm.findFragmentByTag(tag) ?: return@forEach
+			if (id == currentCheckedId) {
+				transaction.show(fragment)
+				transaction.setMaxLifecycle(fragment, Lifecycle.State.RESUMED)
+			} else {
+				transaction.hide(fragment)
+				transaction.setMaxLifecycle(fragment, Lifecycle.State.STARTED)
 			}
 		}
+		transaction.commitNow()
 	}
 
 	/** 视频 Tab 需要黑底 + 浅色系统栏图标；其余 Tab 用主题默认（深色图标） */
@@ -238,10 +249,20 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	}
 
 	/** 二级页：叠在当前 Tab 之上，并把当前 Tab 压到 STARTED（否则背后的视频会继续播） */
+	/**
+	 * 二级页：叠在当前 Tab 之上，并把当前 Tab 压到 STARTED（否则背后的视频会继续播）。
+	 *
+	 * **必须用 `commit()` 而不是 `commitNow()`**：`commitNow()` 内部会调用
+	 * `disallowAddToBackStack()`（因为它要同步执行、无法把事务交给返回栈延迟处理），
+	 * 与 `addToBackStack()` 同用会抛
+	 * `IllegalStateException: This transaction is already being added to the back stack`。
+	 * 事务提交是异步的，但 `clearDetailPages()` 用的 `popBackStackImmediate()`
+	 * 会先执行待处理事务，所以「刚点开二级页就切 Tab」也不会错乱。
+	 */
 	private fun pushDetail(fragment: Fragment) {
 		val currentTag = tabTags[currentCheckedId]
 		val currentTab = currentTag?.let { supportFragmentManager.findFragmentByTag(it) }
-		supportFragmentManager.commitNow {
+		supportFragmentManager.commit {
 			setReorderingAllowed(true)
 			currentTab?.let {
 				hide(it)

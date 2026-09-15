@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.blue_book.data.SearchHistoryStore
@@ -45,6 +48,7 @@ class SearchFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+		initWindowInsets()
 		binding.searchToolbar.setNavigationOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
 		binding.searchSearch.setOnClickListener {
 			val keyword = binding.searchComment.text?.toString().orEmpty().trim()
@@ -64,6 +68,18 @@ class SearchFragment : Fragment() {
 		bindSuggestInput()
 		viewLifecycleOwner.lifecycleScope.launch {
 			renderHistory()
+		}
+	}
+
+	/**
+	 * 工具栏避让状态栏。本页是 Tab 容器内的二级页，宿主为全面屏
+	 * （内容延展到系统栏后方），不自己避让会被状态栏压住。
+	 * 底部无需处理：底部导航栏常驻在内容区下方。
+	 */
+	private fun initWindowInsets() {
+		ViewCompat.setOnApplyWindowInsetsListener(binding.searchToolbar) { v, insets ->
+			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top)
+			insets
 		}
 	}
 

@@ -82,14 +82,15 @@ class UserProfileEditFragment : Fragment() {
 		binding.userInfoToolbar.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
 	}
 
-	/** 背景色延展到状态栏后方；工具栏避让状态栏，列表内容避让导航栏 */
+	/**
+	 * 背景色延展到状态栏后方；工具栏避让状态栏。
+	 *
+	 * 底部**不再**避让 navigationBars：本页是 Tab 容器内的二级页，
+	 * 底部导航栏常驻在内容区下方，这里再加一次会把内容白白抬高一条。
+	 */
 	private fun initWindowInsets() {
 		ViewCompat.setOnApplyWindowInsetsListener(binding.userInfoToolbar) { v, insets ->
 			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top)
-			insets
-		}
-		ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-			v.updatePadding(bottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom)
 			insets
 		}
 	}

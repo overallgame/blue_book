@@ -52,13 +52,19 @@ class NetworkException(
 						)
 					}
 				}
-				is SocketTimeoutException,
-				is ConnectException -> NetworkException(
+				is SocketTimeoutException -> NetworkException(
 					CODE_TIMEOUT, "请求超时，请检查网络后重试", throwable
+				)
+				// 连接被拒绝/无法建立：这不是超时，文案要区分开，
+				// 否则"服务器没启动"会被说成"超时"，误导排查方向
+				is ConnectException -> NetworkException(
+					CODE_NET_ERROR, "无法连接到服务器，请检查网络或服务是否可用", throwable
 				)
 				is UnknownHostException -> NetworkException(
 					CODE_NET_ERROR, "网络连接失败，请检查网络设置", throwable
 				)
+				// IOException 兜底：包含平台网络策略拦截（cleartext 被禁时抛
+				// UnknownServiceException）等场景，这些原始英文文本不能直接给用户看
 				is IOException -> NetworkException(
 					CODE_NET_ERROR, "网络连接失败，请检查网络设置", throwable
 				)

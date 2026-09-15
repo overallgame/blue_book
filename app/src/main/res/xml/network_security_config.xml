@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  明文 HTTP 白名单（仅开发/联调用）。
+
+  注意：这个文件存在 **base-config 缺失** 的语义——未列出的域一律按平台默认
+  （targetSdk 28+ 即禁止明文）。因此 `android:usesCleartextTraffic="true"`
+  在本文件存在时是**被忽略**的，加域名必须加到这里，否则请求会在系统层被拦下，
+  抛出 "CLEARTEXT communication to X not permitted by network security policy"。
+
+  192.168.17.128 = core-network 的 BuildConfig.BASE_URL 指向的局域网后端；
+                   不列入这里的话，App 连自己的后端都发不出请求。
+  10.0.2.2       = Android 模拟器访问宿主机的地址。
+  8.138.41.189   = 早期联调服务器。
+
+  正式发布前应改为 https 并移除本白名单（见 docs 的审计报告 P0-4）。
+-->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">192.168.17.128</domain>
         <domain includeSubdomains="true">8.138.41.189</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
     </domain-config>

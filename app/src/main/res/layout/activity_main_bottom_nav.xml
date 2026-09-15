@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  clipChildren / clipToPadding 必须关掉：
+  发布按钮（52dp 圆形）用负上边距向上溢出导航栏 24dp，
+  而 ViewGroup 默认 clipChildren=true 会把溢出的部分裁掉
+  （此前只有 12px 可见，看起来像"少了一半圆形"）。
+  这里从根布局到 RadioGroup 一路放开裁剪。
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical">
 
     <FrameLayout
@@ -14,6 +23,8 @@
         android:id="@+id/main_navRadioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -29,12 +40,13 @@
             android:text="视频"
             android:textColor="@color/navigation_item_selector" />
 
-        <!-- 发布入口：小红书风格，位于底部导航栏正中，凸起红色圆形加号 -->
+        <!-- 发布入口：小红书风格，位于底部导航栏正中，凸起蓝色圆形加号 -->
         <FrameLayout
             android:id="@+id/tab_publish"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clipChildren="false">
 
             <ImageView
                 android:id="@+id/publish_btn"

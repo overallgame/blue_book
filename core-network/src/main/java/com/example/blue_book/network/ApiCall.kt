@@ -49,14 +49,25 @@ suspend inline fun <T> apiCall(
 	return try {
 		val response = call()
 		if (!response.isSuccessful) return Result.failure(httpFailure(response))
-		val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
-		if (body.code != ResponseState.API_SUCCESS) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
-		val data = body.data ?: return Result.failure(IllegalStateException("响应体为空"))
+		val body = response.body()
+			?: return Result.failure(NetworkException(NetworkException.CODE_PARSE_ERROR, "响应体为空"))
+		if (body.code != ResponseState.API_SUCCESS) {
+			// 服务端用业务码表达失败时自带中文文案，直接透出；
+			// 不能让它走 NetworkException.from（会把消息换成"数据解析错误"，丢掉原因）
+			return Result.failure(
+				NetworkException(body.code, body.message.ifBlank { "请求失败" })
+			)
+		}
+		val data = body.data
+			?: return Result.failure(NetworkException(NetworkException.CODE_PARSE_ERROR, "响应体为空"))
 		Result.success(data)
 	} catch (e: CancellationException) {
 		throw e
 	} catch (t: Throwable) {
-		Result.failure(t)
+		// 必须映射为中文文案：直接把 throwable 塞进 Result 会让
+		// 平台原始文本显示给用户（如 "CLEARTEXT communication to ... not permitted
+		// by network security policy"），用户无法理解也无法据此操作
+		Result.failure(NetworkException.from(t))
 	}
 }
 
@@ -66,13 +77,18 @@ suspend inline fun apiUnitCall(
 	return try {
 		val response = call()
 		if (!response.isSuccessful) return Result.failure(httpFailure(response))
-		val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
-		if (body.code != ResponseState.API_SUCCESS) return Result.failure(IllegalStateException("code=${body.code}, msg=${body.message}"))
+		val body = response.body()
+			?: return Result.failure(NetworkException(NetworkException.CODE_PARSE_ERROR, "响应体为空"))
+		if (body.code != ResponseState.API_SUCCESS) {
+			return Result.failure(
+				NetworkException(body.code, body.message.ifBlank { "请求失败" })
+			)
+		}
 		Result.success(Unit)
 	} catch (e: CancellationException) {
 		throw e
 	} catch (t: Throwable) {
-		Result.failure(t)
+		Result.failure(NetworkException.from(t))
 	}
 }
 
@@ -82,17 +98,20 @@ suspend inline fun <T> commonCall(
 	return try {
 		val response = call()
 		if (!response.isSuccessful) return Result.failure(httpFailure(response))
-		val body = response.body() ?: return Result.failure(IllegalStateException("响应体为空"))
+		val body = response.body()
+			?: return Result.failure(NetworkException(NetworkException.CODE_PARSE_ERROR, "响应体为空"))
 		val code = body.code
 		if (code != ResponseState.COMMON_SUCCESS) {
-			val message = body.msg ?: "业务失败"
-			return Result.failure(IllegalStateException("code=${code ?: -1}, msg=$message"))
+			return Result.failure(
+				NetworkException(code ?: NetworkException.CODE_SERVER_ERROR, body.msg ?: "业务失败")
+			)
 		}
-		val data = body.data ?: return Result.failure(IllegalStateException("响应体为空"))
+		val data = body.data
+			?: return Result.failure(NetworkException(NetworkException.CODE_PARSE_ERROR, "响应体为空"))
 		Result.success(data)
 	} catch (e: CancellationException) {
 		throw e
 	} catch (t: Throwable) {
-		Result.failure(t)
+		Result.failure(NetworkException.from(t))
 	}
 }

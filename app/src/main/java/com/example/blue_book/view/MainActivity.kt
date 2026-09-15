@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -72,6 +73,13 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	private lateinit var radioGroup: RadioGroup
 	private lateinit var navGroup: View
 	private lateinit var contentContainer: FrameLayout
+
+	/**
+	 * 底色恒为深色、不随主题变化的 Tab：视频（纯黑底）与「我的」
+	 * （`mine_page_background` 两种主题下都是 #333232，深色封面式设计）。
+	 * 这两个 Tab 需要浅色系统栏图标，见 [refreshSystemBarAppearance]。
+	 */
+	private val inherentlyDarkTabs = setOf(R.id.tab_video, R.id.tab_mine)
 
 	/** 当前选中的导航项（用于防递归导航与判断是否需要切换） */
 	private var currentCheckedId = R.id.tab_home
@@ -143,6 +151,8 @@ class MainActivity : AppCompatActivity(), IMainHost {
 			if (supportFragmentManager.backStackEntryCount == 0) {
 				contentContainer.post { applyTabVisibility() }
 			}
+			// 二级页压入/弹出都会改变最上层页面的底色，图标明暗要跟着变
+			refreshSystemBarAppearance()
 		}
 
 		setupBackHandling()
@@ -229,13 +239,37 @@ class MainActivity : AppCompatActivity(), IMainHost {
 		transaction.commitNow()
 	}
 
-	/** 视频 Tab 需要黑底 + 浅色系统栏图标；其余 Tab 用主题默认（深色图标） */
+	/**
+	 * 页面外观：视频 Tab 需要黑底（内容区垫黑，视频才不会有白边）。
+	 * 系统栏图标另见 [refreshSystemBarAppearance]。
+	 */
 	private fun applyTabAppearance() {
 		val isVideo = currentCheckedId == R.id.tab_video
 		contentContainer.setBackgroundColor(if (isVideo) Color.BLACK else Color.TRANSPARENT)
+		refreshSystemBarAppearance()
+	}
+
+	/**
+	 * 系统栏图标明暗——判据是**最上层页面的底色**，不是主题、也不是 Tab：
+	 * - 深色底 → 浅色图标；浅色底 → 深色图标
+	 *
+	 * 之所以不能只看主题：视频 Tab 是纯黑底、「我的」Tab 的
+	 * `mine_page_background` 两种主题下都是 #333232（深色封面式设计），
+	 * 这两个 Tab 在浅色主题下也必须用浅色图标，否则深色图标压在深色底上看不清。
+	 * 而二级页（搜索、资料编辑）的底色是跟随主题的，压在这两个 Tab 上时
+	 * 必须切回按主题判断——所以要同时看「当前有没有二级页」。
+	 */
+	private fun refreshSystemBarAppearance() {
+		val isNightTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+			Configuration.UI_MODE_NIGHT_YES
+		val detailShowing = supportFragmentManager.backStackEntryCount > 0
+		// 二级页底色跟随主题；只有 Tab 自身可能是恒定深色
+		val topPageIsDark = !detailShowing && currentCheckedId in inherentlyDarkTabs
+		val useLightIcons = topPageIsDark || isNightTheme
+		// isAppearanceLightStatusBars = true 表示「状态栏背景是浅色」→ 用深色图标
 		WindowInsetsControllerCompat(window, window.decorView).apply {
-			isAppearanceLightStatusBars = !isVideo
-			isAppearanceLightNavigationBars = !isVideo
+			isAppearanceLightStatusBars = !useLightIcons
+			isAppearanceLightNavigationBars = !useLightIcons
 		}
 	}
 
@@ -337,6 +371,9 @@ class MainActivity : AppCompatActivity(), IMainHost {
 
 	override fun onResume() {
 		super.onResume()
+		// 重新对齐系统栏图标：从登录页/其它 Activity 返回、或弹过 Dialog 之后，
+		// 系统栏外观可能被别的窗口改掉，这里按当前主题与 Tab 再设一次（幂等）
+		applyTabAppearance()
 		// 从消息页返回后同步角标
 		refreshUnreadBadge()
 	}

@@ -1,6 +1,15 @@
 <resources>
     <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/md_theme_surface</item>
+        <!--
+          系统栏与「全面屏」相关：MainActivity 等页面调用 setDecorFitsSystemWindows(false)
+          让内容延展到系统栏后方，因此状态栏本身必须透明——否则它会被涂成一条不透明色块，
+          盖住页面自己的背景（表现为"背景色没有延展到状态栏"，例如「我的」页的背景图）。
+        -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- 浅色主题：状态栏背景是浅色，用深色图标 -->
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>

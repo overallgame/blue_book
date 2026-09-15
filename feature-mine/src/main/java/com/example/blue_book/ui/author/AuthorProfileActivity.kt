@@ -47,10 +47,14 @@ class AuthorProfileActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 背景图延展到状态栏后方；状态栏图标使用白天模式（深色） */
+	/**
+	 * 背景图延展到状态栏后方。
+	 *
+	 * 状态栏图标明暗**交给主题**（AppTheme 已按昼夜配置 windowLightStatusBar），
+	 * 这里不再硬编码——原先固定「深色图标」会让深色主题下图标压在深色背景上看不清。
+	 */
 	private fun setupEdgeToEdge() {
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 		window.statusBarColor = Color.TRANSPARENT
-		WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
 	}
 }

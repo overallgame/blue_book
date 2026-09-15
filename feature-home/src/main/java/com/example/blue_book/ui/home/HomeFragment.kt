@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.GravityCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -42,10 +45,24 @@ class HomeFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+		initWindowInsets()
 		initNavigationView()
 		initViewPager()
 		initRadioGroup()
 		guideLoginIfNeeded()
+	}
+
+	/**
+	 * 顶栏（关注/发现/本地 切换条）避让状态栏。
+	 * 宿主是全面屏（内容延展到系统栏后方），本页原本依赖非全面屏窗口的自动避让，
+	 * 合并到 Tab 宿主后需要自己加这一段。
+	 */
+	private fun initWindowInsets() {
+		ViewCompat.setOnApplyWindowInsetsListener(binding.mainPagerNavRadioGroup) { v, insets ->
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.updatePadding(top = bars.top)
+			insets
+		}
 	}
 
 	/** 进入 App 首页时未登录则弹登录引导卡片（进程内仅一次；此层弹出可确保在首页之上可见） */

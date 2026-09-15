@@ -99,10 +99,12 @@ class VideoAdapter(
         )
 
         init {
-            // 全面屏：黑色背景延展到系统栏后方，页面内容避让状态栏/导航栏
+            // 全面屏：黑色背景延展到系统栏后方，内容仅避让**状态栏**。
+            // 不再加 bars.bottom：底部导航栏由宿主常驻在内容区下方，
+            // 这里再加一次会重复占位（全屏时系统栏隐藏，insets 自然为 0）
             ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
                 val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.updatePadding(top = bars.top, bottom = bars.bottom)
+                v.updatePadding(top = bars.top)
                 insets
             }
             // 手势层：消费触摸（返回 true）以保证收到 UP/CANCEL——双击检测依赖上一次 UP，

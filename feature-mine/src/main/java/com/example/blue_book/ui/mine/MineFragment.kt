@@ -203,7 +203,12 @@ class MineFragment : Fragment() {
 		}
 	}
 
-	/** 全面屏：顶栏下移避让状态栏，底部内容避让导航栏；背景图自然延展到状态栏后方 */
+	/**
+	 * 全面屏：顶栏下移避让状态栏；背景图自然延展到状态栏后方。
+	 *
+	 * 底部**不再**加 bars.bottom 内边距：底部导航栏由宿主常驻在内容区下方，
+	 * 这里再加一次会把内容白白抬高一条导航栏的高度。
+	 */
 	private fun initWindowInsets() {
 		val initialTopMargin = (binding.mineNavButton.layoutParams as ViewGroup.MarginLayoutParams).topMargin
 		ViewCompat.setOnApplyWindowInsetsListener(binding.mineContent) { _, insets ->
@@ -211,7 +216,6 @@ class MineFragment : Fragment() {
 			binding.mineNavButton.updateLayoutParams<ViewGroup.MarginLayoutParams> {
 				topMargin = initialTopMargin + bars.top
 			}
-			binding.mineContent.updatePadding(bottom = bars.bottom)
 			insets
 		}
 	}

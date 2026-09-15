@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -50,9 +53,22 @@ class MessageFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+		initWindowInsets()
 		initRecyclerView()
 		initSwipeRefresh()
 		observeViewModel()
+	}
+
+	/**
+	 * 列表避让状态栏。本页没有独立顶栏，列表直接铺满内容区；
+	 * 宿主是全面屏（内容延展到系统栏后方），不加这一段首条消息会被状态栏压住。
+	 */
+	private fun initWindowInsets() {
+		ViewCompat.setOnApplyWindowInsetsListener(binding.messageRecycleView) { v, insets ->
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.updatePadding(top = bars.top)
+			insets
+		}
 	}
 
 	override fun onResume() {

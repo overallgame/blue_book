@@ -137,7 +137,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                app:indicatorColor="@color/video_follow_red"
+                app:indicatorColor="@color/video_brand_blue"
                 app:trackColor="@color/md_theme_surfaceContainer" />
 
             <TextView

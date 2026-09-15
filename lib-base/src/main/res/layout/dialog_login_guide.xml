@@ -27,9 +27,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:breakStrategy="balanced"
             android:gravity="center"
             android:lineSpacingExtra="4dp"
-            android:text="登录后即可点赞、评论、发布内容\n并关注喜欢的作者"
+            android:text="登录后即可点赞、评论、发布内容并关注喜欢的作者"
             android:textColor="@color/login_guide_desc"
             android:textSize="14sp" />
 

@@ -1,5 +1,6 @@
 <resources>
-    <color name="publish_red">#FFFE2C55</color>
+    <!-- 品牌蓝（与登录页 auth_primary_blue / 登录引导 login_guide_primary 同值） -->
+    <color name="brand_blue">#FF2A6AF2</color>
     <color name="md_theme_primary">#605D64</color>
     <color name="md_theme_onPrimary">#FFFFFF</color>
     <color name="md_theme_primaryContainer">#F4EEF6</color>

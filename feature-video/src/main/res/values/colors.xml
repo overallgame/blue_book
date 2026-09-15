@@ -23,7 +23,8 @@
     <color name="video_input_bg">#FF28262C</color>
 
     <!-- 播放页（小红书风格） -->
-    <color name="video_follow_red">#FFFE2C55</color>
+    <!-- 品牌蓝（与登录页 auth_primary_blue 同值）；关注按钮与上传进度条共用 -->
+    <color name="video_brand_blue">#FF2A6AF2</color>
     <color name="video_pill_background">#26FFFFFF</color>
 
     <!-- Progress Bar -->

@@ -1,11 +1,11 @@
 package com.example.blue_book.ui.home
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_home.R
+import com.example.blue_book.host.IMainHost
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.search.SearchFragment
@@ -16,7 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @Route(path = RoutePath.HOME)
 @AndroidEntryPoint
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : AppCompatActivity(), IMainHost {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_home)
@@ -27,14 +27,14 @@ class HomeActivity : AppCompatActivity() {
 		}
 	}
 
-	fun navigateToSearch() {
+	override fun navigateToSearch() {
 		supportFragmentManager.commit {
 			replace(R.id.home_container, SearchFragment())
 			addToBackStack("search")
 		}
 	}
 
-	fun navigateToSearchResult(keyword: String) {
+	override fun navigateToSearchResult(keyword: String) {
 		supportFragmentManager.commit {
 			replace(R.id.home_container, AfterSearchFragment().apply {
 				arguments = Bundle().apply { putString(ExtraKeys.EXTRA_KEYWORD, keyword) }
@@ -43,10 +43,11 @@ class HomeActivity : AppCompatActivity() {
 		}
 	}
 
-	fun navigateToVideoPlayer(
+	override fun navigateToVideoPlayer(
 		item: VideoCardInfo,
-		source: String? = null,
-		keyword: String? = null
+		source: String?,
+		keyword: String?,
+		userId: Long
 	) {
 		TheRouter.build(RoutePath.VIDEO)
 			.withParcelable(ExtraKeys.EXTRA_VIDEO, item)
@@ -57,10 +58,9 @@ class HomeActivity : AppCompatActivity() {
 			.navigation(this)
 	}
 
-	fun navigateToAuthEntry() {
-		TheRouter.build(RoutePath.AUTH)
-			.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-			.navigation(this)
-		finish()
+	override fun navigateToAuthEntry() {
+		// 不清空任务栈也不 finish：本页面是 Tab 宿主之一，清栈会把整个 App 关掉。
+		// 登录成功由 AuthActivity.finishAuth() 自己回到 MAIN。
+		TheRouter.build(RoutePath.AUTH).navigation(this)
 	}
 }

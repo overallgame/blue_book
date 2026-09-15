@@ -24,6 +24,9 @@ android {
 
 dependencies {
     api("cn.therouter:router:1.3.0")
+    // host/IMainHost.kt 的 Fragment.mainHost 取用扩展需要 Fragment 类型；
+    // 用 api 让各 feature 模块可直接使用该扩展（各模块原本已各自声明同版本依赖）
+    api("androidx.fragment:fragment-ktx:1.5.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

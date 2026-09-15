@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.commit
 import androidx.media3.common.util.UnstableApi
 import com.example.blue_book.feature_video.R
+import com.example.blue_book.host.IMainHost
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.therouter.router.Route
@@ -19,7 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @Route(path = RoutePath.VIDEO)
 @AndroidEntryPoint
-class VideoActivity : AppCompatActivity() {
+class VideoActivity : AppCompatActivity(), IMainHost {
 	@OptIn(UnstableApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -65,7 +66,7 @@ class VideoActivity : AppCompatActivity() {
 	}
 
 	/** 全屏（横屏播放）：旋转 + 隐藏系统栏（轻扫可临时唤出） */
-	fun enterFullscreen() {
+	override fun enterFullscreen() {
 		requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 		WindowInsetsControllerCompat(window, window.decorView).apply {
 			hide(WindowInsetsCompat.Type.systemBars())
@@ -74,7 +75,7 @@ class VideoActivity : AppCompatActivity() {
 	}
 
 	/** 退出全屏：恢复竖屏 + 显示系统栏 */
-	fun exitFullscreen() {
+	override fun exitFullscreen() {
 		requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 		WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
 	}

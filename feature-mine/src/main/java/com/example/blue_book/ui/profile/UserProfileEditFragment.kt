@@ -23,7 +23,7 @@ import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.UserProfilePageBinding
 import com.example.blue_book.router.RoutePath
-import com.example.blue_book.ui.mine.MineActivity
+import com.example.blue_book.host.mainHost
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -128,7 +128,7 @@ class UserProfileEditFragment : Fragment() {
 	}
 
 	private fun navigateToField(field: String) {
-		(requireActivity() as MineActivity).navigateToProfileFieldEdit(field)
+		mainHost?.navigateToProfileFieldEdit(field)
 	}
 
 	private fun openCustomImagePicker(tag: String) {

@@ -10,7 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.blue_book.ui.home.HomeActivity
+import com.example.blue_book.host.mainHost
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.data.VideoCardInfo
@@ -82,7 +82,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { video -> toggleLike(video) },
 			onClickItem = { v ->
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, source = "search", keyword = keyword)
+				mainHost?.navigateToVideoPlayer(v, source = "search", keyword = keyword)
 			}
 		)
 	binding.afterSearchRecycleView.run {
@@ -138,7 +138,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> toggleLike(v) },
 			onClickItem = { v ->
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v, source = "search", keyword = keyword)
+				mainHost?.navigateToVideoPlayer(v, source = "search", keyword = keyword)
 			}
 		)
 		binding.afterSearchRecycleView.adapter = adapter

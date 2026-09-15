@@ -11,6 +11,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.feature_home.R
 import com.example.blue_book.feature_home.databinding.HomePageBinding
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.provider.IAuthProvider
 import com.example.blue_book.ui.home.find.HomeFindFragment
 import com.example.blue_book.ui.home.focus.HomeFocusFragment
@@ -64,7 +65,7 @@ class HomeFragment : Fragment() {
 			when (menuItem.itemId) {
 				R.id.menu_backLogin -> {
 					// 简化为直接回到登录入口
-					(requireActivity() as HomeActivity).navigateToAuthEntry()
+					mainHost?.navigateToAuthEntry()
 					true
 				}
 				else -> {
@@ -109,7 +110,7 @@ class HomeFragment : Fragment() {
 			binding.layoutMain.openDrawer(GravityCompat.START)
 		}
 		binding.mainPagerSearch.setOnClickListener {
-			(requireActivity() as HomeActivity).navigateToSearch()
+			mainHost?.navigateToSearch()
 		}
 	}
 

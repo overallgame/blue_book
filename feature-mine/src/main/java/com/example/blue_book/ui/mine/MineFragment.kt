@@ -29,6 +29,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.MinePageBinding
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.mine.page.MineCollectionFragment
@@ -282,7 +283,7 @@ class MineFragment : Fragment() {
 			}
 		}
 		binding.mineEditUserProfile.setOnClickListener {
-			guardLogin { (requireActivity() as MineActivity).navigateToProfileEdit() }
+			guardLogin { mainHost?.navigateToProfileEdit() }
 		}
 	}
 
@@ -364,7 +365,7 @@ class MineFragment : Fragment() {
 								Toast.LENGTH_SHORT
 							).show()
 							is MineEffect.NavigateToLogin -> {
-								(requireActivity() as MineActivity).navigateToAuthEntry()
+								mainHost?.navigateToAuthEntry()
 							}
 							is MineEffect.ImageUploadFailed -> restoreImage(effect.tag)
 						}

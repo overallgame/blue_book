@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_home.databinding.HomeFocusPageBinding
 import com.example.blue_book.provider.IAuthProvider
-import com.example.blue_book.ui.home.HomeActivity
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
@@ -123,7 +123,7 @@ class HomeFocusFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> guardLike(v) },
 			onClickItem = { v ->
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
+				mainHost?.navigateToVideoPlayer(v)
 			}
 		)
 		binding.mainFocusRecycleView.run {

@@ -13,7 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.feature_mine.databinding.MineLovePageBinding
-import com.example.blue_book.ui.mine.MineActivity
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint
@@ -71,7 +71,7 @@ class MineLoveFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(MineLoveIntent.ToggleLike(v)) },
 			onClickItem = { v ->
-				(requireActivity() as MineActivity).navigateToVideoPlayer(v, source = "liked")
+				mainHost?.navigateToVideoPlayer(v, source = "liked")
 			}
 		)
 		binding.mineLoveRecycleView.run {

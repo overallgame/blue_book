@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blue_book.data.VideoCardInfo
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
@@ -141,7 +142,7 @@ class VideoFragment : Fragment() {
 		isFullscreen = true
 		backCallback.isEnabled = true
 		adapter.setFullscreen(true)
-		(requireActivity() as VideoActivity).enterFullscreen()
+		mainHost?.enterFullscreen()
 	}
 
 	/** 退出全屏：恢复竖屏布局与系统栏 */
@@ -150,7 +151,7 @@ class VideoFragment : Fragment() {
 		isFullscreen = false
 		backCallback.isEnabled = false
 		adapter.setFullscreen(false)
-		(requireActivity() as VideoActivity).exitFullscreen()
+		mainHost?.exitFullscreen()
 	}
 
 	/** 空列表态：显示提示 + 重试入口（重新加载走退出重进语义，直接刷新当前模式数据） */

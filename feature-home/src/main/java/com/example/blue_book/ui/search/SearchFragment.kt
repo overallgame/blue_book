@@ -10,7 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.blue_book.data.SearchHistoryStore
 import com.example.blue_book.data.remote.SearchRemoteDataSource
 import com.example.blue_book.feature_home.R
-import com.example.blue_book.ui.home.HomeActivity
+import com.example.blue_book.host.mainHost
 import com.example.blue_book.feature_home.databinding.SearchPageBinding
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -88,7 +88,7 @@ class SearchFragment : Fragment() {
 	private fun performSearch(keyword: String) {
 		viewLifecycleOwner.lifecycleScope.launch {
 			historyStore.add(keyword)
-			(requireActivity() as HomeActivity).navigateToSearchResult(keyword)
+			mainHost?.navigateToSearchResult(keyword)
 		}
 	}
 

@@ -10,7 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.blue_book.ui.home.HomeActivity
+import com.example.blue_book.host.mainHost
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.feature_home.databinding.HomeFindPageBinding
@@ -94,7 +94,7 @@ class HomeFindFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> guardLike(v) },
 			onClickItem = { v ->
-				(requireActivity() as HomeActivity).navigateToVideoPlayer(v)
+				mainHost?.navigateToVideoPlayer(v)
 			}
 		)
 		binding.mainFindRecycleView.run {

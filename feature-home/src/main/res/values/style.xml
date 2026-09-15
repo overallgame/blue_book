@@ -1,4 +1,12 @@
 <resources>
+    <!--
+      与 :app 的 values/style.xml 保持一致（同名的资源在最终 APK 里由 :app 的定义生效，
+      这里保留一份是为了单独构建/预览本模块时也能解析；两处内容必须相同，
+      否则一旦优先级变化就会渲染出不同结果）。
+
+      横向不要加内边距：子 Tab 可用宽度很窄（实测 103px），
+      两个汉字 16sp 需 64px，再加左右各 10dp 就会折行。
+    -->
     <style name="RadioGroupButtonStyle">
         <item name="android:button">@null</item>
         <item name="android:gravity">center</item>
@@ -7,7 +15,8 @@
         <item name="android:layout_weight">1</item>
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@drawable/navigation_item_selector</item>
-        <item name="android:padding">10dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
         <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
     </style>
 
@@ -18,6 +27,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:padding">10dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
     </style>
 </resources>

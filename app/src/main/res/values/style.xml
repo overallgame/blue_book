@@ -1,4 +1,15 @@
 <resources>
+    <!--
+      Tab / 子 Tab 的文字按钮样式。
+
+      注意：横向**不要**加内边距。这类按钮可用宽度很窄（首页子 Tab 实测仅 103px），
+      两个汉字 16sp 就要 64px，再加左右各 10dp 内边距刚好超出 → 文字折成两行。
+      只保留纵向内边距以维持点击热区高度。
+
+      textColor 用 @drawable/navigation_item_selector，它本身是主题感知的
+      （选中 md_theme_primary / 未选中 md_theme_onPrimaryContainer，都有夜间值），
+      昼夜渲染应当完全一致——不要在 values-night 里写一份残缺的覆盖。
+    -->
     <style name="RadioGroupButtonStyle">
         <item name="android:button">@null</item>
         <item name="android:gravity">center</item>
@@ -7,8 +18,21 @@
         <item name="android:layout_weight">1</item>
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@drawable/navigation_item_selector</item>
-        <item name="android:padding">10dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
         <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+    </style>
+
+    <!-- 同款无文字色：用于子 Tab 栏两端的占位项（无文字，只占位） -->
+    <style name="RadioGroupButtonStyle1">
+        <item name="android:button">@null</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
     </style>
 
     <style name="NoMaterialButtonStyle" parent="Widget.MaterialComponents.Button">

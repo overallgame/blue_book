@@ -24,7 +24,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:text="评论"
-        android:textColor="@color/video_on_surface"
+        android:textColor="@color/text_on_dark_primary"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -75,7 +75,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="暂无评论，快来抢沙发吧~"
-        android:textColor="@color/video_text_secondary"
+        android:textColor="@color/text_on_dark_secondary"
         android:textSize="14sp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/comment_input_layout"
@@ -99,7 +99,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:textColor="@color/video_primary"
+            android:textColor="@color/brand_blue"
             android:textSize="12sp"
             android:visibility="gone"
             tools:text="回复 @用户名"
@@ -122,8 +122,8 @@
                 android:minHeight="40dp"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:textColor="@color/video_on_surface"
-                android:textColorHint="@color/video_text_secondary"
+                android:textColor="@color/text_on_dark_primary"
+                android:textColorHint="@color/text_on_dark_secondary"
                 android:textSize="14sp" />
 
             <TextView
@@ -135,7 +135,7 @@
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="10dp"
                 android:text="发送"
-                android:textColor="@color/video_background"
+                android:textColor="@color/brand_on_blue"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 

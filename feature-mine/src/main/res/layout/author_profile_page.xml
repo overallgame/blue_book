@@ -42,8 +42,8 @@
             android:gravity="center"
             android:paddingHorizontal="16dp"
             android:text="关注"
-            android:textColor="@color/mine_text_primary"
-            android:textSize="13sp"
+            android:textColor="@color/text_on_dark_primary"
+            android:textSize="12sp"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@id/author_back"
             app:layout_constraintEnd_toEndOf="parent"
@@ -71,7 +71,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="作者昵称"
-            android:textColor="@color/mine_text_primary"
+            android:textColor="@color/text_on_dark_primary"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@id/author_avatar"
@@ -96,7 +96,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textColor="@color/mine_text_primary"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 tools:text="12" />
@@ -106,8 +106,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:text="关注"
-                android:textColor="@color/mine_text_secondary"
-                android:textSize="13sp" />
+                android:textColor="@color/text_on_dark_secondary"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -126,7 +126,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textColor="@color/mine_text_primary"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 tools:text="8" />
@@ -136,8 +136,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:text="粉丝"
-                android:textColor="@color/mine_text_secondary"
-                android:textSize="13sp" />
+                android:textColor="@color/text_on_dark_secondary"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -156,7 +156,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textColor="@color/mine_text_primary"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 tools:text="0" />
@@ -166,8 +166,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:text="获赞与收藏"
-                android:textColor="@color/mine_text_secondary"
-                android:textSize="13sp" />
+                android:textColor="@color/text_on_dark_secondary"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
@@ -178,7 +178,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="20dp"
             android:maxLines="2"
-            android:textColor="@color/mine_text_primary"
+            android:textColor="@color/text_on_dark_primary"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

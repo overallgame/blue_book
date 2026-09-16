@@ -16,20 +16,12 @@
     <!-- ==================== 个人主页（mine_page，深色 UI） ==================== -->
     <!-- 页面背景 -->
     <color name="mine_page_background">#333232</color>
-    <!-- 文本层级：主（昵称/统计数字/简介）、次（统计标签）、三级（小红书号） -->
-    <color name="mine_text_primary">#FFFFFF</color>
-    <color name="mine_text_secondary">#C8CBCC</color>
-    <color name="mine_text_tertiary">#B3FFFFFF</color>
-    <!-- 图标：顶栏白色图标、复制图标 -->
-    <color name="mine_icon_primary">#FFFFFF</color>
-    <color name="mine_icon_secondary">#B3FFFFFF</color>
-    <!-- 头像描边 -->
+    <!-- 文字与图标统一用 lib-base 的 text_on_dark_* 色板；关注按钮主色用 brand_blue；
+         这里只留纯装饰性的描边与胶囊底 -->
     <color name="mine_avatar_border">#59FFFFFF</color>
     <!-- "编辑主页"药丸背景与描边 -->
     <color name="mine_pill_background">#20FFFFFF</color>
     <color name="mine_pill_stroke">#C8CBCC</color>
-    <!-- 作者主页"关注"胶囊主色（小红书红） -->
-    <color name="mine_follow_red">#FFFE2C55</color>
 
     <!-- ==================== 资料编辑页（user_profile / profile_field） ==================== -->
     <color name="profile_card_background">#FFFFFF</color>

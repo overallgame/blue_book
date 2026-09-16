@@ -1,33 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- MD3 Dark Surface -->
+    <!-- MD3 Dark 背景（播放页恒为深色，不随主题） -->
     <color name="video_background">#FF000000</color>
     <color name="video_surface_high">#FF28262C</color>
     <color name="video_surface_container">#FF211F26</color>
 
-    <!-- MD3 Dark Text -->
-    <color name="video_on_surface">#FFE6E1E5</color>
-    <color name="video_on_surface_variant">#FFCAC4D0</color>
-    <color name="video_text_secondary">#FF9E9E9E</color>
-    <color name="video_text_tertiary">#FF757575</color>
+    <!-- 深色底上的文字色与品牌强调色统一在 lib-base：text_on_dark_* / brand_blue -->
 
-    <!-- MD3 Dark Outline / Divider -->
+    <!-- 分隔线 -->
     <color name="video_divider">#33FFFFFF</color>
 
-    <!-- MD3 Primary (Accent) -->
-    <color name="video_primary">#FFD0BCFF</color>
-    <color name="video_error">#FFF2B8B5</color>
-
-    <!-- Bottom Sheet -->
+    <!-- 底部评论弹层 -->
     <color name="video_bottom_sheet">#FF1C1B1F</color>
     <color name="video_input_bg">#FF28262C</color>
 
-    <!-- 播放页（小红书风格） -->
-    <!-- 品牌蓝（与登录页 auth_primary_blue 同值）；关注按钮与上传进度条共用 -->
-    <color name="video_brand_blue">#FF2A6AF2</color>
+    <!-- 播放页（小红书风格）：关注/收藏等半透明胶囊底 -->
     <color name="video_pill_background">#26FFFFFF</color>
 
-    <!-- Progress Bar -->
+    <!-- 进度条轨道 -->
     <color name="video_progress_track_bg">#33FFFFFF</color>
 
 

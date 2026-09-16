@@ -60,7 +60,7 @@
         android:minWidth="64dp"
         android:paddingHorizontal="14dp"
         android:text="关注"
-        android:textColor="@color/mine_text_primary"
+        android:textColor="@color/text_on_dark_primary"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@id/follow_item_avatar"
         app:layout_constraintEnd_toEndOf="parent"

@@ -1,7 +1,5 @@
 <resources>
-    <!-- 品牌蓝（小蓝书） -->
-    <color name="auth_primary_blue">#2A6AF2</color>
-    <color name="auth_on_primary">#FFFFFF</color>
+    <!-- 品牌蓝统一在 lib-base 的 brand_blue，本模块不再另起名字 -->
 
     <!-- 输入框（bg_input_field 引用色；夜版见 values-night） -->
     <color name="auth_input_background">#F5F5F5</color>

@@ -257,8 +257,12 @@ class VideoAdapter(
             binding.videoItemFollowBtn.text = if (videoInfo.isFollowed) "已关注" else "关注"
             binding.videoItemFollowBtn.setTextColor(
                 binding.root.context.getColor(
-                    // 播放页固定深色：品牌蓝底用固定白字，不随主题（夜版 onPrimary 会变深灰）
-                    if (videoInfo.isFollowed) R.color.video_text_secondary else R.color.video_on_surface
+                    // 播放页固定深色：文字色用 lib-base 的深色底色板（常量，不随主题翻转）
+                    if (videoInfo.isFollowed) {
+                        com.example.blue_book.lib_base.R.color.text_on_dark_secondary
+                    } else {
+                        com.example.blue_book.lib_base.R.color.text_on_dark_primary
+                    }
                 )
             )
             binding.videoItemFollowBtn.setBackgroundResource(

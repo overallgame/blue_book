@@ -41,7 +41,7 @@
         android:layout_marginEnd="60dp"
         android:background="@drawable/shape_auth_primary_btn"
         android:text="登录"
-        android:textColor="@color/auth_on_primary"
+        android:textColor="@color/brand_on_blue"
         android:textSize="17sp" />
 
     <com.google.android.material.button.MaterialButton
@@ -56,7 +56,7 @@
         android:layout_marginBottom="60dp"
         android:background="@drawable/shape_auth_outline_btn"
         android:text="注册"
-        android:textColor="@color/auth_primary_blue"
+        android:textColor="@color/brand_blue"
         android:textSize="17sp" />
 
 </LinearLayout>

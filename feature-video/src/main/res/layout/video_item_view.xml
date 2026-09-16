@@ -52,7 +52,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="播放失败"
-                android:textColor="@color/video_on_surface"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="14sp" />
 
             <TextView
@@ -64,7 +64,7 @@
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="8dp"
                 android:text="点击重试"
-                android:textColor="@color/video_on_surface"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="14sp" />
         </LinearLayout>
     </FrameLayout>
@@ -139,7 +139,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:text="全屏观看"
-                android:textColor="@color/video_on_surface"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -172,7 +172,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="@color/video_on_surface"
+                android:textColor="@color/text_on_dark_primary"
                 android:textSize="16sp"
                 tools:text="nickname" />
 
@@ -199,7 +199,7 @@
             android:layout_marginEnd="16dp"
             android:ellipsize="end"
             android:maxLines="2"
-            android:textColor="@color/video_on_surface"
+            android:textColor="@color/text_on_dark_primary"
             android:textSize="16sp"
             app:layout_constraintBottom_toTopOf="@id/video_item_tags"
             app:layout_constraintEnd_toEndOf="parent"
@@ -217,7 +217,7 @@
             android:layout_marginBottom="10dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/video_on_surface_variant"
+            android:textColor="@color/text_on_dark_secondary"
             android:textSize="14sp"
             android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@id/video_item_bottom_bar"
@@ -249,7 +249,7 @@
                 android:gravity="center_vertical"
                 android:paddingHorizontal="14dp"
                 android:text="说点什么..."
-                android:textColor="@color/video_text_secondary"
+                android:textColor="@color/text_on_dark_secondary"
                 android:textSize="14sp" />
 
             <LinearLayout
@@ -273,7 +273,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:minWidth="32dp"
-                    android:textColor="@color/video_on_surface"
+                    android:textColor="@color/text_on_dark_primary"
                     android:textSize="14sp"
                     tools:text="158" />
             </LinearLayout>
@@ -299,7 +299,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:minWidth="32dp"
-                    android:textColor="@color/video_on_surface"
+                    android:textColor="@color/text_on_dark_primary"
                     android:textSize="14sp"
                     tools:text="57" />
             </LinearLayout>
@@ -325,7 +325,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:minWidth="32dp"
-                    android:textColor="@color/video_on_surface"
+                    android:textColor="@color/text_on_dark_primary"
                     android:textSize="14sp"
                     tools:text="13" />
             </LinearLayout>
@@ -373,8 +373,8 @@
             android:paddingHorizontal="18dp"
             android:paddingVertical="8dp"
             android:text="2倍速播放中"
-            android:textColor="@color/video_on_surface"
-            android:textSize="13sp"
+            android:textColor="@color/text_on_dark_primary"
+            android:textSize="12sp"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

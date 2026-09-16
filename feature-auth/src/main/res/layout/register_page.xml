@@ -134,7 +134,7 @@
                 android:layout_marginEnd="20dp"
                 android:background="@android:color/transparent"
                 android:text="获取验证码"
-                android:textColor="@color/auth_primary_blue"
+                android:textColor="@color/brand_blue"
                 android:textSize="14sp" />
 
         </LinearLayout>
@@ -149,7 +149,7 @@
             android:layout_marginEnd="20dp"
             android:background="@drawable/shape_auth_primary_btn"
             android:text="注册"
-            android:textColor="@color/auth_on_primary"
+            android:textColor="@color/brand_on_blue"
             android:textSize="17sp" />
 
     </LinearLayout>

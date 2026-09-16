@@ -82,7 +82,7 @@
             android:background="@drawable/shape_auth_primary_btn"
             android:gravity="center"
             android:text="登录"
-            android:textColor="@color/auth_on_primary"
+            android:textColor="@color/brand_on_blue"
             android:textSize="17sp" />
 
     </LinearLayout>

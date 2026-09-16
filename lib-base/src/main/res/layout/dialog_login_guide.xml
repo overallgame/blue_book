@@ -19,8 +19,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="登录后体验完整功能"
-            android:textColor="@color/login_guide_title"
-            android:textSize="18sp"
+            android:textColor="@color/md_theme_onSurface"
+            android:textSize="17sp"
             android:textStyle="bold" />
 
         <TextView
@@ -31,7 +31,7 @@
             android:gravity="center"
             android:lineSpacingExtra="4dp"
             android:text="登录后即可点赞、评论、发布内容并关注喜欢的作者"
-            android:textColor="@color/login_guide_desc"
+            android:textColor="@color/md_theme_outline"
             android:textSize="14sp" />
 
         <TextView
@@ -42,7 +42,7 @@
             android:background="@drawable/shape_login_guide_btn"
             android:gravity="center"
             android:text="去登录"
-            android:textColor="@color/login_guide_on_primary"
+            android:textColor="@color/brand_on_blue"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -55,7 +55,7 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp"
             android:text="暂不"
-            android:textColor="@color/login_guide_desc"
+            android:textColor="@color/md_theme_outline"
             android:textSize="14sp" />
     </LinearLayout>
 

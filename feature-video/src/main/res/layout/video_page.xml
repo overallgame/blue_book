@@ -23,8 +23,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="暂无相关视频"
-            android:textColor="@color/video_text_secondary"
-            android:textSize="15sp" />
+            android:textColor="@color/text_on_dark_secondary"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/video_empty_retry"
@@ -35,7 +35,7 @@
             android:paddingHorizontal="20dp"
             android:paddingVertical="8dp"
             android:text="重新加载"
-            android:textColor="@color/video_on_surface"
+            android:textColor="@color/text_on_dark_primary"
             android:textSize="14sp" />
     </LinearLayout>
 

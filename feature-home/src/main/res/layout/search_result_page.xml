@@ -19,7 +19,7 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             app:navigationIcon="@drawable/_chevron_left1"
-            app:navigationIconTint="@color/md_theme_onSurfaceVariant_mediumContrast">
+            app:navigationIconTint="@color/md_theme_onSurfaceVariant">
 
             <!-- 与搜索页同理：MaterialToolbar 不处理 layout_weight，
                  加权 EditText 必须包在 LinearLayout 里，否则会被量成 0 宽 -->

@@ -2,14 +2,9 @@
 <resources>
     <!-- 公用卡片（pre_video_item_view）：跟随主题 -->
     <color name="lib_card_background">#FFFFFF</color>
-    <color name="lib_card_text_primary">#1C1B1F</color>
 
     <!-- 登录引导卡片（品牌蓝，与登录页一致；夜版见 values-night） -->
-    <color name="login_guide_primary">#2A6AF2</color>
-    <color name="login_guide_on_primary">#FFFFFF</color>
     <color name="login_guide_card_background">#FFFFFF</color>
-    <color name="login_guide_title">#1C1B1C</color>
-    <color name="login_guide_desc">#79767B</color>
 
     <!-- ==================== 统一色板 ====================
          各模块共用的语义色。新增颜色前先看这里有没有同义的，
@@ -17,6 +12,10 @@
 
     <!-- 品牌色（原 brand_blue / auth_primary_blue / login_guide_primary / video_brand_blue 四处重复） -->
     <color name="brand_blue">#FF2A6AF2</color>
+
+    <!-- 品牌色按钮上的文字（登录/注册按钮、发布弹层发送键）：品牌蓝不随主题变浅，
+         所以它上面的文字必须是常量白，不能引用会随主题翻转的 md_theme_onPrimary -->
+    <color name="brand_on_blue">#FFFFFF</color>
 
     <!-- 恒定深色页面的底色：我的 / 作者主页的封面式背景，两种主题下都是深色 -->
     <color name="page_dark_background">#333232</color>
@@ -27,4 +26,7 @@
     <color name="text_on_dark_primary">#E6E1E2</color>
     <color name="text_on_dark_secondary">#CAC5CB</color>
     <color name="text_on_dark_tertiary">#938F95</color>
+
+    <!-- 深色底上的错误文字（对齐夜间主题的 md_theme_error） -->
+    <color name="text_on_dark_error">#F2B8B5</color>
 </resources>

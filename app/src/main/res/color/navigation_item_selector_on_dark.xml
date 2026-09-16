@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  恒定深色 Tab（视频）上的底部导航文字色。
+
+  与 navigation_item_selector 的区别：那份用主题色（浅色主题下是深色文字），
+  压在纯黑底的视频 Tab 上会看不清；这份是常量浅色，两种主题下都用。
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/text_on_dark_primary" android:state_checked="true" />
+    <item android:color="@color/text_on_dark_secondary" android:state_checked="false" />
+</selector>

@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RadioGroup
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -201,11 +202,37 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	/**
 	 * 页面外观：视频 Tab 需要黑底（内容区垫黑，视频才不会有白边）。
 	 * 系统栏图标另见 [refreshSystemBarAppearance]。
+	 *
+	 * 底部导航也要跟着垫黑：视频 Tab 是纯黑底，浅色主题下若导航栏仍是主题的浅色底 + 深色文字，
+	 * 深色页面下方会多出一条浅色带。见 [applyNavBarAppearance]。
+	 *
+	 * 「我的」Tab 同样是恒定深色封面（底色 #333232，在 mine 模块），需要时按同一规则加进来即可。
 	 */
 	private fun applyTabAppearance() {
 		val isVideo = currentCheckedId == R.id.tab_video
 		contentContainer.setBackgroundColor(if (isVideo) Color.BLACK else Color.TRANSPARENT)
+		applyNavBarAppearance(darkPage = isVideo)
 		refreshSystemBarAppearance()
+	}
+
+	/**
+	 * 底部导航的底色与文字色跟随当前 Tab。
+	 *
+	 * 默认（浅色主题 + 浅色页面）用主题色：透明底 + [navigation_item_selector] 的深浅文字；
+	 * 深色页面上则垫成同色底，并换成常量浅色的 [navigation_item_selector_on_dark]——
+	 * 否则浅色主题下的深色文字会压在黑底上看不清。
+	 */
+	private fun applyNavBarAppearance(darkPage: Boolean) {
+		navGroup.setBackgroundColor(if (darkPage) Color.BLACK else Color.TRANSPARENT)
+		val selectorRes = if (darkPage) {
+			R.color.navigation_item_selector_on_dark
+		} else {
+			R.color.navigation_item_selector
+		}
+		val textColors = ContextCompat.getColorStateList(this, selectorRes) ?: return
+		tabTags.keys.forEach { id ->
+			findViewById<TextView>(id)?.setTextColor(textColors)
+		}
 	}
 
 	/**

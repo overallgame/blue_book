@@ -6,16 +6,24 @@
     android:background="@color/md_theme_surface"
     android:orientation="vertical">
 
+    <!-- 状态栏内边距加在这一层（见 SearchFragment.initWindowInsets）：
+         加在 MaterialToolbar 自身上会让它内部的返回键垂直居中算错——工具栏给返回键
+         做居中用的是含内边距的高度，实测箭头比输入框低 4dp。加在 AppBarLayout 上则
+         工具栏内部排版走正常路径，返回箭头、输入框、「搜索」三者中心完全一致。
+         两层底色同为 md_theme_surface，不会有色带。 -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/search_appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- 高度钉 56dp：主题的 ?attr/actionBarSize 是 64dp，但内边距不在工具栏上之后，
+             wrap_content 会让它取到 64dp，比改动前高 8dp。这里固定为改动前的 56dp，
+             使本次只改「对齐」一件事。想要更宽松的上下留白（12dp）可换成 ?attr/actionBarSize。 -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/search_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:background="@color/md_theme_surface"
-            android:minHeight="?attr/actionBarSize"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             app:navigationIcon="@drawable/_chevron_left1"

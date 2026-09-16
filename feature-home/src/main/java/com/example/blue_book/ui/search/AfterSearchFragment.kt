@@ -63,9 +63,12 @@ class AfterSearchFragment : Fragment() {
 	 *
 	 * 本页在 SearchActivity 内，Activity 是全屏延展的、下方没有底部导航，
 	 * 所以底部内边距要自己加（加在根布局的 padding 上，底色仍延展到屏幕边缘）。
+	 *
+	 * 顶部内边距加在 **AppBarLayout** 而不是 MaterialToolbar 上：加在工具栏自身时，
+	 * 它内部给返回键做垂直居中用的是含内边距的高度，返回箭头会比输入框低 4dp。
 	 */
 	private fun initWindowInsets() {
-		ViewCompat.setOnApplyWindowInsetsListener(binding.searchResultToolbar) { v, insets ->
+		ViewCompat.setOnApplyWindowInsetsListener(binding.searchResultAppbar) { v, insets ->
 			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			v.updatePadding(top = bars.top)
 			// 底部让开系统手势条；加在根布局的 padding 上，底色仍延展到屏幕边缘

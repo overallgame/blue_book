@@ -6,16 +6,19 @@
     android:background="@color/md_theme_surface"
     android:orientation="vertical">
 
+    <!-- 状态栏内边距加在这一层（与搜索页同一原因，见 AfterSearchFragment.initWindowInsets）：
+         加在 MaterialToolbar 自身上会让它内部的返回键垂直居中算错，实测低 4dp -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/search_result_appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- 高度钉 56dp，与搜索页一致（理由见 search_page.xml） -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/search_result_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:background="@color/md_theme_surface"
-            android:minHeight="?attr/actionBarSize"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             app:navigationIcon="@drawable/_chevron_left1"

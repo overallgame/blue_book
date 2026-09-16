@@ -15,6 +15,21 @@ object RoutePath {
 	/** 视频发布页（独立入口，底部导航栏正中） */
 	const val PUBLISH = "/video/publish"
 
+	/**
+	 * 播放页（独立页面）。
+	 *
+	 * 与底部导航的「视频」Tab 是两件事：视频 Tab 是沉浸式播放 Feed，从底部导航进入、
+	 * 返回即回首页；本页面是**从其它页面点某个视频时压在上层的播放页**，返回时回到
+	 * 点击它的那个页面（搜索结果、消息、我的列表、作者主页……）。入口统一走 [openVideoPlayer]。
+	 */
+	const val VIDEO_PLAYER = "/video/player"
+
+	/** 搜索页（搜索页 + 搜索结果页，两者是本页面内的 Fragment 前后栈） */
+	const val SEARCH = "/home/search"
+
+	/** 资料编辑页（资料页 + 单字段编辑页，两者是本页面内的 Fragment 前后栈） */
+	const val PROFILE_EDIT = "/mine/profile_edit"
+
 	/** 作者主页（他人用户主页） */
 	const val USER_PROFILE = "/mine/user_profile"
 

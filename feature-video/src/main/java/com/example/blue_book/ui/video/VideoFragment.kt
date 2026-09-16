@@ -57,6 +57,8 @@ class VideoFragment : Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		adapter = VideoAdapter(
 			requireContext(),
+			// Tab 宿主下方有底部导航，独立播放页没有——决定互动栏要不要自己避让系统栏
+			hostProvidesBottomNav = mainHost?.providesBottomNav == true,
 			currentUserId = currentUser.userId ?: 0L,
 			onClickBack = { requireActivity().onBackPressedDispatcher.onBackPressed() },
 			onClickLike = { video -> viewModel.dispatch(VideoIntent.ToggleLike(video)) },
@@ -125,7 +127,10 @@ class VideoFragment : Fragment() {
 		initEmptyState()
 		observeCommentDelta()
 		initByArgs()
-		// 全屏时返回键先退全屏（同一回调处理顶栏返回与物理返回）
+		// 全屏时返回键先退全屏（同一回调处理顶栏返回与物理返回）。
+		// 这里必须用带 viewLifecycleOwner 的重载：它在 Fragment 到达 STARTED 时才入队，
+		// 晚于宿主在 onCreate 里注册的 Tab 返回逻辑（返回键后入队者优先），
+		// 所以全屏时本回调先拿到返回键。换成不带 owner 的重载会抢不到。
 		requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
 	}
 

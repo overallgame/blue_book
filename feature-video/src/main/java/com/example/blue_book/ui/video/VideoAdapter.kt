@@ -31,6 +31,8 @@ import com.example.blue_book.feature_video.databinding.VideoItemViewBinding
 @UnstableApi
 class VideoAdapter(
     context: Context,
+    /** 宿主是否常驻底部导航（见 IMainHost.providesBottomNav）：决定底部互动栏要不要自己避让系统栏 */
+    private val hostProvidesBottomNav: Boolean,
     private val currentUserId: Long,
     private val onClickBack: () -> Unit,
     private val onClickLike: (VideoCardInfo) -> Unit,
@@ -100,11 +102,18 @@ class VideoAdapter(
 
         init {
             // 全面屏：黑色背景延展到系统栏后方，内容仅避让**状态栏**。
-            // 不再加 bars.bottom：底部导航栏由宿主常驻在内容区下方，
-            // 这里再加一次会重复占位（全屏时系统栏隐藏，insets 自然为 0）
+            // 底部按宿主分两种：Tab 宿主（MainActivity）内容区下方常驻底部导航，
+            // 那块空间已被导航栏占住（导航栏自己按 bars.bottom 抬高），页面再加一次就是重复占位；
+            // 独立播放页（VideoActivity）没有导航栏，底部互动栏必须自己让开系统手势条，
+            // 否则「说点什么/点赞/收藏/评论」会被压住点不到。
+            // 让位加在互动栏自身的 padding 上，视频画面仍铺满到屏幕边缘。
+            // （全屏时系统栏隐藏，bars 自然为 0）
             ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
                 val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.updatePadding(top = bars.top)
+                binding.videoItemBottomBar.updatePadding(
+                    bottom = if (hostProvidesBottomNav) 0 else bars.bottom
+                )
                 insets
             }
             // 手势层：消费触摸（返回 true）以保证收到 UP/CANCEL——双击检测依赖上一次 UP，

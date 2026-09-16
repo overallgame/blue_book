@@ -1,6 +1,5 @@
 package com.example.blue_book.ui.author
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,11 +21,10 @@ import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.AuthorProfilePageBinding
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.router.ExtraKeys
-import com.example.blue_book.router.RoutePath
+import com.example.blue_book.router.openVideoPlayer
 import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
-import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -79,16 +77,9 @@ class AuthorProfileFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(AuthorProfileIntent.ToggleLike(v)) },
 			onClickItem = { v ->
-				// 从作者主页进入播放页：以点击视频为首条，按 user_videos 来源续拉该作者作品。
-				// 作者主页是独立 Activity（非 Tab），所以路由回 MAIN 交给视频 Tab 播放；
-				// CLEAR_TOP|SINGLE_TOP 让 MainActivity 提前并弹掉作者主页，
-				// 参数由 MainActivity.onNewIntent 消费。
-				TheRouter.build(RoutePath.MAIN)
-					.withParcelable(ExtraKeys.EXTRA_VIDEO, v)
-					.withString(ExtraKeys.EXTRA_SOURCE, "user_videos")
-					.withLong(ExtraKeys.EXTRA_SOURCE_USER_ID, userId)
-					.withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-					.navigation(requireContext())
+				// 从作者主页进入播放页：压一个独立播放页，返回回到本页。
+				// 以点击视频为首条，按 user_videos 来源续拉该作者作品。
+				openVideoPlayer(requireContext(), v, source = "user_videos", userId = userId)
 			}
 		)
 		binding.authorVideos.run {

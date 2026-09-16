@@ -48,6 +48,9 @@ class ProfileFieldEditFragment : Fragment() {
 		private const val CAREER_MAX_LENGTH = 20
 		private const val SCHOOL_MAX_LENGTH = 30
 
+		/** 已按服务器值初始化过输入框（见 [seeded]） */
+		private const val KEY_SEEDED = "profile_field_seeded"
+
 		private val REGION_OPTIONS = arrayOf("北京", "上海", "广州", "深圳", "杭州", "成都", "南京", "武汉", "重庆", "其他")
 	}
 
@@ -64,6 +67,14 @@ class ProfileFieldEditFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+		// 重建（旋转、切换深色模式、进程恢复）时已输入的内容由视图状态恢复，
+		// 这里必须记住「已经播过种」，否则 ViewModel 回放的服务器值会把用户输入覆盖掉，
+		// 用户再点保存就把旧值写回去了（且毫无提示）。
+		//
+		// 生日页例外：它没有可被覆盖的输入控件（选完即提交），而这页唯一的入口就是
+		// 弹出日期选择器——若沿用「已播种」，重建后选择器不再弹出、页面只剩一行提示
+		// （保存按钮也是隐藏的），就成了一个没有任何入口的死页。
+		seeded = field != FIELD_BIRTHDAY && savedInstanceState?.getBoolean(KEY_SEEDED) == true
 		binding.profileFieldToolbar.setNavigationOnClickListener { back() }
 		initWindowInsets()
 		when (field) {
@@ -81,14 +92,16 @@ class ProfileFieldEditFragment : Fragment() {
 	}
 
 	/**
-	 * 背景色延展到状态栏后方；工具栏避让状态栏。
+	 * 背景色延展到状态栏后方；工具栏避让状态栏，底部让开系统手势条。
 	 *
-	 * 底部**不再**避让 navigationBars：本页是 Tab 容器内的二级页，
-	 * 底部导航栏常驻在内容区下方，这里再加一次会把内容白白抬高一条。
+	 * 本页在 ProfileEditActivity 内，Activity 是全屏延展的、底下没有底部导航，
+	 * 所以底部内边距要自己加（加在根布局的 padding 上，底色仍延展到屏幕边缘）。
 	 */
 	private fun initWindowInsets() {
 		ViewCompat.setOnApplyWindowInsetsListener(binding.profileFieldToolbar) { v, insets ->
-			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top)
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.updatePadding(top = bars.top)
+			binding.root.updatePadding(bottom = bars.bottom)
 			insets
 		}
 	}
@@ -237,6 +250,12 @@ class ProfileFieldEditFragment : Fragment() {
 
 	private fun back() {
 		requireActivity().onBackPressedDispatcher.onBackPressed()
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		super.onSaveInstanceState(outState)
+		// 「已播种」要跟着实例状态走，否则重建后服务器值会覆盖用户已输入的内容（见 onViewCreated）
+		outState.putBoolean(KEY_SEEDED, seeded)
 	}
 
 	override fun onDestroyView() {

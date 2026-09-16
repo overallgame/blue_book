@@ -23,7 +23,6 @@ import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.UserProfilePageBinding
 import com.example.blue_book.router.RoutePath
-import com.example.blue_book.host.mainHost
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -83,14 +82,17 @@ class UserProfileEditFragment : Fragment() {
 	}
 
 	/**
-	 * 背景色延展到状态栏后方；工具栏避让状态栏。
+	 * 背景色延展到状态栏后方；工具栏避让状态栏、根布局避让系统手势条。
 	 *
-	 * 底部**不再**避让 navigationBars：本页是 Tab 容器内的二级页，
-	 * 底部导航栏常驻在内容区下方，这里再加一次会把内容白白抬高一条。
+	 * 本页在 ProfileEditActivity 内，Activity 是全屏延展的、下方没有底部导航，
+	 * 所以底部内边距要自己加（加在根布局的 padding 上，底色仍延展到屏幕边缘）。
 	 */
 	private fun initWindowInsets() {
 		ViewCompat.setOnApplyWindowInsetsListener(binding.userInfoToolbar) { v, insets ->
-			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top)
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.updatePadding(top = bars.top)
+			// 底部让开系统手势条；加在根布局的 padding 上，底色仍延展到屏幕边缘
+			binding.root.updatePadding(bottom = bars.bottom)
 			insets
 		}
 	}
@@ -129,7 +131,7 @@ class UserProfileEditFragment : Fragment() {
 	}
 
 	private fun navigateToField(field: String) {
-		mainHost?.navigateToProfileFieldEdit(field)
+		(requireActivity() as ProfileEditActivity).navigateToFieldEdit(field)
 	}
 
 	private fun openCustomImagePicker(tag: String) {

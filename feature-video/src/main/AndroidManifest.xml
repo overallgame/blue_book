@@ -10,5 +10,12 @@
         <activity
             android:name="com.example.blue_book.ui.publish.PublishActivity"
             android:exported="false" />
+
+        <!-- 播放页（独立页面）：从非 Tab 页面点视频时压在上层，返回回到来源。
+             configChanges 与 MainActivity 同：全屏要转横屏，重建会拆掉播放器 -->
+        <activity
+            android:name="com.example.blue_book.ui.video.VideoActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden"
+            android:exported="false" />
     </application>
 </manifest>

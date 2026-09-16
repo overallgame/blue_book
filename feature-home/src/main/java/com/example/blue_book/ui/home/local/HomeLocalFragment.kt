@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_home.databinding.HomeLocalPageBinding
 import com.example.blue_book.provider.IAuthProvider
-import com.example.blue_book.host.mainHost
+import com.example.blue_book.router.openVideoPlayer
 import com.example.blue_book.util.LocationHelper
 import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
@@ -160,7 +160,7 @@ class HomeLocalFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> guardLike(v) },
 			onClickItem = { v ->
-				mainHost?.navigateToVideoPlayer(v)
+				openVideoPlayer(requireContext(), v)
 			}
 		)
 		binding.mainLocalRecycleView.run {

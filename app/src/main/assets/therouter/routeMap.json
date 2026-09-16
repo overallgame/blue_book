@@ -7,8 +7,29 @@
     "params": {}
   },
   {
+    "path": "/video/player",
+    "className": "com.example.blue_book.ui.video.VideoActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/home/search",
+    "className": "com.example.blue_book.ui.search.SearchActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
     "path": "/video/publish",
     "className": "com.example.blue_book.ui.publish.PublishActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
+    "path": "/mine/profile_edit",
+    "className": "com.example.blue_book.ui.profile.ProfileEditActivity",
     "action": "",
     "description": "",
     "params": {}

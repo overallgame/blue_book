@@ -1,12 +1,10 @@
 package com.example.blue_book.view
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -24,25 +22,17 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.blue_book.R
-import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.host.IMainHost
 import com.example.blue_book.provider.IAuthProvider
 import com.example.blue_book.provider.INotificationProvider
-import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.ui.home.HomeFragment
 import com.example.blue_book.ui.mine.MineFragment
 import com.example.blue_book.ui.message.MessageFragment
-import com.example.blue_book.ui.profile.ProfileFieldEditFragment
-import com.example.blue_book.ui.profile.UserProfileEditFragment
-import com.example.blue_book.ui.search.AfterSearchFragment
-import com.example.blue_book.ui.search.SearchFragment
 import com.example.blue_book.ui.video.VideoFragment
 import com.example.blue_book.widget.LoginGuideDialog
 import com.therouter.TheRouter
@@ -59,11 +49,12 @@ import kotlinx.coroutines.withContext
  * （滚动位置、播放进度），同时把隐藏的 Tab 上限压到 STARTED —— 这会触发 onPause，
  * 于是视频 Tab 切走时自动暂停播放（VideoFragment.foreground 依赖的正是 onPause）。
  *
- * 二级页（搜索结果、资料编辑等）用 **add** 叠在 Tab 之上并压住它，返回时弹出即恢复 Tab。
- * 这样二级页天然覆盖内容区，底部导航保持可见。
+ * **本页面只承载四个一级页面**，没有任何二级页：搜索、资料编辑、播放页、作者主页、
+ * 关注列表、发布页、图片选择器、登录页都是独立 Activity，压在 MainActivity 之上，
+ * 返回即 finish、回到点击它们的那个页面。因此这里不需要管理返回栈，
+ * 返回键只剩「非首页 Tab 先回首页，否则退出」两条规则。
  *
- * 本类是从「每个 Tab 一个 Activity」收敛而来的宿主，原先由各 Activity 提供的导航方法
- * 现在集中在这里（见 [IMainHost]）。
+ * 具体分工见 [IMainHost]（本类只向 Tab 提供宿主窗口能力：全屏进出）。
  */
 @Route(path = RoutePath.MAIN)
 @AndroidEntryPoint
@@ -142,37 +133,11 @@ class MainActivity : AppCompatActivity(), IMainHost {
 			}
 		}
 
-		// 二级页全部退出后恢复当前 Tab（Tab 在压二级页时被 hide 了）。
-		// 必须延后到下一个主线程消息：本回调在 FragmentManager 执行事务期间被调用，
-		// 此时提交事务会抛 "already executing transactions"；
-		// 延后还能保证事务是按**最新**的 currentCheckedId 构建的
-		// （用异步 commit 会在回调时就固化选中项，可能被之后的切换覆盖回去）
-		supportFragmentManager.addOnBackStackChangedListener {
-			if (supportFragmentManager.backStackEntryCount == 0) {
-				contentContainer.post { applyTabVisibility() }
-			}
-			// 二级页压入/弹出都会改变最上层页面的底色，图标明暗要跟着变
-			refreshSystemBarAppearance()
-		}
-
 		setupBackHandling()
 
 		messageTab = findViewById(R.id.tab_message)
 		refreshUnreadBadge()
 		resolveLoginState()
-
-		// 非 Tab 入口（作者主页等）带视频参数路由过来：切到视频 Tab 播放
-		consumeVideoIntent(intent)
-	}
-
-	/**
-	 * singleTask 复用时必须处理新 Intent：带视频参数则切到视频 Tab 播放。
-	 * 不处理会导致「点了另一个视频却还在播上一个」。
-	 */
-	override fun onNewIntent(intent: Intent) {
-		super.onNewIntent(intent)
-		setIntent(intent)
-		consumeVideoIntent(intent)
 	}
 
 	override fun onSaveInstanceState(outState: Bundle) {
@@ -189,9 +154,8 @@ class MainActivity : AppCompatActivity(), IMainHost {
 		else -> HomeFragment()
 	}
 
-	/** 用户点击 Tab 或程序化切换：先清掉二级页，再切可见性 */
+	/** 用户点击 Tab 或程序化切换：改选中项并重算可见性 */
 	private fun switchToTab(checkedId: Int) {
-		clearDetailPages()
 		currentCheckedId = checkedId
 		applyTabVisibility()
 		applyTabAppearance()
@@ -201,11 +165,10 @@ class MainActivity : AppCompatActivity(), IMainHost {
 
 	/**
 	 * 程序化选中某个 Tab（会同步底部导航的选中态）。
-	 * 与当前一致时也要清二级页并重算可见性——例如从视频详情返回视频 Tab。
+	 * 与当前一致时也要重算可见性——例如全屏切换到视频 Tab 后回到本页面。
 	 */
 	private fun selectTab(checkedId: Int) {
 		if (checkedId == currentCheckedId) {
-			clearDetailPages()
 			applyTabVisibility()
 		} else {
 			// 交由 RadioGroup 触发监听，保证选中态与切换逻辑只有一条路径
@@ -216,10 +179,6 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	/**
 	 * 只对当前 Tab 用 RESUMED，其余上限压到 STARTED。
 	 * 压到 STARTED 会触发 onPause —— 视频 Tab 切走后自动暂停，且视图不销毁（保留进度）。
-	 *
-	 * **不要在返回栈变化回调里直接调用**：那个回调发生在 FragmentManager 执行事务的过程中，
-	 * `commitNow()` 会抛 `IllegalStateException: FragmentManager is already executing transactions`。
-	 * 那里的用法见 `addOnBackStackChangedListener`（延后到下一个主线程消息）。
 	 */
 	private fun applyTabVisibility() {
 		val fm = supportFragmentManager
@@ -256,16 +215,12 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	 * 之所以不能只看主题：视频 Tab 是纯黑底、「我的」Tab 的
 	 * `mine_page_background` 两种主题下都是 #333232（深色封面式设计），
 	 * 这两个 Tab 在浅色主题下也必须用浅色图标，否则深色图标压在深色底上看不清。
-	 * 而二级页（搜索、资料编辑）的底色是跟随主题的，压在这两个 Tab 上时
-	 * 必须切回按主题判断——所以要同时看「当前有没有二级页」。
+	 * 二级页都是独立 Activity，会各自设置自己的系统栏外观，与本页面无关。
 	 */
 	private fun refreshSystemBarAppearance() {
 		val isNightTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
 			Configuration.UI_MODE_NIGHT_YES
-		val detailShowing = supportFragmentManager.backStackEntryCount > 0
-		// 二级页底色跟随主题；只有 Tab 自身可能是恒定深色
-		val topPageIsDark = !detailShowing && currentCheckedId in inherentlyDarkTabs
-		val useLightIcons = topPageIsDark || isNightTheme
+		val useLightIcons = currentCheckedId in inherentlyDarkTabs || isNightTheme
 		// isAppearanceLightStatusBars = true 表示「状态栏背景是浅色」→ 用深色图标
 		WindowInsetsControllerCompat(window, window.decorView).apply {
 			isAppearanceLightStatusBars = !useLightIcons
@@ -273,51 +228,21 @@ class MainActivity : AppCompatActivity(), IMainHost {
 		}
 	}
 
-	/** 清掉全部二级页（Tab 切换时调用，避免二级页跨 Tab 残留） */
-	private fun clearDetailPages() {
-		if (supportFragmentManager.backStackEntryCount > 0) {
-			supportFragmentManager.popBackStackImmediate(
-				null, FragmentManager.POP_BACK_STACK_INCLUSIVE
-			)
-		}
-	}
-
-	/** 二级页：叠在当前 Tab 之上，并把当前 Tab 压到 STARTED（否则背后的视频会继续播） */
 	/**
-	 * 二级页：叠在当前 Tab 之上，并把当前 Tab 压到 STARTED（否则背后的视频会继续播）。
+	 * 返回键：非首页 Tab 先回首页，否则交回系统退出。
 	 *
-	 * **必须用 `commit()` 而不是 `commitNow()`**：`commitNow()` 内部会调用
-	 * `disallowAddToBackStack()`（因为它要同步执行、无法把事务交给返回栈延迟处理），
-	 * 与 `addToBackStack()` 同用会抛
-	 * `IllegalStateException: This transaction is already being added to the back stack`。
-	 * 事务提交是异步的，但 `clearDetailPages()` 用的 `popBackStackImmediate()`
-	 * 会先执行待处理事务，所以「刚点开二级页就切 Tab」也不会错乱。
-	 */
-	private fun pushDetail(fragment: Fragment) {
-		val currentTag = tabTags[currentCheckedId]
-		val currentTab = currentTag?.let { supportFragmentManager.findFragmentByTag(it) }
-		supportFragmentManager.commit {
-			setReorderingAllowed(true)
-			currentTab?.let {
-				hide(it)
-				setMaxLifecycle(it, Lifecycle.State.STARTED)
-			}
-			add(R.id.main_content, fragment)
-			addToBackStack(null)
-		}
-	}
-
-	/**
-	 * 返回键：有二级页先弹二级页；否则非首页 Tab 先回首页；否则交回系统退出。
-	 * （VideoFragment 全屏时它自己的回调优先级更高，会先处理退出全屏）
+	 * 这里**故意用不带 LifecycleOwner 的重载**：`addCallback(callback)` 立即入队，
+	 * 而 `addCallback(owner, callback)` 要等 owner 到达 ON_START 才入队。
+	 * API 29+ 上 Activity 自身的 ON_START 在 Fragment 的 ON_START **之后**派发
+	 * （由 `Activity.onActivityPostStarted` 驱动），用带 owner 的重载会把自己排在
+	 * Tab 里 VideoFragment 的全屏回调**之后**，而返回键是后入队者优先——
+	 * 于是「全屏时按返回」会被本回调抢走，表现为切到首页 Tab 却仍横屏、且底部导航不可见。
+	 * 立即入队保证 Fragment 的回调（后入队）优先：全屏时先退全屏。
 	 */
 	private fun setupBackHandling() {
-		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+		onBackPressedDispatcher.addCallback(object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
 				when {
-					supportFragmentManager.backStackEntryCount > 0 ->
-						supportFragmentManager.popBackStack()
-
 					currentCheckedId != R.id.tab_home -> selectTab(R.id.tab_home)
 
 					else -> {
@@ -390,46 +315,11 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	}
 
 	// ==================== IMainHost ====================
+	// 导航不再走宿主：搜索/资料编辑/播放页/登录页都是独立 Activity，各调用点直接用路由。
+	// 本类只提供宿主独有的窗口能力——只有承载页面的 Activity 才能转屏与收起导航栏。
 
-	override fun navigateToSearch() {
-		pushDetail(SearchFragment())
-	}
-
-	override fun navigateToSearchResult(keyword: String) {
-		pushDetail(AfterSearchFragment().apply {
-			arguments = Bundle().apply { putString(ExtraKeys.EXTRA_KEYWORD, keyword) }
-		})
-	}
-
-	override fun navigateToProfileEdit() {
-		pushDetail(UserProfileEditFragment())
-	}
-
-	override fun navigateToProfileFieldEdit(field: String) {
-		pushDetail(ProfileFieldEditFragment().apply {
-			arguments = Bundle().apply { putString(ProfileFieldEditFragment.ARG_FIELD, field) }
-		})
-	}
-
-	override fun navigateToAuthEntry() {
-		// 不清空任务栈也不 finish：本页面就是主界面，清栈会把整个 App 关掉。
-		// 登录成功由 AuthActivity.finishAuth() 自己回到 MAIN。
-		TheRouter.build(RoutePath.AUTH).navigation(this)
-	}
-
-	override fun navigateToVideoPlayer(
-		item: VideoCardInfo,
-		source: String?,
-		keyword: String?,
-		userId: Long
-	) {
-		showVideoWith(Bundle().apply {
-			putParcelable(ExtraKeys.EXTRA_VIDEO, item)
-			source?.let { putString(ExtraKeys.EXTRA_SOURCE, it) }
-			keyword?.let { putString(ExtraKeys.EXTRA_KEYWORD, it) }
-			putLong(ExtraKeys.EXTRA_SOURCE_USER_ID, userId)
-		})
-	}
+	/** 底部导航常驻在内容区下方，页面不必自己避让系统手势条（见 [IMainHost.providesBottomNav]） */
+	override val providesBottomNav: Boolean get() = true
 
 	override fun enterFullscreen() {
 		requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -446,45 +336,6 @@ class MainActivity : AppCompatActivity(), IMainHost {
 		navGroup.visibility = View.VISIBLE
 		WindowInsetsControllerCompat(window, window.decorView)
 			.show(WindowInsetsCompat.Type.systemBars())
-	}
-
-	// ==================== 视频入口 ====================
-
-	/**
-	 * 播放指定视频：**重建**视频 Tab 的 Fragment，而不是复用旧实例。
-	 * 这是原 VideoActivity.onNewIntent 的等价物——不复用是为了避免
-	 * 「点了另一个视频却还在播上一个」。
-	 */
-	private fun showVideoWith(args: Bundle) {
-		clearDetailPages()
-		val old = supportFragmentManager.findFragmentByTag(TAG_VIDEO)
-		supportFragmentManager.commitNow {
-			setReorderingAllowed(true)
-			old?.let { remove(it) }
-			add(R.id.main_content, VideoFragment().apply { arguments = args }, TAG_VIDEO)
-		}
-		selectTab(R.id.tab_video)
-		applyTabVisibility()
-	}
-
-	/** 消费 Intent 里的视频参数（非 Tab 页面路由过来时使用） */
-	private fun consumeVideoIntent(source: Intent?) {
-		if (source == null || !source.hasExtra(ExtraKeys.EXTRA_VIDEO)) return
-		val item = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			source.getParcelableExtra(ExtraKeys.EXTRA_VIDEO, VideoCardInfo::class.java)
-		} else {
-			@Suppress("DEPRECATION")
-			source.getParcelableExtra(ExtraKeys.EXTRA_VIDEO)
-		} ?: return
-		showVideoWith(Bundle().apply {
-			putParcelable(ExtraKeys.EXTRA_VIDEO, item)
-			source.getStringExtra(ExtraKeys.EXTRA_SOURCE)?.let { putString(ExtraKeys.EXTRA_SOURCE, it) }
-			source.getStringExtra(ExtraKeys.EXTRA_KEYWORD)?.let { putString(ExtraKeys.EXTRA_KEYWORD, it) }
-			putLong(
-				ExtraKeys.EXTRA_SOURCE_USER_ID,
-				source.getLongExtra(ExtraKeys.EXTRA_SOURCE_USER_ID, 0L)
-			)
-		})
 	}
 
 	private companion object {

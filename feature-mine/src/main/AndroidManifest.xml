@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <!-- 「我的」已改为 MainActivity 内的 Tab Fragment；以下两个仍是独立页面（非 Tab） -->
+        <!-- 「我的」已改为 MainActivity 内的 Tab Fragment；以下三个仍是独立页面（非 Tab） -->
         <activity
             android:name="com.example.blue_book.ui.author.AuthorProfileActivity"
             android:exported="false" />
 
         <activity
             android:name="com.example.blue_book.ui.followlist.FollowListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.blue_book.ui.profile.ProfileEditActivity"
             android:exported="false" />
     </application>
 </manifest>

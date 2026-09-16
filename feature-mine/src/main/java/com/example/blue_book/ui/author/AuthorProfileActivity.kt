@@ -1,6 +1,5 @@
 package com.example.blue_book.ui.author
 
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +12,14 @@ import com.example.blue_book.router.RoutePath
 import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
 
-/** 作者主页：以 mine_page 为模板，无编辑资料/扫一扫，下半部分仅展示该作者作品 */
+/**
+ * 作者主页：以 mine_page 为模板，无编辑资料/扫一扫，下半部分仅展示该作者作品。
+ *
+ * 标准启动模式（清单未声明 launchMode）：每次打开都是新实例，叠在当前页面之上，
+ * 返回即回到来源。因此从播放页点头像看另一位作者会压出第二个实例、返回时逐层退回，
+ * 这正是「从哪来回哪去」的期望；原先按 singleTask 写的 onNewIntent 复用逻辑
+ * 在标准模式下永远不会被调用，已删除。
+ */
 @Route(path = RoutePath.USER_PROFILE)
 @AndroidEntryPoint
 class AuthorProfileActivity : AppCompatActivity() {
@@ -24,19 +30,6 @@ class AuthorProfileActivity : AppCompatActivity() {
 		if (savedInstanceState == null) {
 			showProfile(intent.getLongExtra(ExtraKeys.EXTRA_USER_ID, 0L))
 		}
-	}
-
-	/**
-	 * singleTask 复用时按新 userId 重建页面：
-	 * 否则从播放页点头像进入另一位作者，看到的仍是上一位作者的主页。
-	 */
-	override fun onNewIntent(intent: Intent) {
-		super.onNewIntent(intent)
-		setIntent(intent)
-		val userId = intent.getLongExtra(ExtraKeys.EXTRA_USER_ID, 0L)
-		val current = supportFragmentManager.findFragmentById(R.id.author_profile_container)
-		if (current != null && current.arguments?.getLong(ExtraKeys.EXTRA_USER_ID, 0L) == userId) return
-		showProfile(userId)
 	}
 
 	private fun showProfile(userId: Long) {

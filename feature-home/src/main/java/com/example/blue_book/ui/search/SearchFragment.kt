@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.blue_book.data.SearchHistoryStore
 import com.example.blue_book.data.remote.SearchRemoteDataSource
 import com.example.blue_book.feature_home.R
-import com.example.blue_book.host.mainHost
 import com.example.blue_book.feature_home.databinding.SearchPageBinding
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -49,7 +48,10 @@ class SearchFragment : Fragment() {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		initWindowInsets()
-		binding.searchToolbar.setNavigationOnClickListener { requireActivity().supportFragmentManager.popBackStack() }
+		binding.searchToolbar.setNavigationOnClickListener {
+			// 本页是 SearchActivity 的第一层，没有可弹的返回栈：交给返回键逻辑（结束本页回到来源）
+			requireActivity().onBackPressedDispatcher.onBackPressed()
+		}
 		binding.searchSearch.setOnClickListener {
 			val keyword = binding.searchComment.text?.toString().orEmpty().trim()
 			if (keyword.isBlank()) {
@@ -72,13 +74,17 @@ class SearchFragment : Fragment() {
 	}
 
 	/**
-	 * 工具栏避让状态栏。本页是 Tab 容器内的二级页，宿主为全面屏
-	 * （内容延展到系统栏后方），不自己避让会被状态栏压住。
-	 * 底部无需处理：底部导航栏常驻在内容区下方。
+	 * 工具栏避让状态栏、根布局避让系统手势条。
+	 *
+	 * 本页在 SearchActivity 内，Activity 是全屏延展的、下方没有底部导航，
+	 * 所以底部内边距要自己加（加在根布局的 padding 上，底色仍延展到屏幕边缘）。
 	 */
 	private fun initWindowInsets() {
 		ViewCompat.setOnApplyWindowInsetsListener(binding.searchToolbar) { v, insets ->
-			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top)
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.updatePadding(top = bars.top)
+			// 底部让开系统手势条；加在根布局的 padding 上，底色仍延展到屏幕边缘
+			binding.root.updatePadding(bottom = bars.bottom)
 			insets
 		}
 	}
@@ -100,12 +106,18 @@ class SearchFragment : Fragment() {
 		}
 	}
 
-	/** 发起搜索：写入历史并跳转结果页 */
+	/**
+	 * 发起搜索：**先跳结果页，再异步写历史**。
+	 *
+	 * 顺序不能反：`historyStore.add` 走 DataStore，是真挂起点（IO 派发）。
+	 * 若先写历史再跳转，挂起期间用户按 Home/锁屏会让 FragmentManager 进入已保存状态，
+	 * 恢复执行时提交事务就会抛 `Can not perform this action after onSaveInstanceState`。
+	 * 先跳转则点击当帧就完成提交；写历史放后台，用 Activity 作用域（视图已被替换掉，
+	 * 用 viewLifecycleOwner 会被取消），失败也不影响已经发起的搜索。
+	 */
 	private fun performSearch(keyword: String) {
-		viewLifecycleOwner.lifecycleScope.launch {
-			historyStore.add(keyword)
-			mainHost?.navigateToSearchResult(keyword)
-		}
+		(requireActivity() as SearchActivity).navigateToSearchResult(keyword)
+		requireActivity().lifecycleScope.launch { historyStore.add(keyword) }
 	}
 
 	private suspend fun renderHistory() {

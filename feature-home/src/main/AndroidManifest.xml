@@ -4,5 +4,10 @@
     <!-- 本地流定位（仅取城市，粗略定位即可） -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- 首页已改为 MainActivity 内的 Tab Fragment，本模块不再声明 Activity -->
+    <!-- 首页已改为 MainActivity 内的 Tab Fragment；搜索页是独立页面（非 Tab） -->
+    <application>
+        <activity
+            android:name="com.example.blue_book.ui.search.SearchActivity"
+            android:exported="false" />
+    </application>
 </manifest>

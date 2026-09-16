@@ -13,7 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.blue_book.feature_mine.databinding.MineWorkPageBinding
-import com.example.blue_book.host.mainHost
+import com.example.blue_book.router.openVideoPlayer
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint
@@ -85,7 +85,8 @@ class MineWorkFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> viewModel.dispatch(MineWorkIntent.ToggleLike(v)) },
 			onClickItem = { v ->
-				mainHost?.navigateToVideoPlayer(
+				openVideoPlayer(
+					requireContext(),
 					v,
 					source = "user_videos",
 					userId = viewModel.uiState.value.items.firstOrNull()?.uploaderId ?: v.uploaderId

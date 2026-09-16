@@ -13,13 +13,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.blue_book.host.mainHost
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.blue_book.data.VideoCardInfo
-import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.data.SearchHistoryStore
+import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.feature_home.databinding.SearchResultPageBinding
+import com.example.blue_book.router.ExtraKeys
+import com.example.blue_book.router.openVideoPlayer
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
 import dagger.hilt.android.AndroidEntryPoint
@@ -58,13 +58,17 @@ class AfterSearchFragment : Fragment() {
 	}
 
 	/**
-	 * 工具栏避让状态栏。本页是 Tab 容器内的二级页，宿主为全面屏
-	 * （内容延展到系统栏后方），不自己避让会被状态栏压住。
-	 * 底部无需处理：底部导航栏常驻在内容区下方。
+	 * 工具栏避让状态栏、根布局避让系统手势条。
+	 *
+	 * 本页在 SearchActivity 内，Activity 是全屏延展的、下方没有底部导航，
+	 * 所以底部内边距要自己加（加在根布局的 padding 上，底色仍延展到屏幕边缘）。
 	 */
 	private fun initWindowInsets() {
 		ViewCompat.setOnApplyWindowInsetsListener(binding.searchResultToolbar) { v, insets ->
-			v.updatePadding(top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top)
+			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.updatePadding(top = bars.top)
+			// 底部让开系统手势条；加在根布局的 padding 上，底色仍延展到屏幕边缘
+			binding.root.updatePadding(bottom = bars.bottom)
 			insets
 		}
 	}
@@ -98,7 +102,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { video -> toggleLike(video) },
 			onClickItem = { v ->
-				mainHost?.navigateToVideoPlayer(v, source = "search", keyword = keyword)
+				openVideoPlayer(requireContext(), v, source = "search", keyword = keyword)
 			}
 		)
 	binding.afterSearchRecycleView.run {
@@ -154,7 +158,7 @@ class AfterSearchFragment : Fragment() {
 		adapter = PreVideoAdapter(
 			onClickLike = { v -> toggleLike(v) },
 			onClickItem = { v ->
-				mainHost?.navigateToVideoPlayer(v, source = "search", keyword = keyword)
+				openVideoPlayer(requireContext(), v, source = "search", keyword = keyword)
 			}
 		)
 		binding.afterSearchRecycleView.adapter = adapter

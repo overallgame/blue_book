@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -78,17 +79,29 @@ class AfterSearchFragment : Fragment() {
 			requireActivity().onBackPressedDispatcher.onBackPressed()
 		}
 		binding.afterSearchComment.setText(keyword)
-		binding.afterSearchSearch.setOnClickListener {
-			val newKeyword = binding.afterSearchComment.text?.toString().orEmpty().trim()
-			if (newKeyword.isBlank()) {
-				Toast.makeText(requireContext(), "请输入搜索内容", Toast.LENGTH_SHORT).show()
-				return@setOnClickListener
+		binding.afterSearchSearch.setOnClickListener { submitSearch() }
+		// 软键盘右下角的「搜索」键与点「搜索」按钮等价
+		binding.afterSearchComment.setOnEditorActionListener { _, actionId, _ ->
+			if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+				submitSearch()
+				true
+			} else {
+				false
 			}
-			viewLifecycleOwner.lifecycleScope.launch { historyStore.add(newKeyword) }
-			adapterSubmitClear()
-			keyword = newKeyword
-			viewModel.dispatch(SearchIntent.Init(keyword))
 		}
+	}
+
+	/** 「搜索」按钮与软键盘搜索键共用：在本页内以新关键词重查（不新开页面） */
+	private fun submitSearch() {
+		val newKeyword = binding.afterSearchComment.text?.toString().orEmpty().trim()
+		if (newKeyword.isBlank()) {
+			Toast.makeText(requireContext(), "请输入搜索内容", Toast.LENGTH_SHORT).show()
+			return
+		}
+		viewLifecycleOwner.lifecycleScope.launch { historyStore.add(newKeyword) }
+		adapterSubmitClear()
+		keyword = newKeyword
+		viewModel.dispatch(SearchIntent.Init(keyword))
 	}
 
 	/** 空态重试：以当前关键字重新发起搜索 */

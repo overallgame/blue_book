@@ -22,7 +22,8 @@
             app:navigationIconTint="@color/md_theme_onSurfaceVariant">
 
             <!-- 与搜索页同理：MaterialToolbar 不处理 layout_weight，
-                 加权 EditText 必须包在 LinearLayout 里，否则会被量成 0 宽 -->
+                 加权 EditText 必须包在 LinearLayout 里，否则会被量成 0 宽。
+                 样式与搜索页共用（见 SearchInputStyle）。 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -31,31 +32,12 @@
 
                 <EditText
                     android:id="@+id/after_search_comment"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/shape1"
-                    android:drawableStart="@drawable/search_icon2"
-                    android:drawablePadding="8dp"
-                    android:gravity="center_vertical"
-                    android:hint="搜索视频"
-                    android:paddingHorizontal="12dp"
-                    android:textColor="@color/md_theme_primary"
-                    android:textColorHint="@color/md_theme_outline"
-                    android:textSize="14sp" />
+                    style="@style/SearchInputStyle" />
 
                 <TextView
                     android:id="@+id/after_search_search"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:gravity="center"
-                    android:paddingHorizontal="12dp"
-                    android:text="搜索"
-                    android:textColor="@color/md_theme_onSurfaceVariant"
-                    android:textSize="14sp" />
+                    style="@style/SearchActionStyle"
+                    android:text="搜索" />
             </LinearLayout>
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>

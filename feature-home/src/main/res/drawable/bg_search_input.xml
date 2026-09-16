@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  搜索输入框背景：40dp 高的胶囊（圆角 = 高度一半，才是真正的胶囊；
+  原先 36dp 配 16dp 圆角差 2dp，视觉上「不圆不方」）。
+
+  补 1dp 描边的原因：纯填充色在浅色主题下与页面底色对比偏弱，边界糊在一起；
+  描边用 outlineVariant（浅色 #CAC5CB / 深色 #48464B），两种主题下都能勾出轮廓。
+
+  聚焦时描边换成品牌蓝：输入框本身没有水波纹之类的按下反馈，
+  没有聚焦态的话点进去看不出「光标已经在这儿了」。
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_surfaceContainerHighest" />
+            <corners android:radius="20dp" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/brand_blue" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_theme_surfaceContainerHighest" />
+            <corners android:radius="20dp" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/md_theme_outlineVariant" />
+        </shape>
+    </item>
+</selector>

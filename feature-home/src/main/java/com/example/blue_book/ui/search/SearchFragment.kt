@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -52,13 +53,16 @@ class SearchFragment : Fragment() {
 			// 本页是 SearchActivity 的第一层，没有可弹的返回栈：交给返回键逻辑（结束本页回到来源）
 			requireActivity().onBackPressedDispatcher.onBackPressed()
 		}
-		binding.searchSearch.setOnClickListener {
-			val keyword = binding.searchComment.text?.toString().orEmpty().trim()
-			if (keyword.isBlank()) {
-				Toast.makeText(requireContext(), "请输入搜索内容", Toast.LENGTH_SHORT).show()
-				return@setOnClickListener
+		binding.searchSearch.setOnClickListener { submitSearch() }
+		// 软键盘右下角的「搜索」键（SearchInputStyle 里的 imeOptions=actionSearch）
+		// 与点「搜索」按钮等价——不接的话那个键按下去没反应
+		binding.searchComment.setOnEditorActionListener { _, actionId, _ ->
+			if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+				submitSearch()
+				true
+			} else {
+				false
 			}
-			performSearch(keyword)
 		}
 		binding.searchHistoryClear.setOnClickListener {
 			viewLifecycleOwner.lifecycleScope.launch {
@@ -104,6 +108,16 @@ class SearchFragment : Fragment() {
 				renderSuggested(terms?.filter { it.isNotBlank() }.orEmpty().ifEmpty { fallback })
 			}
 		}
+	}
+
+	/** 「搜索」按钮与软键盘搜索键共用：空输入只提示，不发起搜索 */
+	private fun submitSearch() {
+		val keyword = binding.searchComment.text?.toString().orEmpty().trim()
+		if (keyword.isBlank()) {
+			Toast.makeText(requireContext(), "请输入搜索内容", Toast.LENGTH_SHORT).show()
+			return
+		}
+		performSearch(keyword)
 	}
 
 	/**

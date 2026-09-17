@@ -30,6 +30,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class ApiGateway @Inject constructor(
@@ -75,7 +76,7 @@ class ApiGateway @Inject constructor(
 	private fun refreshOkHttpClient() {
 		targetIsLocal = isLocalHost(baseUrl)
 		val cacheDir = File(context.cacheDir, CACHE_DIR)
-		okHttpClient = OkHttpClient.Builder()
+		val builder = OkHttpClient.Builder()
 			.connectTimeout(10, TimeUnit.SECONDS)
 			.readTimeout(10, TimeUnit.SECONDS)
 			.writeTimeout(10, TimeUnit.SECONDS)
@@ -86,8 +87,14 @@ class ApiGateway @Inject constructor(
 			.addInterceptor(tokenInterceptor)
 			.addInterceptor(RetryInterceptor())                                      // #2 自动重试
 			.authenticator(tokenAuthenticator)
-			.addInterceptor(LogSanitizer())                                          // #5 日志脱敏
-			.build()
+
+		// 请求/响应全文日志只在 debug 挂载：这个拦截器要把响应体读进内存才能打印，
+		// 正式包既不需要这些日志，也不该为每个请求付这份开销。
+		// （重试日志不在此列——那是异常路径的 Log.w，见 RetryInterceptor）
+		if (BuildConfig.DEBUG) {
+			builder.addInterceptor(LogSanitizer())                                   // #5 日志脱敏
+		}
+		okHttpClient = builder.build()
 	}
 
 	/** 后台恢复持久化的 Base URL 覆盖（不做主线程阻塞读） */
@@ -150,7 +157,7 @@ class ApiGateway @Inject constructor(
 	 */
 	private suspend fun <T> withNetwork(block: suspend () -> Result<T>): Result<T> {
 		if (targetIsLocal || networkMonitor.isConnected) return block()
-		val connected = withTimeoutOrNull(NETWORK_WAIT_MS) {
+		val connected = withTimeoutOrNull(NETWORK_WAIT_MS.milliseconds) {
 			networkMonitor.networkState.first { it }
 		} ?: false
 		if (!connected && !networkMonitor.isConnected) {

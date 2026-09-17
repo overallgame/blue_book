@@ -1,3 +1,6 @@
+// 注意：不能写 java.util.Properties——Kotlin DSL 里 `java` 已被绑定为 Gradle 的 java 扩展
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,6 +8,13 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
     id("therouter")
+}
+
+// release 签名从项目根的 signing.properties 读取（该文件与 keystore/*.jks 都已 gitignore）。
+// 读不到也不报错：release 变体产出未签名包，其它机器/CI 上仍能构建、跑 lint。
+val signingProps = Properties().apply {
+    val f = rootProject.file("signing.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -24,6 +34,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (signingProps.getProperty("storeFile") != null) {
+            create("release") {
+                storeFile = rootProject.file(signingProps.getProperty("storeFile"))
+                storePassword = signingProps.getProperty("storePassword")
+                keyAlias = signingProps.getProperty("keyAlias")
+                keyPassword = signingProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -31,6 +52,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 没有 signing.properties 时为 null → 产出未签名包（可构建、装不上）
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

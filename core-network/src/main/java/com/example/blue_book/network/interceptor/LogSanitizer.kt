@@ -1,5 +1,6 @@
 package com.example.blue_book.network.interceptor
 
+import android.util.Log
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
@@ -12,6 +13,9 @@ import java.nio.charset.UnsupportedCharsetException
 
 /**
 * 日志拦截器 — 输出请求/响应详情，敏感 header 脱敏，body 超长截断。
+*
+* **只在 debug 变体挂载**（见 ApiGateway.refreshOkHttpClient）：它要把响应体读进内存才能打印，
+* 正式包不需要这些日志，也不该付这份开销。因此这里不需要再做 BuildConfig 判断。
 */
 class LogSanitizer : Interceptor {
 
@@ -30,7 +34,7 @@ class LogSanitizer : Interceptor {
 				append("\n${bodyToString(reqBody)}")
 			}
 		}
-		println(reqStr)
+		Log.d(TAG, reqStr)
 
 		val startMs = System.currentTimeMillis()
 		val response = chain.proceed(request)
@@ -56,7 +60,7 @@ class LogSanitizer : Interceptor {
 				if (bodyStr.length > maxBodyLogSize) append("...<truncated>")
 			}
 		}
-		println(respStr)
+		Log.d(TAG, respStr)
 
 		return response
 	}
@@ -94,6 +98,8 @@ class LogSanitizer : Interceptor {
 	}
 
 	companion object {
+		private const val TAG = "HttpLog"
+
 		fun maskToken(token: String): String {
 			if (token.length <= 8) return "***"
 			return token.take(4) + "***" + token.takeLast(4)

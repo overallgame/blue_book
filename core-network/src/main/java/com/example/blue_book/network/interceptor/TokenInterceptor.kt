@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Interceptor
 import okhttp3.Response
+import kotlin.time.Duration.Companion.milliseconds
 
 class TokenInterceptor(
 	private val tokenHolder: TokenHolder
@@ -21,7 +22,7 @@ class TokenInterceptor(
 		// 仅在无 token 时等待，且设上限，避免阻塞请求线程。
 		if (tokenHolder.authToken == null) {
 			runBlocking {
-				withTimeoutOrNull(RESTORE_WAIT_MS) { tokenHolder.awaitLoaded() }
+				withTimeoutOrNull(RESTORE_WAIT_MS.milliseconds) { tokenHolder.awaitLoaded() }
 			}
 		}
 		val token = tokenHolder.authToken?.trim().orEmpty()

@@ -41,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import androidx.media3.common.util.UnstableApi
 
 /**
  * 主界面：底部导航 + 四个 Tab（Fragment 承载，导航栏常驻）。
@@ -153,6 +154,8 @@ class MainActivity : AppCompatActivity(), IMainHost {
 
 	// ==================== Tab 切换 ====================
 
+	/** VideoFragment 标了 media3 的 @UnstableApi，这里只是构造它；须用 androidx.annotation.OptIn */
+	@androidx.annotation.OptIn(UnstableApi::class)
 	private fun createTabFragment(checkedId: Int): Fragment = when (checkedId) {
 		R.id.tab_video -> VideoFragment()
 		R.id.tab_message -> MessageFragment()

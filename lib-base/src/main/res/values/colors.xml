@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+      本模块用到的主题色。各模块各自持有自己用到的那几个（feature-auth / mine / video 同样如此），
+      因为库模块的资源必须自洽——只依赖 :app 里的色板会让 verifyReleaseResources 报找不到资源。
+      取值对齐 app/src/main/res/values/colors.xml 与 values-night/colors.xml。
+    -->
+    <color name="md_theme_onSurface">#1C1B1C</color>
+    <color name="md_theme_outline">#79767B</color>
+
     <!-- 公用卡片（pre_video_item_view）：跟随主题 -->
     <color name="lib_card_background">#FFFFFF</color>
 

@@ -17,6 +17,7 @@ import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.media3.common.util.UnstableApi
 
 /**
  * 播放页（独立页面）：从其它页面点某个视频时压在上层，返回即回到点击它的那个页面。
@@ -36,6 +37,9 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class VideoActivity : AppCompatActivity(), IMainHost {
 
+	// VideoFragment 标了 media3 的 @UnstableApi（它直接驱动 ExoPlayer），本页面只是承载它。
+	// 必须用 androidx.annotation.OptIn——lint 的 UnsafeOptInUsageError 不识别 kotlin.OptIn
+	@androidx.annotation.OptIn(UnstableApi::class)
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_video_player)

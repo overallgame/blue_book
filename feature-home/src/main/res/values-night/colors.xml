@@ -8,6 +8,7 @@
     <color name="md_theme_onSurfaceVariant_highContrast">#FFF9FF</color>
     <color name="md_theme_onSurfaceVariant_mediumContrast">#CEC9CF</color>
     <color name="md_theme_outline">#938F95</color>
+    <color name="md_theme_outlineVariant">#48464B</color>
     <color name="md_theme_primary">#FFFFFF</color>
     <color name="md_theme_surface">#141314</color>
     <color name="md_theme_surfaceContainer">#201F20</color>

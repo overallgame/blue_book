@@ -20,7 +20,6 @@ import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.network.TokenHolder
 import com.example.blue_book.provider.IUserStore
 import com.example.blue_book.util.UriFileResolver
-import com.therouter.TheRouter
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -33,10 +32,9 @@ class UserRepositoryImpl @Inject constructor(
 	private val fileRemote: FileRemoteDataSource,
 	private val uriFileResolver: UriFileResolver,
 	private val tokenHolder: TokenHolder,
-	private val currentUser: CurrentUser
+	private val currentUser: CurrentUser,
+	private val userStore: IUserStore
 ) : UserRepository {
-
-	private val userStore: IUserStore get() = TheRouter.get(IUserStore::class.java)!!
 
 	override suspend fun getUserProfile(phone: String): Result<UserAccount> {
 		val remote = userRemote.me()

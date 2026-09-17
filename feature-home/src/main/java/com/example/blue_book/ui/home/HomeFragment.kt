@@ -25,9 +25,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
+	@Inject
+	lateinit var authProvider: IAuthProvider
+
 
 	private var _binding: HomePageBinding? = null
 	private val binding get() = _binding!!
@@ -69,7 +73,7 @@ class HomeFragment : Fragment() {
 	private fun guideLoginIfNeeded() {
 		viewLifecycleOwner.lifecycleScope.launch {
 			val logged = withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: true
+				authProvider.isLoggedIn()
 			}
 			if (!logged && isAdded) {
 				LoginGuideDialog.showIfNeeded(requireActivity())

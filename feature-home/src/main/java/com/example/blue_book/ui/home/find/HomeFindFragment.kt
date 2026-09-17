@@ -18,138 +18,149 @@ import com.example.blue_book.router.openVideoPlayer
 import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
-import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFindFragment : Fragment() {
+	@Inject
+	lateinit var authProvider: IAuthProvider
 
-	private var _binding: HomeFindPageBinding? = null
-	private val binding get() = _binding!!
-	private val viewModel: HomeFindViewModel by viewModels()
-	private lateinit var adapter: PreVideoAdapter
 
-	private var isLoading = false
-	private var noMoreToasted = false
+    private var _binding: HomeFindPageBinding? = null
+    private val binding get() = _binding!!
+    private val viewModel: HomeFindViewModel by viewModels()
+    private lateinit var adapter: PreVideoAdapter
 
-	/** 游客状态（未登录）：可浏览视频，点赞等互动需登录 */
-	private var isGuest = false
+    private var isLoading = false
+    private var noMoreToasted = false
 
-	override fun onCreateView(
-		inflater: LayoutInflater,
-		container: ViewGroup?,
-		savedInstanceState: Bundle?
-	): View {
-		_binding = HomeFindPageBinding.inflate(inflater, container, false)
-		return binding.root
-	}
+    /** 游客状态（未登录）：可浏览视频，点赞等互动需登录 */
+    private var isGuest = false
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
-		initSwipeRefreshLayout()
-		initRecyclerView()
-		initErrorState()
-		observeViewModel()
-		viewModel.dispatch(HomeFindIntent.Init)
-	}
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = HomeFindPageBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-	/** 加载失败空态：显示原因并提供重试入口（此前失败时是永久白屏） */
-	private fun initErrorState() {
-		binding.homeFindErrorRetry.setOnClickListener {
-			noMoreToasted = false
-			viewModel.dispatch(HomeFindIntent.Refresh)
-		}
-	}
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initSwipeRefreshLayout()
+        initRecyclerView()
+        initErrorState()
+        observeViewModel()
+        viewModel.dispatch(HomeFindIntent.Init)
+    }
 
-	override fun onResume() {
-		super.onResume()
-		// 同步游客状态（用于互动守卫）
-		viewLifecycleOwner.lifecycleScope.launch {
-			isGuest = !withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: true
-			}
-		}
-	}
+    /** 加载失败空态：显示原因并提供重试入口（此前失败时是永久白屏） */
+    private fun initErrorState() {
+        binding.homeFindErrorRetry.setOnClickListener {
+            noMoreToasted = false
+            viewModel.dispatch(HomeFindIntent.Refresh)
+        }
+    }
 
-	/** 未登录触发点赞：弹登录引导卡片 */
-	private fun guardLike(v: com.example.blue_book.data.VideoCardInfo) {
-		if (isGuest) {
-			LoginGuideDialog.show(requireActivity())
-		} else {
-			viewModel.dispatch(HomeFindIntent.ToggleLike(v))
-		}
-	}
+    override fun onResume() {
+        super.onResume()
+        // 同步游客状态（用于互动守卫）
+        viewLifecycleOwner.lifecycleScope.launch {
+            isGuest = !withContext(Dispatchers.IO) {
+                authProvider.isLoggedIn()
+            }
+        }
+    }
 
-	private fun initSwipeRefreshLayout() {
-		binding.mainFindPagerSwipeRefreshLayout.setOnRefreshListener {
-			noMoreToasted = false
-			viewModel.dispatch(HomeFindIntent.Refresh)
-		}
-	}
+    /** 未登录触发点赞：弹登录引导卡片 */
+    private fun guardLike(v: com.example.blue_book.data.VideoCardInfo) {
+        if (isGuest) {
+            LoginGuideDialog.show(requireActivity())
+        } else {
+            viewModel.dispatch(HomeFindIntent.ToggleLike(v))
+        }
+    }
 
-	private fun initRecyclerView() {
-		adapter = PreVideoAdapter(
-			onClickLike = { v -> guardLike(v) },
-			onClickItem = { v ->
-				openVideoPlayer(requireContext(), v)
-			}
-		)
-		binding.mainFindRecycleView.run {
-			layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL).apply {
-				gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
-			}
-			addItemDecoration(SpaceItem(8))
-			adapter = this@HomeFindFragment.adapter
-			addOnScrollListener(object : RecyclerView.OnScrollListener() {
-				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-					super.onScrolled(recyclerView, dx, dy)
-					if (!recyclerView.canScrollVertically(1)) {
-						val state = viewModel.uiState.value
-						if (state.hasMore && !state.isLoading) {
-							isLoading = true
-							viewModel.dispatch(HomeFindIntent.LoadMore)
-						} else if (!state.hasMore && !state.isLoading && state.items.isNotEmpty() && !noMoreToasted) {
-							noMoreToasted = true
-							Toast.makeText(requireContext(), "没有更多了", Toast.LENGTH_SHORT).show()
-						}
-					}
-				}
-			})
-		}
-	}
+    private fun initSwipeRefreshLayout() {
+        binding.mainFindPagerSwipeRefreshLayout.setOnRefreshListener {
+            noMoreToasted = false
+            viewModel.dispatch(HomeFindIntent.Refresh)
+        }
+    }
 
-	private fun observeViewModel() {
-		viewLifecycleOwner.lifecycleScope.launch {
-			repeatOnLifecycle(Lifecycle.State.STARTED) {
-				launch {
-					viewModel.uiState.collect { state ->
-						adapter.submitAppend(state.items)
-						isLoading = state.isLoading
-						binding.mainFindPagerSwipeRefreshLayout.isRefreshing = false
-						// 列表为空、不在加载中、且带错误信息 → 展示失败原因与重试入口
-						val failed = !state.isLoading && state.items.isEmpty() && state.message != null
-						binding.homeFindError.visibility = if (failed) View.VISIBLE else View.GONE
-						if (failed) binding.homeFindErrorText.text = state.message
-					}
-				}
-					launch {
-						viewModel.uiEffect.collect { effect ->
-							when (effect) {
-								is HomeFindEffect.ShowToast -> Toast.makeText(requireContext(), effect.message, Toast.LENGTH_SHORT).show()
-								is HomeFindEffect.UpdateItem -> adapter.updateVideoList(effect.item)
-								HomeFindEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
-							}
-						}
-					}
-			}
-		}
-	}
+    private fun initRecyclerView() {
+        adapter = PreVideoAdapter(
+            onClickLike = { v -> guardLike(v) },
+            onClickItem = { v ->
+                openVideoPlayer(requireContext(), v)
+            }
+        )
+        binding.mainFindRecycleView.run {
+            layoutManager =
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL).apply {
+                    gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
+                }
+            addItemDecoration(SpaceItem(8))
+            adapter = this@HomeFindFragment.adapter
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    if (!recyclerView.canScrollVertically(1)) {
+                        val state = viewModel.uiState.value
+                        if (state.hasMore && !state.isLoading) {
+                            isLoading = true
+                            viewModel.dispatch(HomeFindIntent.LoadMore)
+                        } else if (!state.hasMore && !state.isLoading && state.items.isNotEmpty() && !noMoreToasted) {
+                            noMoreToasted = true
+                            Toast.makeText(requireContext(), "没有更多了", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
+                }
+            })
+        }
+    }
 
-	override fun onDestroyView() {
-		super.onDestroyView()
-		_binding = null
-	}
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        adapter.submitAppend(state.items)
+                        isLoading = state.isLoading
+                        binding.mainFindPagerSwipeRefreshLayout.isRefreshing = false
+                        // 列表为空、不在加载中、且带错误信息 → 展示失败原因与重试入口
+                        val failed =
+                            !state.isLoading && state.items.isEmpty() && state.message != null
+                        binding.homeFindError.visibility = if (failed) View.VISIBLE else View.GONE
+                        if (failed) binding.homeFindErrorText.text = state.message
+                    }
+                }
+                launch {
+                    viewModel.uiEffect.collect { effect ->
+                        when (effect) {
+                            is HomeFindEffect.ShowToast -> Toast.makeText(
+                                requireContext(),
+                                effect.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            is HomeFindEffect.UpdateItem -> adapter.updateVideoList(effect.item)
+                            HomeFindEffect.ShowLoginGuide -> LoginGuideDialog.show(requireActivity())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

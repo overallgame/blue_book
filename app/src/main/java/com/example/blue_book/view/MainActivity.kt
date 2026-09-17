@@ -7,13 +7,11 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -42,6 +40,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 /**
  * 主界面：底部导航 + 四个 Tab（Fragment 承载，导航栏常驻）。
@@ -75,6 +74,12 @@ class MainActivity : AppCompatActivity(), IMainHost {
 
 	/** 当前选中的导航项（用于防递归导航与判断是否需要切换） */
 	private var currentCheckedId = R.id.tab_home
+
+	@Inject
+	lateinit var authProvider: IAuthProvider
+
+	@Inject
+	lateinit var notificationProvider: INotificationProvider
 
 	/** 登录态：null=判断中（放行，避免误拦已登录用户） */
 	private var loggedIn: Boolean? = null
@@ -301,9 +306,7 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	/** 登录态：已登录在首页先行申请定位权限（未登录引导由首页负责，避免 Dialog 被首页覆盖） */
 	private fun resolveLoginState() {
 		lifecycleScope.launch {
-			val logged = withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
-			}
+			val logged = withContext(Dispatchers.IO) { authProvider.isLoggedIn() }
 			loggedIn = logged
 			if (logged) {
 				requestLocationPermission()
@@ -334,8 +337,7 @@ class MainActivity : AppCompatActivity(), IMainHost {
 	private fun refreshUnreadBadge() {
 		lifecycleScope.launch {
 			val count = withContext(Dispatchers.IO) {
-				TheRouter.get(INotificationProvider::class.java)
-					?.unreadCount()?.getOrNull() ?: 0L
+				notificationProvider.unreadCount().getOrNull() ?: 0L
 			}
 			messageTab.setUnreadCount(count.toInt())
 		}

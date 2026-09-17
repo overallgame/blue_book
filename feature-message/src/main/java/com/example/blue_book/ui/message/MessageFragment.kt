@@ -27,10 +27,17 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 /** 消息中心：需登录使用；未登录进入弹引导卡片且不加载，登录后自动加载 */
 @AndroidEntryPoint
 class MessageFragment : Fragment() {
+	@Inject
+	lateinit var videoProvider: IVideoProvider
+
+	@Inject
+	lateinit var authProvider: IAuthProvider
+
 
 	private var _binding: MessagePageBinding? = null
 	private val binding get() = _binding!!
@@ -77,7 +84,7 @@ class MessageFragment : Fragment() {
 		// 每次可见：同步登录态；未登录弹引导卡片，登录后首次进入加载
 		viewLifecycleOwner.lifecycleScope.launch {
 			val logged = withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
+				authProvider.isLoggedIn()
 			}
 			if (!isAdded) return@launch
 			isGuest = !logged
@@ -164,7 +171,7 @@ class MessageFragment : Fragment() {
 	private fun openVideo(videoId: Long) {
 		viewLifecycleOwner.lifecycleScope.launch {
 			val card = withContext(Dispatchers.IO) {
-				TheRouter.get(IVideoProvider::class.java)?.fetchVideoById(videoId)?.getOrNull()
+				videoProvider.fetchVideoById(videoId).getOrNull()
 			}
 			if (card != null) {
 				// 压一个独立播放页，返回即回到消息页

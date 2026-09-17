@@ -4,7 +4,6 @@ import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.data.remote.video.VideoRemoteDataSource
 import com.example.blue_book.domain.repository.VideoRepository
 import com.example.blue_book.network.CurrentUser
-import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.udf.UdfViewModel
 import com.example.blue_book.domain.model.Video
 import com.example.blue_book.domain.usecase.CollectVideoUseCase
@@ -13,7 +12,6 @@ import com.example.blue_book.domain.usecase.FetchRandomVideosUseCase
 import com.example.blue_book.domain.usecase.FetchVideosByKeywordUseCase
 import com.example.blue_book.domain.usecase.LikeVideoUseCase
 import com.example.blue_book.event.VideoInteractionBus
-import com.therouter.TheRouter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -40,6 +38,9 @@ class VideoViewModel @Inject constructor(
 		/** 转码状态轮询上限与间隔 */
 		const val MAX_TRANSCODE_POLLS = 3
 		const val TRANSCODE_POLL_INTERVAL_MS = 2000L
+
+		/** 续拉同源列表的每页条数 */
+		const val SOURCE_PAGE_SIZE = 20
 	}
 
 	/** 来源列表模式对应的用户 id（仅 UserVideos 模式使用） */
@@ -130,18 +131,21 @@ class VideoViewModel @Inject constructor(
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
 			call = {
-				// 统一转为 Result<List<VideoCardInfo>>，usecase 与 provider 的模型不同
+				// 各分支统一为 Result<List<VideoCardInfo>>，用 toUi 映射成卡片
 				when (state.mode) {
 					VideoUiState.Mode.Random ->
 						fetchRandomVideos(cursorId).map { list -> list.map(::toUi) }
 					VideoUiState.Mode.Search ->
 						fetchByKeyword(state.keyword, cursorId).map { list -> list.map(::toUi) }
 					VideoUiState.Mode.Liked ->
-						videoProvider().fetchLikedVideos(cursorId)
+						videoRepository.fetchLikedVideos(cursorId, SOURCE_PAGE_SIZE)
+							.map { list -> list.map(::toUi) }
 					VideoUiState.Mode.Collected ->
-						videoProvider().fetchCollectedVideos(cursorId)
+						videoRepository.fetchCollectedVideos(cursorId, SOURCE_PAGE_SIZE)
+							.map { list -> list.map(::toUi) }
 					VideoUiState.Mode.UserVideos ->
-						videoProvider().fetchUserVideos(sourceUserId, cursorId)
+						videoRepository.fetchUserVideos(sourceUserId, cursorId, SOURCE_PAGE_SIZE)
+							.map { list -> list.map(::toUi) }
 				}
 			},
 			onSuccess = { list ->
@@ -185,9 +189,6 @@ class VideoViewModel @Inject constructor(
 		// 广播到各列表页，返回列表卡片上的评论数同步
 		VideoInteractionBus.publishCommentCount(aid, updated.commentCount)
 	}
-
-	/** 服务发现获取视频数据源（feature-video 自身提供） */
-	private fun videoProvider(): IVideoProvider = TheRouter.get(IVideoProvider::class.java)!!
 
 	private fun toUi(v: Video): VideoCardInfo {
 		return VideoCardInfo(

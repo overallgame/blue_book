@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -48,6 +47,9 @@ import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class MineFragment : Fragment() {
+	@Inject
+	lateinit var authProvider: IAuthProvider
+
 
 	private var _binding: MinePageBinding? = null
 	private val binding get() = _binding!!
@@ -99,7 +101,7 @@ class MineFragment : Fragment() {
 		super.onResume()
 		viewLifecycleOwner.lifecycleScope.launch {
 			val logged = withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
+				authProvider.isLoggedIn()
 			}
 			if (!isAdded) return@launch
 			isGuest = !logged

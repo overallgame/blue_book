@@ -17,7 +17,6 @@ class BlueBookApplication : Application() {
 
 	override fun onCreate() {
 		super.onCreate()
-		AppContext.init(this)
 		TheRouter.init(this)
 		applyStoredTheme()
 	}

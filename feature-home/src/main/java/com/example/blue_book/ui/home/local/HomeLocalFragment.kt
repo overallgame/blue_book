@@ -25,11 +25,11 @@ import com.example.blue_book.util.LocationHelper
 import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
-import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 /**
  * 本地流：需登录使用。
@@ -38,6 +38,9 @@ import kotlinx.coroutines.withContext
  */
 @AndroidEntryPoint
 class HomeLocalFragment : Fragment() {
+	@Inject
+	lateinit var authProvider: IAuthProvider
+
 
 	private var _binding: HomeLocalPageBinding? = null
 	private val binding get() = _binding!!
@@ -90,7 +93,7 @@ class HomeLocalFragment : Fragment() {
 		// 每次可见：同步登录态；未登录弹引导卡片，登录后首次进入加载并定位
 		viewLifecycleOwner.lifecycleScope.launch {
 			val logged = withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
+				authProvider.isLoggedIn()
 			}
 			if (!isAdded) return@launch
 			isGuest = !logged

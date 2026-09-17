@@ -5,7 +5,6 @@ import com.example.blue_book.event.VideoInteractionBus
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.udf.UdfViewModel
-import com.therouter.TheRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
@@ -13,10 +12,10 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class HomeLocalViewModel @Inject constructor(
-	private val currentUser: CurrentUser
+	private val currentUser: CurrentUser,
+	private val videoProvider: IVideoProvider
 ) : UdfViewModel<HomeLocalIntent, HomeLocalUiState, HomeLocalEffect>(HomeLocalUiState()) {
 
-	private val videoProvider: IVideoProvider get() = TheRouter.get(IVideoProvider::class.java)!!
 	private val togglingAids = mutableSetOf<Long>()
 
 	/** 跨页互动同步：播放页内的点赞/收藏/评论数变化落到本列表 */

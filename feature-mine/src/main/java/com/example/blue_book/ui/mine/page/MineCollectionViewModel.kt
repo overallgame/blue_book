@@ -4,7 +4,6 @@ import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.event.VideoInteractionBus
 import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.udf.UdfViewModel
-import com.therouter.TheRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
@@ -12,9 +11,9 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MineCollectionViewModel @Inject constructor(
+	private val videoProvider: IVideoProvider
 ) : UdfViewModel<MineCollectionIntent, MineCollectionUiState, MineCollectionEffect>(MineCollectionUiState()) {
 
-	private val videoProvider: IVideoProvider get() = TheRouter.get(IVideoProvider::class.java)!!
 	private val togglingAids = mutableSetOf<Long>()
 
 	/** 跨页互动同步：播放页内的点赞/收藏/评论数变化落到本列表 */

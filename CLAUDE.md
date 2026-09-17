@@ -62,7 +62,7 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 :core-datastore      ← IDataStore/AppDataStore（DataStore 封装） + Room 数据库
 
 ── 基础层 ──
-:lib-base            ← UDF 基类 + 公共 bean + Provider 接口 + 路由常量 + AppContext
+:lib-base            ← UDF 基类 + 公共 bean + Provider 接口 + 路由常量
 ```
 
 ### 模块依赖层次
@@ -86,22 +86,43 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 ```
 
 - `core-network` → `core-datastore`（TokenHolder 注入 IDataStore）
-- feature 模块互不依赖，通过 TheRouter `@ServiceProvider` 服务发现
+- feature 模块互不依赖：跨模块能力靠**接口下沉到 lib-base + Hilt 绑定**（见下节），
+  编译期不需要 `implementation(project(":feature-*"))`
 - 各 feature 的实际依赖（构建文件为准）：
   `feature-image` 仅 `lib-base`；`feature-message` 为 `lib-base` + `core-network`；
   `feature-home` 为 `lib-base` + `core-datastore` + `core-network`
 - 宿主能力（`IMainHost`：全屏进出、是否有底部导航）定义在 `lib-base`，feature 通过它回调宿主，
   不依赖 `:app`；页面跳转不用宿主，一律走路由
 
-### 跨模块服务发现（TheRouter）
+### 跨模块服务：接口在 lib-base，实现在能力所属模块，用 Hilt 注入
 
-| 接口（lib-base） | 实现模块 | 消费模块 |
-|---|---|---|
-| `IAuthProvider` | feature-auth | feature-mine |
-| `IVideoProvider` | feature-video | feature-home |
-| `IUserStore` | core-datastore | feature-auth, feature-mine |
+| 接口（lib-base） | 实现模块 | Hilt 绑定位置 | 消费方 |
+|---|---|---|---|
+| `IAuthProvider` | feature-auth | `AuthRepositoryModule` 的 companion `@Provides` | 6 个 Fragment、MainActivity、`LogoutUseCase` |
+| `IVideoProvider` | feature-video | `VideoRepositoryModule` 的 companion `@Provides` | 8 个 ViewModel、MessageFragment |
+| `IUserStore` | core-datastore | `StoreModule` 的 `@Binds` | `AuthRepositoryImpl`、`UserRepositoryImpl` |
+| `INotificationProvider` | feature-message | `MessageModule` 的 `@Provides` | MainActivity（未读角标） |
 
-模式：`TheRouter.get(IUserStore::class.java)!!.saveUser(account)` + Hilt `@EntryPoint` 桥接。
+**消费方一律构造注入（ViewModel / UseCase）或字段注入（Fragment / Activity）**，
+不写 `TheRouter.get(X::class.java)`：依赖在构造函数/字段上就能看见，
+而且提供方模块没被打进 APK 时是**编译期**报错，不是运行期 NPE。
+
+```kotlin
+// ViewModel：构造注入
+class HomeFindViewModel @Inject constructor(
+    private val currentUser: CurrentUser,
+    private val videoProvider: IVideoProvider
+) : UdfViewModel<...>(...)
+
+// Fragment / Activity：字段注入（这些类由系统实例化，只能字段注入）
+@AndroidEntryPoint
+class MessageFragment : Fragment() {
+    @Inject lateinit var authProvider: IAuthProvider
+}
+```
+
+TheRouter 只用于**页面路由**（`@Route` + routeMap.json），不承担依赖注入；
+不要再用服务定位器绕开依赖声明。
 
 ### 权限归属
 
@@ -171,7 +192,7 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 - **IDataStore / AppDataStore**：通用 key-value 封装（putString/getString/putInt/getInt/putBoolean/putLong/remove/clear），底层用 DataStore Preferences
 - **Room**：`AppDatabase`（版本 1）→ `UserDao` → `UserEntity`（表名 `user`，主键 phone）
-- **IUserStore**：lib-base 定义的存储接口，由 `UserStoreProviderImpl` 实现，通过 TheRouter `@ServiceProvider` 暴露
+- **IUserStore**：lib-base 定义的存储接口，由 `UserStoreProviderImpl` 实现，绑定见 `StoreModule`（`@Binds`）
 - **Hilt DI**：`DatabaseModule` 提供 IDataStore、AppDatabase、UserDao
 
 ## 依赖注入（Hilt 2.48.1）
@@ -188,7 +209,8 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 各 feature 模块的 ViewModel 通过 `@HiltViewModel` + `@Inject constructor` 自动注册，无需额外 Module。
 
-跨模块服务（IAuthProvider、IUserStore、IVideoProvider）通过 TheRouter `@ServiceProvider` + Hilt `@EntryPoint` 暴露，不经过 Hilt DI。
+跨模块服务（IAuthProvider、IUserStore、IVideoProvider、INotificationProvider）**也是普通 Hilt 绑定**，
+绑定位置见「跨模块服务」一节；消费方直接构造注入/字段注入，不走服务定位器。
 
 ## 导航与 Tab 结构
 
@@ -315,4 +337,5 @@ mainHost?.providesBottomNav   // 宿主是否常驻底部导航，决定页面�
 2. **ViewBinding**：layout 文件迁入模块后，DataBinding 生成的类在模块自己的包下，需要同步更新 import
 3. **跨模块资源**：共享 drawable 当前采用复制策略（各模块各持一份）。后续计划提取到 `:lib-base`
 4. **kapt 缓存**：新增模块或大改依赖后，如遇 kapt `NonExistentClass` 错误，执行 `./gradlew clean assembleDebug`
-5. **跨模块依赖**：feature 模块间通过 TheRouter `@ServiceProvider` 服务发现，禁止直接 `implementation(project(":feature-*"))`
+5. **跨模块依赖**：feature 模块间靠「接口下沉 lib-base + Hilt 绑定 + 构造/字段注入」，
+   禁止直接 `implementation(project(":feature-*"))`，也不要用服务定位器（`TheRouter.get`）绕开依赖声明

@@ -6,7 +6,6 @@ import com.example.blue_book.event.VideoInteractionBus
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.provider.IVideoProvider
 import com.example.blue_book.udf.UdfViewModel
-import com.therouter.TheRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
@@ -15,10 +14,9 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class AuthorProfileViewModel @Inject constructor(
 	private val userRepository: UserRepository,
-	private val currentUser: CurrentUser
+	private val currentUser: CurrentUser,
+	private val videoProvider: IVideoProvider
 ) : UdfViewModel<AuthorProfileIntent, AuthorProfileUiState, AuthorProfileEffect>(AuthorProfileUiState()) {
-
-	private val videoProvider: IVideoProvider get() = TheRouter.get(IVideoProvider::class.java)!!
 
 	/** 目标用户 id（进入页面后固定） */
 	private var userId: Long = 0L

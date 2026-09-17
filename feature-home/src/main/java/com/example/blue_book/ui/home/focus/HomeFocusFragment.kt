@@ -19,11 +19,11 @@ import com.example.blue_book.router.openVideoPlayer
 import com.example.blue_book.widget.LoginGuideDialog
 import com.example.blue_book.widget.PreVideoAdapter
 import com.example.blue_book.widget.SpaceItem
-import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 /**
  * 关注流：需登录使用。
@@ -31,6 +31,9 @@ import kotlinx.coroutines.withContext
  */
 @AndroidEntryPoint
 class HomeFocusFragment : Fragment() {
+	@Inject
+	lateinit var authProvider: IAuthProvider
+
 
 	private var _binding: HomeFocusPageBinding? = null
 	private val binding get() = _binding!!
@@ -67,7 +70,7 @@ class HomeFocusFragment : Fragment() {
 		// 每次可见：同步登录态；未登录弹引导卡片，登录后首次进入自动加载
 		viewLifecycleOwner.lifecycleScope.launch {
 			val logged = withContext(Dispatchers.IO) {
-				TheRouter.get(IAuthProvider::class.java)?.isLoggedIn() ?: false
+				authProvider.isLoggedIn()
 			}
 			if (!isAdded) return@launch
 			isGuest = !logged

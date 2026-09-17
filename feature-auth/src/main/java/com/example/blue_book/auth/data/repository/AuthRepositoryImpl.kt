@@ -11,7 +11,6 @@ import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.network.TokenHolder
 import com.example.blue_book.network.datasource.TokenRemoteDataSource
 import com.example.blue_book.provider.IUserStore
-import com.therouter.TheRouter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,10 +19,9 @@ class AuthRepositoryImpl @Inject constructor(
 	private val remoteDataSource: AuthRemoteDataSource,
 	private val authRemote: TokenRemoteDataSource,
 	private val tokenHolder: TokenHolder,
-	private val currentUser: CurrentUser
+	private val currentUser: CurrentUser,
+	private val userStore: IUserStore
 ) : AuthRepository {
-
-	private val userStore: IUserStore get() = TheRouter.get(IUserStore::class.java)!!
 
 	override suspend fun isLoggedIn(): Boolean {
 		if (currentUser.isLoggedIn) return true

@@ -214,7 +214,7 @@ class VideoAdapter(
 
             Glide.with(binding.root.context)
                 .load(videoInfo.avatar)
-                .placeholder(R.drawable.ic_launcher_background)
+                .placeholder(com.example.blue_book.lib_base.R.drawable.ic_launcher_background)
                 .circleCrop()
                 .into(binding.videoItemAvatar)
 
@@ -223,7 +223,7 @@ class VideoAdapter(
                 binding.videoItemCover.visibility = View.VISIBLE
                 binding.videoItemCover.alpha = 1f
                 Glide.with(binding.root.context).load(videoInfo.image).centerCrop()
-                    .placeholder(R.drawable.ic_launcher_background)
+                    .placeholder(com.example.blue_book.lib_base.R.drawable.ic_launcher_background)
                     .into(binding.videoItemCover)
             } else {
                 binding.videoItemCover.visibility = View.GONE

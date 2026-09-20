@@ -70,7 +70,7 @@ class CommentAdapter(
 			onDeleteClick: (Comment) -> Unit,
 			onLoadReplies: (Comment) -> Unit
 		) {
-			Glide.with(itemView.context).load(comment.avatar).placeholder(R.drawable.ic_launcher_background).into(avatar)
+			Glide.with(itemView.context).load(comment.avatar).placeholder(com.example.blue_book.lib_base.R.drawable.ic_launcher_background).into(avatar)
 			nickname.text = comment.nickname
 			time.text = formatTime(comment.createTime)
 			content.text = comment.content

@@ -258,7 +258,7 @@ class MineFragment : Fragment() {
 				if (url != null) {
 					Glide.with(requireContext()).load(url).into(binding.mineAvatar)
 				} else {
-					binding.mineAvatar.setImageResource(R.drawable.default_avatar)
+					binding.mineAvatar.setImageResource(com.example.blue_book.lib_base.R.drawable.default_avatar)
 				}
 			}
 			"background" -> {

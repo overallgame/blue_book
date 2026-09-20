@@ -81,6 +81,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/md_theme_surfaceContainerLow"
-        app:menu="@menu/main_bottom_navigation" />
+        app:menu="@menu/drawer_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -18,7 +18,7 @@
             android:minHeight="?attr/actionBarSize"
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
-            app:navigationIcon="@drawable/_chevron_left1"
+            app:navigationIcon="@drawable/_chevron_left"
             app:navigationIconTint="@color/md_theme_onSurface" />
 
     </com.google.android.material.appbar.AppBarLayout>

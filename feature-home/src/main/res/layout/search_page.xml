@@ -26,7 +26,7 @@
             android:background="@color/md_theme_surface"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            app:navigationIcon="@drawable/_chevron_left1"
+            app:navigationIcon="@drawable/_chevron_left"
             app:navigationIconTint="@color/md_theme_onSurfaceVariant">
 
             <!-- 输入框与「搜索」按钮必须包一层 LinearLayout：

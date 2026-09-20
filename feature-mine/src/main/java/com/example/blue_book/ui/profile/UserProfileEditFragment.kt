@@ -163,7 +163,7 @@ class UserProfileEditFragment : Fragment() {
 								Glide.with(requireContext()).load(avatarSrc).into(binding.userInfoAvatar)
 							} else {
 								Glide.with(requireContext()).clear(binding.userInfoAvatar)
-								binding.userInfoAvatar.setImageResource(R.drawable.default_avatar)
+								binding.userInfoAvatar.setImageResource(com.example.blue_book.lib_base.R.drawable.default_avatar)
 							}
 							val backgroundSrc = state.backgroundPreviewUri ?: u.background
 							if (backgroundSrc != null) {

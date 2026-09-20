@@ -51,7 +51,7 @@ class ReplyAdapter(
 				comment.nickname
 			}
 
-			Glide.with(itemView.context).load(comment.avatar).placeholder(R.drawable.ic_launcher_background).into(avatar)
+			Glide.with(itemView.context).load(comment.avatar).placeholder(com.example.blue_book.lib_base.R.drawable.ic_launcher_background).into(avatar)
 			nickname.text = displayName
 			time.text = formatTime(comment.createTime)
 			content.text = comment.content

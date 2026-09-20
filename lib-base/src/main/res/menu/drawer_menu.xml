@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 侧边栏（DrawerLayout）菜单：首页 Tab 与「我的」Tab 都靠它呼出侧边栏。 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single">
         <item

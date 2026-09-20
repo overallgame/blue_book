@@ -160,7 +160,7 @@ private class FollowAdapter(
 	class VH(private val binding: ItemFollowUserBinding) : RecyclerView.ViewHolder(binding.root) {
 
 		fun bind(user: UserAccount, onItemClick: (UserAccount) -> Unit, onFollowClick: (UserAccount) -> Unit) {
-			Glide.with(binding.root.context).load(user.avatar).placeholder(R.drawable.default_avatar).into(binding.followItemAvatar)
+			Glide.with(binding.root.context).load(user.avatar).placeholder(com.example.blue_book.lib_base.R.drawable.default_avatar).into(binding.followItemAvatar)
 			binding.followItemNickname.text = user.nickname ?: "用户"
 			binding.followItemBio.text = user.introduction.orEmpty().ifBlank { "暂无简介" }
 

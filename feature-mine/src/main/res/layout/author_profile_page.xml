@@ -31,7 +31,7 @@
             android:contentDescription="返回"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/_chevron_left_white" />
+            app:srcCompat="@drawable/_chevron_left_on_dark" />
 
         <TextView
             android:id="@+id/author_follow_btn"

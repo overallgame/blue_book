@@ -5,31 +5,23 @@ import com.example.blue_book.domain.repository.UserRepository
 import com.example.blue_book.event.VideoInteractionBus
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.provider.IVideoProvider
-import com.example.blue_book.udf.UdfViewModel
+import com.example.blue_book.udf.VideoCardListViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AuthorProfileViewModel @Inject constructor(
 	private val userRepository: UserRepository,
 	private val currentUser: CurrentUser,
-	private val videoProvider: IVideoProvider
-) : UdfViewModel<AuthorProfileIntent, AuthorProfileUiState, AuthorProfileEffect>(AuthorProfileUiState()) {
+	private val videoProvider: IVideoProvider,
+	interactionBus: VideoInteractionBus
+) : VideoCardListViewModel<AuthorProfileIntent, AuthorProfileUiState, AuthorProfileEffect>(AuthorProfileUiState(), interactionBus) {
 
 	/** 目标用户 id（进入页面后固定） */
 	private var userId: Long = 0L
 
 	fun bindUserId(userId: Long) {
 		this.userId = userId
-	}
-
-	/** 跨页互动同步：播放页内的点赞/收藏/评论数变化落到本列表 */
-	init {
-		viewModelScope.launch {
-			VideoInteractionBus.patches.collect { patch -> applyInteraction(patch) }
-		}
 	}
 
 	override suspend fun handleIntent(intent: AuthorProfileIntent) {
@@ -58,11 +50,11 @@ class AuthorProfileViewModel @Inject constructor(
 			like = item.like + if (newStatus) 1 else -1
 		)
 		// 乐观更新
-		updateItemInList(updated)
+		replaceCard(updated)
 		sendEffect(AuthorProfileEffect.UpdateItem(updated))
 		val result = videoProvider.likeVideo(item.aid, newStatus)
 		result.onFailure { e ->
-			updateItemInList(item)
+			replaceCard(item)
 			sendEffect(AuthorProfileEffect.UpdateItem(item))
 			sendEffect(AuthorProfileEffect.ShowToast(e.message ?: "点赞失败"))
 		}
@@ -162,18 +154,8 @@ class AuthorProfileViewModel @Inject constructor(
 		)
 	}
 
-	private fun updateItemInList(updatedVideo: VideoCardInfo) {
-		setState {
-			val newItems = items.map { if (it.aid == updatedVideo.aid && it.cid == updatedVideo.cid) updatedVideo else it }
-			copy(items = newItems)
-		}
-	}
-
-	/** 播放页互动结果同步：更新 state 与对应卡片 */
-	private suspend fun applyInteraction(patch: VideoInteractionBus.Patch) {
-		val target = uiState.value.items.firstOrNull { it.aid == patch.aid } ?: return
-		val updated = VideoInteractionBus.apply(target, patch) ?: return
-		updateItemInList(updated)
+	/** 广播变更已落到列表 state：发本页的 UpdateItem effect 局部刷新对应卡片 */
+	override suspend fun onInteractionSynced(updated: VideoCardInfo) {
 		sendEffect(AuthorProfileEffect.UpdateItem(updated))
 	}
 }

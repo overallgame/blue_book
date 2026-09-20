@@ -3,7 +3,7 @@ package com.example.blue_book.ui.mine.page
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
-import com.example.blue_book.udf.UiState
+import com.example.blue_book.udf.VideoCardListState
 
 sealed interface MineLoveIntent : UiIntent {
 	data object Init : MineLoveIntent
@@ -13,13 +13,16 @@ sealed interface MineLoveIntent : UiIntent {
 }
 
 data class MineLoveUiState(
-	val items: List<VideoCardInfo> = emptyList(),
+	override val items: List<VideoCardInfo> = emptyList(),
 	val isLoading: Boolean = false,
 	val message: String? = null,
 	val cursorId: Long? = null,
 	val hasMore: Boolean = true,
 	val pageSize: Int = 20
-) : UiState
+) : VideoCardListState<MineLoveUiState> {
+
+	override fun withItems(items: List<VideoCardInfo>) = copy(items = items)
+}
 
 sealed interface MineLoveEffect : UiEffect {
 	data class ShowToast(val message: String) : MineLoveEffect

@@ -3,7 +3,7 @@ package com.example.blue_book.ui.search
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
-import com.example.blue_book.udf.UiState
+import com.example.blue_book.udf.VideoCardListState
 
 sealed interface SearchIntent : UiIntent {
 	data class Init(val keyword: String) : SearchIntent
@@ -12,13 +12,16 @@ sealed interface SearchIntent : UiIntent {
 }
 
 data class SearchUiState(
-	val items: List<VideoCardInfo> = emptyList(),
+	override val items: List<VideoCardInfo> = emptyList(),
 	val isLoading: Boolean = false,
 	val message: String? = null,
 	val keyword: String = "",
 	val cursorId: Long? = null,
 	val hasMore: Boolean = true
-) : UiState
+) : VideoCardListState<SearchUiState> {
+
+	override fun withItems(items: List<VideoCardInfo>) = copy(items = items)
+}
 
 sealed interface SearchUiEffect : UiEffect {
 	data class ShowToast(val message: String) : SearchUiEffect

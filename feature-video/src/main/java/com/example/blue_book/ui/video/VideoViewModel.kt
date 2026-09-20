@@ -27,7 +27,8 @@ class VideoViewModel @Inject constructor(
 	private val collectVideoUseCase: CollectVideoUseCase,
 	private val transcodeDataSource: VideoRemoteDataSource,
 	private val videoRepository: VideoRepository,
-	private val currentUser: CurrentUser
+	private val currentUser: CurrentUser,
+	private val interactionBus: VideoInteractionBus
 ) : UdfViewModel<VideoIntent, VideoUiState, VideoUiEffect>(VideoUiState()) {
 
 	private val togglingAids = mutableSetOf<Long>()
@@ -187,7 +188,7 @@ class VideoViewModel @Inject constructor(
 		updateItemInList(updated)
 		sendEffect(VideoUiEffect.UpdateItem(updated))
 		// 广播到各列表页，返回列表卡片上的评论数同步
-		VideoInteractionBus.publishCommentCount(aid, updated.commentCount)
+		interactionBus.publishCommentCount(aid, updated.commentCount)
 	}
 
 	private fun toUi(v: Video): VideoCardInfo {

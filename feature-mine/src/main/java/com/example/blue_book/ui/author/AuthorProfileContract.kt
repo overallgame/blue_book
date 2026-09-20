@@ -4,7 +4,7 @@ import com.example.blue_book.data.UserAccount
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.udf.UiEffect
 import com.example.blue_book.udf.UiIntent
-import com.example.blue_book.udf.UiState
+import com.example.blue_book.udf.VideoCardListState
 
 sealed interface AuthorProfileIntent : UiIntent {
 	data object Init : AuthorProfileIntent
@@ -17,7 +17,7 @@ sealed interface AuthorProfileIntent : UiIntent {
 data class AuthorProfileUiState(
 	/** 目标用户信息（isFollowed 透传关注态） */
 	val profile: UserAccount? = null,
-	val items: List<VideoCardInfo> = emptyList(),
+	override val items: List<VideoCardInfo> = emptyList(),
 	val isLoading: Boolean = false,
 	val isLoadingMore: Boolean = false,
 	val message: String? = null,
@@ -26,7 +26,10 @@ data class AuthorProfileUiState(
 	val pageSize: Int = 10,
 	/** 关注请求进行中，防连点 */
 	val isTogglingFollow: Boolean = false
-) : UiState
+) : VideoCardListState<AuthorProfileUiState> {
+
+	override fun withItems(items: List<VideoCardInfo>) = copy(items = items)
+}
 
 sealed interface AuthorProfileEffect : UiEffect {
 	data class ShowToast(val message: String) : AuthorProfileEffect

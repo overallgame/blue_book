@@ -3,25 +3,17 @@ package com.example.blue_book.ui.search
 import com.example.blue_book.data.VideoCardInfo
 import com.example.blue_book.event.VideoInteractionBus
 import com.example.blue_book.provider.IVideoProvider
-import com.example.blue_book.udf.UdfViewModel
+import com.example.blue_book.udf.VideoCardListViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SearchResultViewModel @Inject constructor(
-	private val videoProvider: IVideoProvider
-) : UdfViewModel<SearchIntent, SearchUiState, SearchUiEffect>(SearchUiState()) {
+	private val videoProvider: IVideoProvider,
+	interactionBus: VideoInteractionBus
+) : VideoCardListViewModel<SearchIntent, SearchUiState, SearchUiEffect>(SearchUiState(), interactionBus) {
 
 	private val togglingAids = mutableSetOf<Long>()
-
-	/** 跨页互动同步：播放页内的点赞/收藏/评论数变化落到本列表 */
-	init {
-		viewModelScope.launch {
-			VideoInteractionBus.patches.collect { patch -> applyInteraction(patch) }
-		}
-	}
 
 	override suspend fun handleIntent(intent: SearchIntent) {
 		when (intent) {
@@ -74,17 +66,8 @@ class SearchResultViewModel @Inject constructor(
 		togglingAids.remove(item.aid)
 	}
 
-	private fun updateItemInList(updated: VideoCardInfo) {
-		setState {
-			copy(items = items.map { if (it.aid == updated.aid && it.cid == updated.cid) updated else it })
-		}
-	}
-
-	/** 播放页互动结果同步：更新 state 与对应卡片 */
-	private suspend fun applyInteraction(patch: VideoInteractionBus.Patch) {
-		val target = uiState.value.items.firstOrNull { it.aid == patch.aid } ?: return
-		val updated = VideoInteractionBus.apply(target, patch) ?: return
-		updateItemInList(updated)
+	/** 广播变更已落到列表 state：发本页的 UpdateItem effect 局部刷新对应卡片 */
+	override suspend fun onInteractionSynced(updated: VideoCardInfo) {
 		sendEffect(SearchUiEffect.UpdateItem(updated))
 	}
 }

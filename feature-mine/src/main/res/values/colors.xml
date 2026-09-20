@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ==================== Material 主题色板（全局引用，勿随意改动） ==================== -->
-    <color name="md_theme_onBackground">#1A1A1A</color>
-    <color name="md_theme_onPrimaryContainer">#666666</color>
-    <color name="md_theme_onSurface">#1A1A1A</color>
-    <color name="md_theme_onSurfaceVariant">#666666</color>
-    <color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
-    <color name="md_theme_outline">#999999</color>
-    <color name="md_theme_primary">#2A6AF2</color>
-    <color name="md_theme_surface">#FFFFFF</color>
-    <color name="md_theme_surfaceContainer">#F5F5F5</color>
-    <color name="md_theme_surfaceContainerLow">#F7F7F7</color>
-
     <!-- ==================== 个人主页（mine_page，深色 UI） ==================== -->
     <!-- 页面背景 -->
     <color name="mine_page_background">#333232</color>

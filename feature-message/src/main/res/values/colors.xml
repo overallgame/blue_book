@@ -1,17 +1,9 @@
 <resources>
 	<!--
-	  这几项此前是从更早的一套紫色主题（#49454F / #79747E / #F3EDF7 / #1C1B1F）留下来的，
-	  与 app 及其他 feature 的中性值不一致（本文件自称"值对齐 app"，实际没有）。
-	  本模块的颜色在合并时会被 :app 覆盖，所以它们不影响界面；但优先级一旦变化就会渲染出紫色，
-	  故一并对齐到当前中性色板。
+	  本模块的跟随主题色（md_theme_*）已统一到 lib-base 的共享色板，这里只留本模块独有的装饰色。
+	  此前这里还残留过一套更早的紫色主题值（#49454F / #79747E / #F3EDF7 / #1C1B1F）：
+	  合并时被 :app 覆盖、静默失效，无人察觉，已随这次统一一并删除。
 	-->
-	<color name="md_theme_onSurfaceVariant">#666666</color>
-	<color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
-	<color name="md_theme_outline">#999999</color>
-	<color name="md_theme_surfaceContainer">#F5F5F5</color>
-	<color name="md_theme_surface">#FFFFFF</color>
-	<!-- 列表项容器底色（bg_message_item 引用，模块自包含；值对齐 app 与其他 feature） -->
-	<color name="md_theme_onSurface">#1A1A1A</color>
 	<!-- 消息类型图标圆底（shape1 引用；夜版见 values-night）；原 #E6E0EC 带紫 -->
 	<color name="msg_icon_background">#EEEEEE</color>
 </resources>

@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 深色模式（值对齐 app/src/main/res/values-night/colors.xml） -->
-    <color name="md_theme_onBackground">#E6E1E2</color>
-    <color name="md_theme_onSurface">#E6E1E2</color>
-    <color name="md_theme_onSurfaceVariant">#CAC5CB</color>
-    <color name="md_theme_onSurfaceVariant_mediumContrast">#CEC9CF</color>
-    <color name="md_theme_outline">#938F95</color>
-    <color name="md_theme_surface">#141314</color>
-    <color name="md_theme_surfaceContainer">#201F20</color>
-    <color name="md_theme_surfaceContainerHighest">#363435</color>
+    <!-- 深色模式：本模块独有的输入框配色（跟随主题色板与 :app 对齐） -->
     <!-- 输入框（bg_input_field 引用色） -->
     <color name="auth_input_background">#201F20</color>
     <color name="auth_input_stroke">#48464B</color>

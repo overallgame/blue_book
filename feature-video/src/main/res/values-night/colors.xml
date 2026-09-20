@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- 深色模式：仅覆盖发布页使用的跟随色；播放页/评论弹层的 video_* 深色系固定不覆盖 -->
-    <color name="md_theme_surface">#141314</color>
-    <color name="md_theme_onSurface">#E6E1E2</color>
-    <color name="md_theme_onSurfaceVariant">#CAC5CB</color>
-    <color name="md_theme_outline">#938F95</color>
-    <color name="md_theme_surfaceContainer">#201F20</color>
-</resources>

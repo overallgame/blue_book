@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 深色模式：仅覆盖"跟随主题"的页面色；mine_*/author 头部等固定深色值不在此覆盖 -->
-    <color name="md_theme_onBackground">#E6E1E2</color>
-    <color name="md_theme_onPrimaryContainer">#413E44</color>
-    <color name="md_theme_onSurface">#E6E1E2</color>
-    <color name="md_theme_onSurfaceVariant">#CAC5CB</color>
-    <color name="md_theme_onSurfaceVariant_mediumContrast">#CEC9CF</color>
-    <color name="md_theme_outline">#938F95</color>
-    <color name="md_theme_primary">#FFFFFF</color>
-    <color name="md_theme_surface">#141314</color>
-    <color name="md_theme_surfaceContainer">#201F20</color>
-    <color name="md_theme_surfaceContainerLow">#1C1B1C</color>
 
     <!-- 资料编辑页卡片与分割线 -->
     <color name="profile_card_background">#2B2A2A</color>

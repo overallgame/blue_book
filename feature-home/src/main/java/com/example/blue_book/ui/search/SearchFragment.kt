@@ -178,10 +178,14 @@ class SearchFragment : Fragment() {
 	private fun ChipGroup.addChip(text: String, onClick: () -> Unit) {
 		val chip = Chip(requireContext()).apply {
 			this.text = text
+			// 跟随主题的色板统一在 lib-base（本模块的 R 里没有这些 id，库模块的 R 只含自己的资源），
+			// 故显式写 lib_base.R —— 与 VideoAdapter 取 text_on_dark_* 是同一写法
 			chipBackgroundColor = android.content.res.ColorStateList.valueOf(
-				requireContext().getColor(R.color.md_theme_surfaceContainerLow)
+				requireContext().getColor(com.example.blue_book.lib_base.R.color.md_theme_surfaceContainerLow)
 			)
-			setTextColor(requireContext().getColor(R.color.md_theme_onSurfaceVariant))
+			setTextColor(
+				requireContext().getColor(com.example.blue_book.lib_base.R.color.md_theme_onSurfaceVariant)
+			)
 			chipStrokeWidth = 0f
 			textSize = 13f
 		}

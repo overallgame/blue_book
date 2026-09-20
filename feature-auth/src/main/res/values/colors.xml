@@ -5,12 +5,4 @@
     <color name="auth_input_background">#F5F5F5</color>
     <color name="auth_input_stroke">#E0E0E0</color>
 
-    <color name="md_theme_onBackground">#1A1A1A</color>
-    <color name="md_theme_onSurface">#1A1A1A</color>
-    <color name="md_theme_onSurfaceVariant">#666666</color>
-    <color name="md_theme_onSurfaceVariant_mediumContrast">#444247</color>
-    <color name="md_theme_outline">#999999</color>
-    <color name="md_theme_surface">#FFFFFF</color>
-    <color name="md_theme_surfaceContainer">#F5F5F5</color>
-    <color name="md_theme_surfaceContainerHighest">#F0F0F0</color>
 </resources>

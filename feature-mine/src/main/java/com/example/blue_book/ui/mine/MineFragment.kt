@@ -167,7 +167,7 @@ class MineFragment : Fragment() {
 					true
 				}
 
-				R.id.menu_backLogin -> {
+				com.example.blue_book.lib_base.R.id.menu_backLogin -> {
 					viewModel.dispatch(MineIntent.Logout)
 					true
 				}

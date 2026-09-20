@@ -1,6 +1,9 @@
 <resources>
     <!--
-      Tab / 子 Tab 的文字按钮样式。
+      Tab / 子 Tab 的文字按钮样式。三个模块（app / feature-home / feature-mine）都用它，
+      故统一放在 lib-base —— 所有模块都依赖 lib-base，是唯一能放共享资源的地方。
+      此前每个模块各存一份、内容必须手工保持一致（feature-home 里还留着「两处内容必须相同」
+      的提醒），改一处要改三处。
 
       注意：横向**不要**加内边距。这类按钮可用宽度很窄（首页子 Tab 实测仅 103px），
       两个汉字 16sp 就要 64px，再加左右各 10dp 内边距刚好超出 → 文字折成两行。
@@ -9,6 +12,7 @@
       textColor 用 @drawable/navigation_item_selector，它本身是主题感知的
       （选中 md_theme_primary / 未选中 md_theme_onPrimaryContainer，都有夜间值），
       昼夜渲染应当完全一致——不要在 values-night 里写一份残缺的覆盖。
+      该 drawable 与本文件同在 lib-base（库模块的资源必须自洽）。
     -->
     <style name="RadioGroupButtonStyle">
         <item name="android:button">@null</item>
@@ -35,6 +39,7 @@
         <item name="android:paddingBottom">10dp</item>
     </style>
 
+    <!-- 去掉 MaterialButton 默认的 backgroundTint，让自定义 shape 背景色生效 -->
     <style name="NoMaterialButtonStyle" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@null</item>
     </style>

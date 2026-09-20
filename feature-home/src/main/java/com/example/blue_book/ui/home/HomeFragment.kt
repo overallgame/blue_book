@@ -84,7 +84,9 @@ class HomeFragment : Fragment() {
 	private fun initNavigationView() {
 		binding.mainPagerNavigationView.setNavigationItemSelectedListener { menuItem ->
 			when (menuItem.itemId) {
-				R.id.menu_backLogin -> {
+				// id 定义在 lib-base 的 menu/main_bottom_navigation.xml（本模块的菜单文件已删除），
+				// 库模块的 R 只含本模块资源，故显式写 lib_base.R
+				com.example.blue_book.lib_base.R.id.menu_backLogin -> {
 					// 简化为直接回到登录入口
 					TheRouter.build(RoutePath.AUTH).navigation(requireContext())
 					true

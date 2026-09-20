@@ -235,7 +235,8 @@ class MainActivity : AppCompatActivity(), IMainHost {
 		val selectorRes = if (darkPage) {
 			R.color.navigation_item_selector_on_dark
 		} else {
-			R.color.navigation_item_selector
+			// 该色板随共享样式一起在 lib-base，app 的 R 里没有这个 id
+		com.example.blue_book.lib_base.R.color.navigation_item_selector
 		}
 		val textColors = ContextCompat.getColorStateList(this, selectorRes) ?: return
 		tabTags.keys.forEach { id ->

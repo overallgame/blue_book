@@ -5,8 +5,8 @@
       因为库模块的资源必须自洽——只依赖 :app 里的色板会让 verifyReleaseResources 报找不到资源。
       取值对齐 app/src/main/res/values/colors.xml 与 values-night/colors.xml。
     -->
-    <color name="md_theme_onSurface">#1C1B1C</color>
-    <color name="md_theme_outline">#79767B</color>
+    <color name="md_theme_onSurface">#1A1A1A</color>
+    <color name="md_theme_outline">#999999</color>
 
     <!-- 公用卡片（pre_video_item_view）：跟随主题 -->
     <color name="lib_card_background">#FFFFFF</color>

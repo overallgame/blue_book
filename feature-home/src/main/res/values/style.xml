@@ -35,7 +35,7 @@
       搜索输入框（搜索页与搜索结果页共用，避免两处各写一份而慢慢走样）。
 
       高度 40dp 与圆角 20dp 配套：圆角等于高度一半才是真正的胶囊。
-      文字色用 onSurface 而不是 primary——primary 是强调色（浅色主题下是灰紫 #605D64），
+      文字色用 onSurface 而不是 primary——primary 是强调色（品牌蓝 #2A6AF2），
       输入框里用户自己敲的字应当是正文色。
 
       单行 + actionSearch：不加 inputType 时 EditText 可换行，回车会插入换行把文字顶出可视区；

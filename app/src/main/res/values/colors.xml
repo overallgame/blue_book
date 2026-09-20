@@ -1,51 +1,86 @@
 <resources>
-    <color name="md_theme_primary">#605D64</color>
+    <!--
+      浅色主题色板：纯中性灰 + 单一强调色。
+
+      2026-09-20 换色说明——原色板是以「灰色种子」生成的 M3 色阶，两处问题：
+        1. 中性色带明显的粉紫底：surface #FDF8F8（粉白）、surfaceContainer #F1EDED、
+           surfaceVariant #E6E1E7、primaryContainer #F4EEF6（淡紫）、tertiaryContainer #FCECF0（粉）。
+           压在品牌蓝上发脏，不像常规 App 的浅色主题。
+        2. primary 是灰的 #605D64，且被用作「重试」等动作文字（9 处），看起来像禁用态。
+
+      现在改成常规浅色主题的取色：白 / 中性灰分层、近黑正文、灰色次要文字、浅灰分割线；
+      品牌蓝只作强调色（primary）用在动作文字与水波纹上，不再由它派生任何 M3 色阶。
+
+      ★ 分层约定（改颜色前先读）：
+          surfaceContainer = 页面底（灰）   surface = 内容 / 卡片（白）
+        布局里就是这么用的，不要反向，否则卡片会从页面上「消失」。
+    -->
+    <!-- 强调色：品牌蓝。仅此一处用品牌色，用于「重试」等动作文字与 ?attr/colorPrimary 的水波纹 -->
+    <color name="md_theme_primary">#2A6AF2</color>
     <color name="md_theme_onPrimary">#FFFFFF</color>
-    <color name="md_theme_primaryContainer">#F4EEF6</color>
-    <color name="md_theme_onPrimaryContainer">#524F55</color>
-    <color name="md_theme_secondary">#605D60</color>
+    <color name="md_theme_primaryContainer">#EEEEEE</color>
+    <color name="md_theme_onPrimaryContainer">#666666</color>
+    <color name="md_theme_secondary">#666666</color>
     <color name="md_theme_onSecondary">#FFFFFF</color>
-    <color name="md_theme_secondaryContainer">#E7E2E5</color>
-    <color name="md_theme_onSecondaryContainer">#4A484B</color>
-    <color name="md_theme_tertiary">#675B5F</color>
+    <color name="md_theme_secondaryContainer">#EEEEEE</color>
+    <color name="md_theme_onSecondaryContainer">#1A1A1A</color>
+    <color name="md_theme_tertiary">#666666</color>
     <color name="md_theme_onTertiary">#FFFFFF</color>
-    <color name="md_theme_tertiaryContainer">#FCECF0</color>
-    <color name="md_theme_onTertiaryContainer">#584D50</color>
+    <color name="md_theme_tertiaryContainer">#EEEEEE</color>
+    <color name="md_theme_onTertiaryContainer">#1A1A1A</color>
     <color name="md_theme_error">#BA1A1A</color>
     <color name="md_theme_onError">#FFFFFF</color>
     <color name="md_theme_errorContainer">#FFDAD6</color>
     <color name="md_theme_onErrorContainer">#410002</color>
-    <color name="md_theme_background">#FDF8F8</color>
-    <color name="md_theme_onBackground">#1C1B1C</color>
-    <color name="md_theme_surface">#FDF8F8</color>
-    <color name="md_theme_onSurface">#1C1B1C</color>
-    <color name="md_theme_surfaceVariant">#E6E1E7</color>
-    <color name="md_theme_onSurfaceVariant">#48464B</color>
-    <color name="md_theme_outline">#79767B</color>
-    <color name="md_theme_outlineVariant">#CAC5CB</color>
+    <color name="md_theme_background">#FFFFFF</color>
+    <color name="md_theme_onBackground">#1A1A1A</color>
+    <!-- 内容 / 卡片层：纯白 -->
+    <color name="md_theme_surface">#FFFFFF</color>
+    <!-- 正文 -->
+    <color name="md_theme_onSurface">#1A1A1A</color>
+    <color name="md_theme_surfaceVariant">#F2F2F2</color>
+    <!-- 次要文字：白底 5.7:1，灰底 5.3:1，均过 WCAG AA -->
+    <color name="md_theme_onSurfaceVariant">#666666</color>
+    <!-- 提示 / 占位 / 弱化文字与图标（"暂无内容"、时间戳、输入框 hint） -->
+    <color name="md_theme_outline">#999999</color>
+    <!-- 分割线 / 搜索输入框描边。注意：它必须比 surfaceContainerHighest 深，
+         否则搜索框的描边会比填充还浅、轮廓内外翻转（bg_search_input.xml 依赖这个关系）。
+         目前实际用到它的只有搜索框描边——应用里的分割线各用自己的色（profile_divider 等）。 -->
+    <color name="md_theme_outlineVariant">#E0E0E0</color>
     <color name="md_theme_scrim">#000000</color>
-    <color name="md_theme_inverseSurface">#313030</color>
-    <color name="md_theme_inverseOnSurface">#F4F0F0</color>
-    <color name="md_theme_inversePrimary">#CAC5CC</color>
-    <color name="md_theme_primaryFixed">#E6E1E8</color>
-    <color name="md_theme_onPrimaryFixed">#1D1B20</color>
-    <color name="md_theme_primaryFixedDim">#CAC5CC</color>
-    <color name="md_theme_onPrimaryFixedVariant">#48464C</color>
-    <color name="md_theme_secondaryFixed">#E6E1E4</color>
-    <color name="md_theme_onSecondaryFixed">#1C1B1E</color>
-    <color name="md_theme_secondaryFixedDim">#C9C5C8</color>
-    <color name="md_theme_onSecondaryFixedVariant">#484649</color>
-    <color name="md_theme_tertiaryFixed">#EEDFE3</color>
-    <color name="md_theme_onTertiaryFixed">#21191C</color>
-    <color name="md_theme_tertiaryFixedDim">#D2C3C7</color>
-    <color name="md_theme_onTertiaryFixedVariant">#4E4447</color>
-    <color name="md_theme_surfaceDim">#DDD9D9</color>
-    <color name="md_theme_surfaceBright">#FDF8F8</color>
+    <color name="md_theme_inverseSurface">#1A1A1A</color>
+    <color name="md_theme_inverseOnSurface">#F5F5F5</color>
+    <color name="md_theme_inversePrimary">#E0E0E0</color>
+    <color name="md_theme_primaryFixed">#EEEEEE</color>
+    <color name="md_theme_onPrimaryFixed">#1A1A1A</color>
+    <color name="md_theme_primaryFixedDim">#E0E0E0</color>
+    <color name="md_theme_onPrimaryFixedVariant">#666666</color>
+    <color name="md_theme_secondaryFixed">#EEEEEE</color>
+    <color name="md_theme_onSecondaryFixed">#1A1A1A</color>
+    <color name="md_theme_secondaryFixedDim">#E0E0E0</color>
+    <color name="md_theme_onSecondaryFixedVariant">#666666</color>
+    <color name="md_theme_tertiaryFixed">#EEEEEE</color>
+    <color name="md_theme_onTertiaryFixed">#1A1A1A</color>
+    <color name="md_theme_tertiaryFixedDim">#E0E0E0</color>
+    <color name="md_theme_onTertiaryFixedVariant">#666666</color>
+    <color name="md_theme_surfaceDim">#DDDDDD</color>
+    <color name="md_theme_surfaceBright">#FFFFFF</color>
     <color name="md_theme_surfaceContainerLowest">#FFFFFF</color>
-    <color name="md_theme_surfaceContainerLow">#F7F3F3</color>
-    <color name="md_theme_surfaceContainer">#F1EDED</color>
-    <color name="md_theme_surfaceContainerHigh">#EBE7E7</color>
-    <color name="md_theme_surfaceContainerHighest">#E6E1E2</color>
+    <!-- 搜索输入框底、侧边抽屉底（衬在白页面上的浅灰块） -->
+    <color name="md_theme_surfaceContainerLow">#F7F7F7</color>
+    <!-- 页面底：首页瀑布流、消息、我的各列表、资料页等 -->
+    <color name="md_theme_surfaceContainer">#F5F5F5</color>
+    <color name="md_theme_surfaceContainerHigh">#F2F2F2</color>
+    <!-- 搜索输入框的填充（bg_search_input.xml） -->
+    <color name="md_theme_surfaceContainerHighest">#F0F0F0</color>
+
+    <!--
+      以下 _mediumContrast / _highContrast 两套值**没有任何引用**：
+      它们只被 values/theme_overlays.xml 与 values-night/theme_overlays.xml 里的
+      ThemeOverlay.AppTheme.MediumContrast / HighContrast 使用，而这两个 style
+      在布局、清单、代码里都搜不到引用（无人 apply）。属于 M3 主题模板的残留。
+      故本次换色未改动它们——它们不影响任何界面。要清理可连同 theme_overlays.xml 一起删。
+    -->
     <color name="md_theme_primary_mediumContrast">#444248</color>
     <color name="md_theme_onPrimary_mediumContrast">#FFFFFF</color>
     <color name="md_theme_primaryContainer_mediumContrast">#77737A</color>

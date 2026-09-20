@@ -1,7 +1,6 @@
 package com.example.blue_book.ui.video
 
 import com.example.blue_book.data.VideoCardInfo
-import com.example.blue_book.data.remote.video.VideoRemoteDataSource
 import com.example.blue_book.domain.repository.VideoRepository
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.udf.UdfViewModel
@@ -25,7 +24,6 @@ class VideoViewModel @Inject constructor(
 	private val fetchPlayUrl: FetchPlayUrlUseCase,
 	private val likeVideoUseCase: LikeVideoUseCase,
 	private val collectVideoUseCase: CollectVideoUseCase,
-	private val transcodeDataSource: VideoRemoteDataSource,
 	private val videoRepository: VideoRepository,
 	private val currentUser: CurrentUser,
 	private val interactionBus: VideoInteractionBus
@@ -168,7 +166,7 @@ class VideoViewModel @Inject constructor(
 	 */
 	private suspend fun checkTranscode(aid: Long, originMessage: String) {
 		repeat(MAX_TRANSCODE_POLLS) { attempt ->
-			val result = withContext(Dispatchers.IO) { transcodeDataSource.transcodeStatus(aid) }
+			val result = withContext(Dispatchers.IO) { videoRepository.transcodeStatus(aid) }
 			when {
 				result.isFailure -> return sendEffect(VideoUiEffect.ShowToast(originMessage))
 				result.getOrNull()!!.equals("DONE", true) ->

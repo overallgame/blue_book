@@ -35,5 +35,13 @@ dependencies {
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+
+    // 单元测试。此前 11 个模块里只有 :app 配了测试依赖、且三个测试文件全是脚手架，
+    // 所以「ViewModel 能在纯 JVM 上测」一直是声称、没被验证过。第一个真测试见
+    // src/test/.../MineLoveViewModelTest.kt。
+    // coroutines-test 是必需的：UDF 的 init 与 dispatch 都跑在 viewModelScope 上，
+    // 而它用 Dispatchers.Main.immediate —— 纯 JVM 测试里没有 Main，会直接抛异常。
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 

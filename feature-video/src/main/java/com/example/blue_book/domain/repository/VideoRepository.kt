@@ -18,6 +18,16 @@ interface VideoRepository {
 
 	suspend fun fetchPlayUrl(aid: Long, cid: Long): Result<String>
 
+	/**
+	 * 转码状态（服务端返回 "DONE" / "FAILED"，其余视为处理中）。
+	 *
+	 * 播放失败时轮询用。此前 VideoViewModel 是直接注入 VideoRemoteDataSource 拿这个能力的
+	 * ——因为本接口当时没有它，于是出现了「ViewModel 穿透到数据源」的分层穿透，
+	 * 而那个数据源的构造依赖 ApiGateway（要 Android Context），把这个 ViewModel
+	 * 整个拖出了纯 JVM 单测的范围。补在这里既修了分层，也让 VideoViewModel 可测。
+	 */
+	suspend fun transcodeStatus(videoId: Long): Result<String>
+
 	suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit>
 
 	suspend fun collectVideo(aid: Long, collected: Boolean): Result<Unit>

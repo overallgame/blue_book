@@ -41,6 +41,11 @@ class VideoRepositoryImpl @Inject constructor(
 		return remote.getPlayUrl(aid, cid)
 	}
 
+	/** 直接透传：服务端返回的就是 "DONE"/"FAILED" 这类状态串，没有 DTO 需要映射 */
+	override suspend fun transcodeStatus(videoId: Long): Result<String> {
+		return remote.transcodeStatus(videoId)
+	}
+
 	override suspend fun likeVideo(aid: Long, liked: Boolean): Result<Unit> {
 		return remote.likeVideo(aid, liked)
 	}

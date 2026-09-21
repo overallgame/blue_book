@@ -36,7 +36,10 @@ internal fun serverMessage(response: Response<*>): String? = try {
 	if (raw.isBlank()) {
 		null
 	} else {
-		val parsed = Gson().fromJson(raw, Map::class.java) as? Map<*, *>
+		// Gson().fromJson(raw, Map::class.java) 的返回类型已经是 Map<*, *>（平台类型），
+		// 原先那句 `as? Map<*, *>` 是多余的——编译器会直接报 "No cast needed"。
+		// 这里仍然用 ?. 取字段：平台类型可能为 null（raw 是 "null" 或标量时）。
+		val parsed = Gson().fromJson(raw, Map::class.java)
 		(parsed?.get("message") as? String)?.trim()?.takeIf { it.isNotEmpty() && it != "success" }
 	}
 } catch (_: Throwable) {

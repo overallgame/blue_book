@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.core.AuthenticationException
-import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.ServletRequestBindingException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -32,8 +31,10 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Any>> {
+        // fieldErrors 的元素本来就是 FieldError，原先的 `it as? FieldError` 是多余转换
+        // （编译器报 "No cast needed"）。defaultMessage 可能为 null，仍按原样兜成空串。
         val msg = ex.bindingResult.fieldErrors
-            .joinToString("; ") { (it as? FieldError)?.let { f -> "${f.field}: ${f.defaultMessage}" } ?: (it.defaultMessage ?: "") }
+            .joinToString("; ") { "${it.field}: ${it.defaultMessage ?: ""}" }
         return ResponseEntity.badRequest().body(ApiResponse.fail(14002, msg))
     }
 

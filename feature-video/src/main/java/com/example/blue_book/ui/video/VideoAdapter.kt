@@ -233,8 +233,10 @@ class VideoAdapter(
             binding.videoItemError.visibility = View.GONE
             binding.videoItemErrorRetry.setOnClickListener {
                 binding.videoItemError.visibility = View.GONE
-                val url = currentUrl ?: return@setOnClickListener
-                engine?.prepare(url)
+                // 改名避免遮蔽 bind() 里的 url（编译器报 "Name shadowed"）；
+                // 这里要的是"当前正在播的地址"，与新传入的 videoInfo.playUrl 不是一回事
+                val retryUrl = currentUrl ?: return@setOnClickListener
+                engine?.prepare(retryUrl)
                 engine?.play()
             }
 

@@ -36,4 +36,8 @@ dependencies {
     // pre_video_item_view.xml 使用：布局由本模块持有，依赖也要在本模块声明
     // （否则 lint 报 MissingClass，单独构建/预览本模块会失败）
     implementation("de.hdodenhof:circleimageview:3.1.0")
+
+    // scan/ScanCodeFormat.kt 是纯函数（无 Android 依赖），所以只要 junit，不需要 coroutines-test。
+    // 它是扫码的安全边界，测试必须穷举畸形与恶意输入——这是本模块第一个测试。
+    testImplementation("junit:junit:4.13.2")
 }

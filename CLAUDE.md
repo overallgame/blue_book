@@ -126,11 +126,24 @@ TheRouter 只用于**页面路由**（`@Route` + routeMap.json），不承担依
 
 ### 权限归属
 
+**权限随使用它的模块走**：模块自洽（单独构建时声明齐全），移除模块时权限随之消失。
+清单以各模块自己的 `AndroidManifest.xml` 为准（2026-09-20 更正：原文写的是"三权全归 :app"，
+与实现不符——实际只有 `INTERNET` 在 :app）。
+
 | 权限 | 所属模块 | 说明 |
 |------|---------|------|
-| `INTERNET` | `:app` | 壳工程统一声明 |
-| `READ_MEDIA_IMAGES` | `:app` | 壳工程统一声明 |
-| `READ_EXTERNAL_STORAGE` | `:app` | 兼容旧版本存储读取 |
+| `INTERNET` | `:app` | 壳工程声明；全部网络请求都经它 |
+| `ACCESS_NETWORK_STATE` | `:core-network` | 断网等待网络恢复用 |
+| `ACCESS_COARSE_LOCATION` | `:feature-home`、`:feature-video` | 本地流按城市过滤 |
+| `READ_MEDIA_IMAGES`、`READ_MEDIA_VISUAL_USER_SELECTED`、`READ_EXTERNAL_STORAGE` | `:feature-image` | 选图/裁剪；`READ_EXTERNAL_STORAGE` 兼容旧版本 |
+
+**代价（如实记下）**：审计全部权限需要翻所有模块的清单，没有单一入口。一条命令可汇总
+（必须按 `android:name` 抓而不是按行抓——`READ_EXTERNAL_STORAGE` 是跨行声明的，按行抓会漏）：
+
+```bash
+grep -rho 'android:name="android\.permission\.[A-Z_]*"' --include=AndroidManifest.xml . \
+  | grep -v build | sed 's/.*permission\.//;s/"//' | sort -u
+```
 
 ### 资源文件归属
 

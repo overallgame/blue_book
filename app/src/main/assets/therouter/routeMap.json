@@ -21,6 +21,13 @@
     "params": {}
   },
   {
+    "path": "/scan/entry",
+    "className": "com.example.blue_book.ui.scan.ScanActivity",
+    "action": "",
+    "description": "",
+    "params": {}
+  },
+  {
     "path": "/video/publish",
     "className": "com.example.blue_book.ui.publish.PublishActivity",
     "action": "",

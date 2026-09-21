@@ -224,7 +224,8 @@ class MineFragment : Fragment() {
 	private fun initTopActions() {
 		binding.mineScan.setOnClickListener {
 			guardLogin {
-				Toast.makeText(requireContext(), "扫一扫即将上线", Toast.LENGTH_SHORT).show()
+				// 跳转走路由：扫一扫是独立模块 feature-scan，本模块不依赖它
+				TheRouter.build(RoutePath.SCAN).navigation(requireContext())
 			}
 		}
 		binding.mineShare.setOnClickListener {

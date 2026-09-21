@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/md_theme_surface"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/scan_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_theme_surface"
+        android:minHeight="?attr/actionBarSize"
+        app:navigationIcon="@drawable/_chevron_left"
+        app:navigationIconTint="@color/md_theme_onSurface"
+        app:title="扫一扫"
+        app:titleCentered="true"
+        app:titleTextColor="@color/md_theme_onSurface" />
+
+    <!-- 第 1 步的占位：本步只验证「入口 → 页面 → 返回」这条链路通；
+         相机预览、权限、相册入口在第 3 步接入 -->
+    <TextView
+        android:id="@+id/scan_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="相机预览将在此处接入"
+        android:textColor="@color/md_theme_outline"
+        android:textSize="14sp" />
+
+</LinearLayout>

@@ -78,7 +78,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginStart="16dp"
-                    android:contentDescription="@null"
+                    android:contentDescription="扫一扫"
                     android:src="@drawable/_ic_scan" />
 
                 <ImageView
@@ -86,7 +86,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginStart="16dp"
-                    android:contentDescription="@null"
+                    android:contentDescription="分享"
                     android:src="@drawable/_ic_share_arrow" />
             </LinearLayout>
 

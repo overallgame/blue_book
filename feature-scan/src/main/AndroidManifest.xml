@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      权限按项目实际做法「随使用它的模块走」：CAMERA 留到第 3 步真正接相机时再声明——
+      现在声明一个用不到的敏感权限，只会让它出现在权限审计里，没有任何收益。
+    -->
+
+    <application>
+        <activity
+            android:name="com.example.blue_book.ui.scan.ScanActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>

@@ -47,6 +47,9 @@ object RoutePath {
 
 	/** 图片选择器 */
 	const val IMAGE_PICKER = "/image/picker"
+
+	/** 扫一扫（独立入口，我的页顶部图标进入） */
+	const val SCAN = "/scan/entry"
 }
 
 /**

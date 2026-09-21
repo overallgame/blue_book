@@ -23,6 +23,7 @@ import com.bumptech.glide.Glide
 import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.UserProfilePageBinding
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.router.ExtraKeys
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -62,7 +63,7 @@ class UserProfileEditFragment : Fragment() {
 		) { result ->
 			if (result.resultCode != AppCompatActivity.RESULT_OK) return@registerForActivityResult
 			val uri = result.data?.data ?: return@registerForActivityResult
-			when (result.data?.getStringExtra("tag")) {
+			when (result.data?.getStringExtra(ExtraKeys.EXTRA_IMAGE_TAG)) {
 				"avatar" -> {
 					// 用 Glide 而非 setImageURI：后者会按原始尺寸同步解码
 					// （12MP 照片在 ARGB_8888 下约 48MB），且 URI 不可读时会抛异常崩溃
@@ -136,7 +137,7 @@ class UserProfileEditFragment : Fragment() {
 
 	private fun openCustomImagePicker(tag: String) {
 		val intent = TheRouter.build(RoutePath.IMAGE_PICKER)
-			.withString("tag", tag)
+			.withString(ExtraKeys.EXTRA_IMAGE_TAG, tag)
 			.createIntent(requireContext())
 		pickImageLauncher.launch(intent)
 	}

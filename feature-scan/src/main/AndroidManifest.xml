@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-      权限按项目实际做法「随使用它的模块走」：CAMERA 留到第 3 步真正接相机时再声明——
-      现在声明一个用不到的敏感权限，只会让它出现在权限审计里，没有任何收益。
-    -->
+    <!-- 相机：实时扫码用。按项目实际做法「权限随使用它的模块走」——
+         本模块被移除时，这个权限自动消失，不需要去 :app 清理。
+         相册路径不需要它（媒体权限由 feature-image 自己处理），
+         所以权限被拒时相册是有效降级路径。 -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application>
         <activity

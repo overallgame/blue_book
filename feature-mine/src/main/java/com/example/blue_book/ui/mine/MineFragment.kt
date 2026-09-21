@@ -128,7 +128,7 @@ class MineFragment : Fragment() {
 		) { result ->
 			if (result.resultCode == AppCompatActivity.RESULT_OK) {
 				val uri = result.data?.data ?: return@registerForActivityResult
-				val tag = result.data?.getStringExtra("tag")
+				val tag = result.data?.getStringExtra(ExtraKeys.EXTRA_IMAGE_TAG)
 				when (tag) {
 					"avatar" -> {
 						// 用 Glide 而非 setImageURI：后者会按原始尺寸同步解码
@@ -305,7 +305,7 @@ class MineFragment : Fragment() {
 
 	private fun openCustomImagePicker(tag: String) {
 		val intent = TheRouter.build(RoutePath.IMAGE_PICKER)
-			.withString("tag", tag)
+			.withString(ExtraKeys.EXTRA_IMAGE_TAG, tag)
 			.createIntent(requireContext())
 		pickImageLauncher.launch(intent)
 	}

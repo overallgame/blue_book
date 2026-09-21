@@ -68,7 +68,7 @@ class GalleryFragment : Fragment() {
 		emptyView = view.findViewById(R.id.gallery_empty)
 		recyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
 		galleryAdapter = GalleryAdapter { uri ->
-			(activity as? ImagePickerActivity)?.openCrop(uri, tag)
+			(activity as? ImagePickerActivity)?.openCropOrFinish(uri, tag)
 		}
 		recyclerView.adapter = galleryAdapter
 
@@ -215,7 +215,7 @@ class GalleryFragment : Fragment() {
 			val uri = pendingCameraUri
 			pendingCameraUri = null
 			if (success && uri != null) {
-				(activity as? ImagePickerActivity)?.openCrop(uri, tag)
+				(activity as? ImagePickerActivity)?.openCropOrFinish(uri, tag)
 			}
 		}
 	}

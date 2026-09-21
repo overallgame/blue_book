@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("com.google.dagger.hilt.android")
     id("kotlin-kapt")
 }
 
@@ -24,13 +25,25 @@ android {
     }
 }
 
-// 第 1 步只接通模块与路由，所以依赖只留真正用到的：
-// 尚无 Hilt（第 3 步有 ViewModel 时再加）、尚无 core-network（第 4 步接校验接口时再加）。
-// 相机/条码库（ML Kit）同样等到第 3 步。
 dependencies {
     kapt("cn.therouter:apt:1.3.0")
     implementation(project(":lib-base"))
     implementation("com.google.android.material:material:1.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+    // 相机：预览 + 帧分析。本步（3a）只走相册路径，相机在 3b 接入；
+    // 依赖先声明齐，避免同一个功能分两次动构建文件。
+    implementation("androidx.camera:camera-core:1.3.4")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+
+    // 条码识别。★ MlKitBarcodeScanner 是全项目唯一 import ML Kit 的地方——
+    // 换 ZXing 只改那一个文件（BarcodeScanner 是接口，见 ui/scan/BarcodeScanner.kt）
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
+    implementation("com.google.dagger:hilt-android:2.48.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.48.1")
 
     testImplementation("junit:junit:4.13.2")
 }

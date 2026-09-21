@@ -71,4 +71,21 @@ object ExtraKeys {
 
 	/** 关注列表类型：following=我关注的，followers=我的粉丝 */
 	const val EXTRA_FOLLOW_TYPE = "EXTRA_FOLLOW_TYPE"
+
+	/**
+	 * 图片选择器回传的调用方标记（`ImagePickerActivity` 原样回传，调用方据此区分"这张图是干嘛用的"）。
+	 *
+	 * 收进这里是因为它原本是三处硬编码的字面量 `"tag"`（MineFragment 的传参与回读、
+	 * ImagePickerActivity 的 EXTRA_TAG），靠"字面量恰好相同"维系——改一处不改另一处不会报错，
+	 * 只会静默拿不到结果。
+	 */
+	const val EXTRA_IMAGE_TAG = "tag"
+
+	/**
+	 * 图片选择器：为 true 时**跳过裁剪页**，选中后直接回传原图。
+	 *
+	 * 给"要的是原图本身"的调用方用（扫码就是——裁剪既多一步，又可能把二维码裁坏或重压缩）。
+	 * 默认 false，即保持既有行为（选图 → 裁剪 → 回传），现有调用方不受影响。
+	 */
+	const val EXTRA_SKIP_CROP = "EXTRA_SKIP_CROP"
 }

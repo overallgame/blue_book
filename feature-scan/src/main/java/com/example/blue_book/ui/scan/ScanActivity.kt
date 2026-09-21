@@ -1,13 +1,22 @@
 package com.example.blue_book.ui.scan
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -29,10 +38,13 @@ import javax.inject.Inject
  * 本页**不判登录**：入口 `mine_scan` 已经套了 `guardLogin`，那是既定的约束位置。
  *
  * 职责划分（见设计方案 4.0 的关注点拆分）：
- * - 本类负责 C1（相机/权限，3b 接）与"把帧/图交给识别器"这一步
+ * - 本类负责 C1（相机预览、权限、帧的生命周期）与"把帧/图交给识别器"
  * - 识别器是 C2（[BarcodeScanner]，可换库）
  * - 归类是 C3（[com.example.blue_book.scan.ScanCodeFormat]，纯函数）
- * - 编排是 C4/C5（[ScanViewModel]，它不认识 CameraX 也不认识 ML Kit）
+ * - 编排是 C4/C5（[ScanViewModel]），它不认识 CameraX 也不认识 ML Kit
+ *
+ * **相机释放不用手写 onPause**：`bindToLifecycle` 把用例绑到 Activity 生命周期上，
+ * 切后台/来电时 CameraX 自动停掉采集，回前台自动恢复——这正是用它而不是手动管相机的理由。
  */
 @AndroidEntryPoint
 @Route(path = RoutePath.SCAN)
@@ -44,12 +56,20 @@ class ScanActivity : AppCompatActivity() {
 	@Inject
 	lateinit var scanner: BarcodeScanner
 
+	private var cameraProvider: ProcessCameraProvider? = null
+
 	private val pickImage = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
 		if (result.resultCode != RESULT_OK) return@registerForActivityResult
 		val uri = result.data?.data ?: return@registerForActivityResult
 		decodeFromGallery(uri)
+	}
+
+	private val requestCamera = registerForActivityResult(
+		ActivityResultContracts.RequestPermission()
+	) { granted ->
+		if (granted) startCamera() else showPermissionDenied()
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +80,7 @@ class ScanActivity : AppCompatActivity() {
 		binding.scanToolbar.setNavigationOnClickListener { finish() }
 		binding.scanPickGallery.setOnClickListener { launchImagePicker() }
 		collectEffects()
+		ensureCameraPermission()
 	}
 
 	/**
@@ -68,7 +89,85 @@ class ScanActivity : AppCompatActivity() {
 	 */
 	override fun onDestroy() {
 		super.onDestroy()
+		cameraProvider?.unbindAll()
 		scanner.close()
+	}
+
+	// ───────────────────────── 相机（3b）─────────────────────────
+
+	private fun ensureCameraPermission() {
+		val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+			PackageManager.PERMISSION_GRANTED
+		if (granted) startCamera() else requestCamera.launch(Manifest.permission.CAMERA)
+	}
+
+	/**
+	 * 权限被拒时的降级：**不退出页面**，保留相册入口。
+	 *
+	 * 这正是方案里把"相册识别"当成必须项的原因——否则相机权限一被拒，整个扫码功能就死了。
+	 * （完整的降级 UX——区分"还能再问一次"与"只能去设置"、加跳设置按钮——在第 5 步的状态机里做。）
+	 */
+	private fun showPermissionDenied() {
+		binding.scanPreview.visibility = View.GONE
+		binding.scanPlaceholder.text = "没有相机权限，无法实时扫码\n可点下方「从相册选择图片」识别图里的二维码"
+	}
+
+	private fun startCamera() {
+		val future = ProcessCameraProvider.getInstance(this)
+		future.addListener({
+			runCatching { future.get() }
+				.onSuccess { provider ->
+					cameraProvider = provider
+					bindUseCases(provider)
+				}
+				.onFailure { error ->
+					// 设备无相机 / 相机被占用：同样的降级，不崩
+					Log.w(TAG, "相机启动失败", error)
+					showPermissionDenied()
+				}
+		}, ContextCompat.getMainExecutor(this))
+	}
+
+	private fun bindUseCases(provider: ProcessCameraProvider) {
+		val preview = Preview.Builder().build().also {
+			// CameraX 1.3 的 Preview 只有 setSurfaceProvider、没有 getter，
+			// 因此 Kotlin 不把它暴露成属性，只能显式调方法
+			it.setSurfaceProvider(binding.scanPreview.surfaceProvider)
+		}
+
+		// KEEP_ONLY_LATEST：识别比采集慢，积压旧帧只会让画面里早就移走的码仍被处理
+		val analysis = ImageAnalysis.Builder()
+			.setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+			.build()
+			.also { it.setAnalyzer(ContextCompat.getMainExecutor(this), createAnalyzer()) }
+
+		provider.unbindAll()
+		try {
+			provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
+			binding.scanPreview.visibility = View.VISIBLE
+			binding.scanPlaceholder.visibility = View.GONE
+		} catch (error: IllegalArgumentException) {
+			// 没有后置相机等：降级而不是崩
+			Log.w(TAG, "相机用例绑定失败", error)
+			showPermissionDenied()
+		}
+	}
+
+	private fun createAnalyzer() = ImageAnalysis.Analyzer { image ->
+		// 分析器是同步回调，识别是挂起的；在 lifecycleScope 里做，
+		// 这样离开页面时未完成的识别会被取消。image 必须在处理完后关闭，否则后续帧拿不到。
+		lifecycleScope.launch {
+			try {
+				scanner.analyze(image).firstOrNull()?.let { payload ->
+					viewModel.dispatch(ScanIntent.OnCodeDetected(payload))
+				}
+			} catch (error: Throwable) {
+				// 单帧识别失败不该影响后续帧：记日志继续
+				Log.w(TAG, "单帧识别失败", error)
+			} finally {
+				image.close()
+			}
+		}
 	}
 
 	// ─────────────── 相册路径（3a 先做它：同一套解码，但可以确定性验证）───────────────

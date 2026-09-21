@@ -1,6 +1,8 @@
 package com.example.blue_book.ui.scan
 
 import android.graphics.Bitmap
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -23,6 +25,11 @@ class MlKitBarcodeScanner @Inject constructor() : BarcodeScanner {
 	// 延迟创建：识别器初始化有成本，而相册路径可能一直用不到相机路径
 	private val client by lazy { BarcodeScanning.getClient() }
 
+	// ImageProxy.getImage() 在 CameraX 1.3 里标着 @ExperimentalGetImage，
+	// 要取 MediaImage 喂给 ML Kit 就必须显式承接这个实验性 API。
+	// 用 androidx 的 @OptIn（不是 kotlin 的）：CameraX 的实验性标记是 androidx 的
+	// RequiresOptIn，kotlin 的 @OptIn 不认它、会被静默忽略。
+	@OptIn(ExperimentalGetImage::class)
 	override suspend fun analyze(image: ImageProxy): List<String> {
 		// image.image 在某些输出格式下可能为 null（CameraX 的约定），此时没有可识别的帧
 		val mediaImage = image.image ?: return emptyList()

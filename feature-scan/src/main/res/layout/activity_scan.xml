@@ -18,7 +18,7 @@
         app:titleCentered="true"
         app:titleTextColor="@color/md_theme_onSurface" />
 
-    <!-- 相机预览容器：3b 接入 CameraX 的 PreviewView 放这里 -->
+    <!-- 相机预览容器：CameraX 的 PreviewView 会在 3b 运行时创建并加进来 -->
     <FrameLayout
         android:id="@+id/scan_preview_container"
         android:layout_width="match_parent"
@@ -26,12 +26,21 @@
         android:layout_weight="1"
         android:background="@color/page_dark_background">
 
+        <!-- 相机预览（3b）。权限被拒或无相机时保持 INVISIBLE，此时显示下面的提示 -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/scan_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="invisible" />
+
         <TextView
             android:id="@+id/scan_placeholder"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="相机预览将在此处接入"
+            android:gravity="center"
+            android:paddingHorizontal="32dp"
+            android:text="正在准备相机…"
             android:textColor="@color/text_on_dark_tertiary"
             android:textSize="14sp" />
     </FrameLayout>

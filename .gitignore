@@ -1,14 +1,78 @@
-# ==================== 构建产物（Gradle / Android） ====================
-.gradle
+# ==========================================================================
+# .gitignore —— blue_book
+#
+# 规则分两类，改的时候对号入座：
+#   ① 目录级：整个目录不入库（构建产物、IDE、工具缓存、密钥目录、运行时数据）
+#   ② 模式级：按名字/扩展名兜住**散落在各处**的文件（日志、密钥文件、环境变量）
+#
+# ★ 两个容易踩的点：
+#   1. 目录级规则**不会取消跟踪已在库里的文件**——它只影响未跟踪的新文件。
+#      要让已跟踪的文件退出跟踪，必须 `git rm --cached`（.idea 那次就是这么做的）。
+#   2. 密钥这类东西**两类都要留**：目录级盖住 keystore/，模式级盖住被人放到别处的 .jks。
+#      只写目录级会在"密钥换了个地方放"时失守。
+#
+# ★ 关于"看起来没用的规则"：captures/、app/release/、.cxx/ 等当前在磁盘上都不存在。
+#   这是**预防性**的，不是死规则——删掉它们等于把这些目录将来出现时的风险重新打开。
+#   所以本文件只做去重与归类，不删保护性规则。
+# ==========================================================================
+
+# ── ① 目录级：构建产物 ───────────────────────────────────────────────────
+# AGP 把产物写在各自模块的 build/ 下；build/ 不带前导斜杠，因此匹配任意层级的 build/
+.gradle/
 build/
 .kotlin/
-.externalNativeBuild
-.cxx
-/captures
-captures
+.cxx/
+.externalNativeBuild/
+captures/
 app/release/
 
-# 打包产物与中间文件（AGP 默认输出在 build/ 内，这里兜住自定义输出目录）
+# ── ① 目录级：IDE 与工具缓存 ────────────────────────────────────────────
+# .idea 整体不入库（2026-09-21 改）。原先只忽略本机状态、放行 vcs.xml 与
+# inspectionProfiles/Project_Default.xml 两处"项目级配置"；实际看过内容后确认都没价值：
+#   · vcs.xml 只有一行 VCS 映射，IDE 会自行生成
+#   · Project_Default.xml 是 Android Studio 写出的**默认**档（46 行全是
+#     Compose/Glance 预览检查的 enabled_by_default 默认值，无本项目定制）
+# 将来若真要共享某个 IDE 配置，按 "/.idea/*" + "!/.idea/xxx" 加反向例外——
+# 反向例外必须配合 "/.idea/*"（忽略目录内容）才生效；写成 ".idea" 会让 ! 全部失效。
+.idea/
+.vscode/
+# 本仓库的 AI 助手工作目录（plans 等），属本机状态
+.zcode/
+
+# Python 字节码缓存（tools/ 下的检查脚本会生成）
+__pycache__/
+
+# ── ① 目录级：密钥目录 ──────────────────────────────────────────────────
+# 这个目录只放签名文件，整目录不入库（文件名不再逐个排除）
+keystore/
+
+# ── ① 目录级：后端运行时数据 ────────────────────────────────────────────
+# 上传文件、HLS 转码产物、封面
+upload/
+# 日志目录；不带前导斜杠，因此 backend/logs/ 一并盖住（原先单列一行是冗余的）
+logs/
+
+# ── ② 模式级：日志与崩溃转储 ────────────────────────────────────────────
+*.log
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# ── ② 模式级：密钥与本地配置（绝不能入库）────────────────────────────────
+# 扩展名兜底：密钥文件被放到 keystore/ 之外时也要拦住
+*.jks
+*.keystore
+*.p12
+*.pem
+signing.properties
+secrets.properties
+# Android SDK 路径等机器相关配置
+local.properties
+# 环境变量（DB/JWT/Redis 口令走环境变量，见 backend/src/main/resources/application.yml）
+.env
+.env.*
+
+# ── ② 模式级：打包产物与中间文件 ────────────────────────────────────────
 *.apk
 *.aab
 *.ap_
@@ -18,55 +82,15 @@ app/release/
 # Gradle Wrapper 的 jar 必须入库，否则 clone 后无法构建
 !gradle/wrapper/gradle-wrapper.jar
 
-# ==================== 日志与崩溃转储 ====================
-*.log
-hs_err_pid*
-replay_pid*
-*.hprof
-logs/
-backend/logs/
+# ── ② 模式级：内嵌数据库文件（H2 等）────────────────────────────────────
+*.mv.db
+*.trace.db
 
-# ==================== IDE / 编辑器 ====================
-# 忽略 IDE 本机状态（workspace.xml / dbnavigator.xml / misc.xml 等），只保留项目级配置。
-# 注意：反向例外必须配合 "/.idea/*"（忽略目录内容）才生效；
-# 若写成 ".idea"（忽略整个目录），后面的 !/.idea/xxx 全部无效。
-/.idea/*
-!/.idea/inspectionProfiles/
-!/.idea/codeStyles/
-!/.idea/vcs.xml
+# ── ② 模式级：编辑器与系统临时文件 ──────────────────────────────────────
 *.iml
-.vscode/
 *.swp
 *~
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# ==================== 本地配置与密钥（绝不入库） ====================
-# Android SDK 路径等机器相关配置
-local.properties
-/local.properties
-# 签名与证书
-*.jks
-*.keystore
-*.p12
-*.pem
-signing.properties
-secrets.properties
-# 环境变量文件（DB/JWT/Redis 口令走环境变量，见 backend/src/main/resources/application.yml）
-.env
-.env.*
-
-# ==================== 运行时数据（后端） ====================
-# 上传文件、HLS 转码产物、封面
-upload/
-# 内嵌数据库文件（H2 等）
-*.mv.db
-*.trace.db
-
-# ==================== 工具目录 ====================
-.zcode
-
-# Python（tools/ 下的检查脚本会生成字节码缓存）
-__pycache__/
 *.pyc

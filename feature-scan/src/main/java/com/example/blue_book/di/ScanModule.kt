@@ -1,11 +1,14 @@
 package com.example.blue_book.di
 
+import com.example.blue_book.data.repository.ScanRepositoryImpl
+import com.example.blue_book.domain.repository.ScanRepository
 import com.example.blue_book.ui.scan.BarcodeScanner
 import com.example.blue_book.ui.scan.MlKitBarcodeScanner
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -22,4 +25,13 @@ abstract class ScanModule {
 	 */
 	@Binds
 	abstract fun bindBarcodeScanner(impl: MlKitBarcodeScanner): BarcodeScanner
+
+	/**
+	 * 仓库绑定。★ 这里加 `@Singleton` 是对的，与上面识别器的理由正好相反——
+	 * 判断依据是"**这个实例自己持有需要释放的资源吗**"：识别器持有 ML Kit 客户端且必须能被关闭；
+	 * 仓库只持有一个无状态的 `ScanRemoteDataSource`，共享它没有副作用。
+	 */
+	@Binds
+	@Singleton
+	abstract fun bindScanRepository(impl: ScanRepositoryImpl): ScanRepository
 }

@@ -24,6 +24,21 @@ class FileTooLargeException : BusinessException(13001, "文件大小超过限制
 class ChunkMissingException : BusinessException(13002, "分片缺失，请重新上传缺失的分片")
 class InvalidFileTypeException : BusinessException(13003, "不支持的文件格式")
 
+// 扫一扫相关 15001-15999
+//
+// 「这不是小蓝书的二维码」必须由**服务端**回答，而不是客户端先解析出 id 再传过来（设计方案 6.2）：
+// 判据放在服务端，后端将来加新码格式时老版本 App 依然能扫出来（老版本 App 是改不动的）。
+class NotBlueBookCodeException : BusinessException(15001, "这不是小蓝书的二维码")
+
+/**
+ * 码指向的内容存在、但当前不可见（例如审核中）。
+ * 与 404 的区别是「有，你看不到」对「没有」——一律按 404 处理会把审核中的内容说成"已删除"。
+ */
+class ScanContentForbiddenException : BusinessException(15002, "该内容暂时无法查看")
+
+/** 码本身合法，但指向的内容已经不在了。message 由调用方给出具体对象名。 */
+class ScanTargetNotFoundException(message: String) : BusinessException(15003, message)
+
 // 通用 14001-14999
 class ForbiddenException : BusinessException(14001, "无权执行此操作")
 class ServerBusyException : BusinessException(14999, "服务器繁忙，请稍后再试")

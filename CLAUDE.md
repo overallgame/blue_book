@@ -391,3 +391,17 @@ mainHost?.providesBottomNav   // 宿主是否常驻底部导航，决定页面�
    欠债被消掉却还留在清单里也会报错，避免清单腐烂。**新增 ViewModel 时先跑它。**
    已被它拦下并修掉的一例：`VideoViewModel` 曾直接注入 `VideoRemoteDataSource` 取转码状态，
    根因是 `VideoRepository` 缺 `transcodeStatus` 方法；补上接口方法后即回可测范围。
+8. **跨语言契约检查脚本**：`python tools/check_scan_code_contract.py` 比对客户端
+   `lib-base/.../scan/ScanCodeFormat.kt` 与后端 `backend/.../scan/ScanCodeFormat.kt` 里
+   `CODE_HOST` / 路径段 / 长度上限 / `HTTP_URL` 正则是否一致。
+   站内码（二维码里那串 URL）的编解码**无法跨工程共享代码**（Android 工程与 `:backend`
+   是两个独立编译单元），所以是刻意的两份实现；不一致的后果不是崩溃而是**自己分享出去的码
+   自己扫不出来**，只有真机上扫了才发现。**改任何一侧都要同时改另一侧**，
+   且服务端 host 白名单只加不删（删了等于让已发出的码失效）。
+9. **改完资源要跑 release**：`./gradlew assembleDebug` **不会**跑 `verifyReleaseResources`，
+   而它只在 release 变体执行。资源类改动（尤其把资源挪进/挪出 `:lib-base`）必须
+   `./gradlew assembleRelease` 才算验过——上一轮 `NoMaterialButtonStyle` 迁进 `:lib-base`
+   缺 Material 依赖，debug 一路绿灯、release 直接失败。
+10. **`clean` 前先离开 build 目录**：在 `xxx/build/...` 里执行过命令后，该目录会成为一个
+    进程的当前工作目录，Windows 上无法删除——`./gradlew clean` 会以
+    `Unable to delete directory` 失败（本项目已踩两次）。跑构建前先 `cd` 回仓库根。

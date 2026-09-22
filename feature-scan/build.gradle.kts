@@ -28,6 +28,10 @@ android {
 dependencies {
     kapt("cn.therouter:apt:1.3.0")
     implementation(project(":lib-base"))
+    // 第 4 步接 /api/v2/scan/resolve 需要 ApiGateway（Retrofit/OkHttp 都在 core-network）。
+    // 层次是 feature → core → lib-base；扫码结果要跳的播放页/作者主页**走路由**，
+    // 不引入任何 feature 之间的横向编译依赖（设计方案 4.4 的"稳定契约"）
+    implementation(project(":core-network"))
     implementation("com.google.android.material:material:1.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
@@ -46,4 +50,10 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
 
     testImplementation("junit:junit:4.13.2")
+    // ScanViewModel / ScanMappers / 失败分类的测试要驱动 viewModelScope，用 TestDispatcher 换主线程调度器
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    // ScanApiIntegrationTest：真 HTTP 上验证路径、@Query 编码、信封解析与错误映射。
+    // 版本跟 core-network 的 okhttp 对齐（4.11.0），避免测试类路径上解析出两份 okhttp。
+    // 不能用 JDK 的 com.sun.net.httpserver：Android 单元测试以 android.jar 为基准，com.sun.* 不可见
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
 }

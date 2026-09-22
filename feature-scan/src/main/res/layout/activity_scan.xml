@@ -18,7 +18,7 @@
         app:titleCentered="true"
         app:titleTextColor="@color/md_theme_onSurface" />
 
-    <!-- 相机预览容器：CameraX 的 PreviewView 会在 3b 运行时创建并加进来 -->
+    <!-- 相机预览容器 -->
     <FrameLayout
         android:id="@+id/scan_preview_container"
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
         android:layout_weight="1"
         android:background="@color/page_dark_background">
 
-        <!-- 相机预览（3b）。权限被拒或无相机时保持 INVISIBLE，此时显示下面的提示 -->
+        <!-- 相机预览。相机没起来时保持 invisible，此时显示下面的 placeholder 文案 -->
         <androidx.camera.view.PreviewView
             android:id="@+id/scan_preview"
             android:layout_width="match_parent"
@@ -43,9 +43,86 @@
             android:text="正在准备相机…"
             android:textColor="@color/text_on_dark_tertiary"
             android:textSize="14sp" />
+
+        <!-- 取景引导：只在"相机在跑且没有别的事要说"时显示（见 ScanActivity.render） -->
+        <TextView
+            android:id="@+id/scan_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="24dp"
+            android:text="将二维码放入取景框内"
+            android:textColor="@color/text_on_dark_tertiary"
+            android:textSize="14sp"
+            android:visibility="gone" />
     </FrameLayout>
 
-    <!-- 相册入口：既是"从图里识别"的入口，也是相机权限被拒时的降级路径 -->
+    <!--
+      提示卡片：失败原因 + 出路。
+      文案与按钮**全部由代码从 ScanUiState 推出**（ScanNotice.kt），这里只是壳——
+      同一个位置在不同场景下是不同的文案与按钮（权限 / 网络 / 已删除 / 外部链接…），
+      写死在布局里就会变成"布局一份、代码一份"的双真相，而失败矩阵正是靠它们保证完整的。
+    -->
+    <LinearLayout
+        android:id="@+id/scan_notice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_theme_surfaceContainer"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/scan_notice_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/md_theme_onSurface"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/scan_notice_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/md_theme_onSurfaceVariant"
+            android:textIsSelectable="true"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/scan_notice_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/scan_notice_primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:textColor="@color/md_theme_primary"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/scan_notice_secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:textColor="@color/md_theme_onSurfaceVariant"
+                android:textSize="15sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 相册入口：既是"从图里识别"的入口，也是相机不可用时的降级路径 -->
     <TextView
         android:id="@+id/scan_pick_gallery"
         android:layout_width="match_parent"

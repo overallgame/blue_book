@@ -22,7 +22,10 @@ class GlobalExceptionHandler {
         val status = when (ex.code) {
             in 10001..10005 -> HttpStatus.UNAUTHORIZED
             in 11001..11999 -> HttpStatus.NOT_FOUND
-            14001 -> HttpStatus.FORBIDDEN
+            14001, 15002 -> HttpStatus.FORBIDDEN
+            // 扫一扫：码合法但内容不在了。15001（不是本站码）刻意不在此列——它落到 else 的 400，
+            // 「这不是小蓝书的二维码」在语义上就是"入参不是我们认的东西"，不是权限也不是 404
+            15003 -> HttpStatus.NOT_FOUND
             14999 -> HttpStatus.INTERNAL_SERVER_ERROR
             else -> HttpStatus.BAD_REQUEST
         }

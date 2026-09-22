@@ -27,6 +27,7 @@ import com.example.blue_book.scan.ScanTarget
 import com.therouter.TheRouter
 import com.therouter.router.Route
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -161,6 +162,12 @@ class ScanActivity : AppCompatActivity() {
 				scanner.analyze(image).firstOrNull()?.let { payload ->
 					viewModel.dispatch(ScanIntent.OnCodeDetected(payload))
 				}
+			} catch (cancel: CancellationException) {
+				// 取消必须透传。离开页面时 lifecycleScope 被取消，这是**正常流程**而不是失败——
+				// 真机实测踩到：原写法 catch(Throwable) 把 JobCancellationException 记成了
+				// W 级「单帧识别失败」，既污染日志，又让协程"正常完成"、父作用域观察不到取消。
+				// 规则与 `UdfViewModel.runResult` 一致。
+				throw cancel
 			} catch (error: Throwable) {
 				// 单帧识别失败不该影响后续帧：记日志继续
 				Log.w(TAG, "单帧识别失败", error)
@@ -196,7 +203,13 @@ class ScanActivity : AppCompatActivity() {
 			// 用完**不 recycle**：ML Kit 的 InputImage 包着这个 bitmap，
 			// 而"回收了还在用的 bitmap"正是本项目裁剪页踩过的坑（trying to use a recycled bitmap）。
 			// 一次性的页面让 GC 处理即可。
-			val payloads = runCatching { scanner.analyze(bitmap) }.getOrElse { error ->
+			// 用显式 try/catch 而**不是** runCatching：后者也捕 Throwable，
+			// 会把取消当成"识别失败"吞掉（`PublishViewModel` 的注释里对同一坑有说明）。
+			val payloads = try {
+				scanner.analyze(bitmap)
+			} catch (cancel: CancellationException) {
+				throw cancel
+			} catch (error: Throwable) {
 				Log.w(TAG, "识别失败", error)
 				emptyList()
 			}

@@ -39,7 +39,7 @@
 
 ## 架构概览
 
-Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP 8.5.2**、**Java 17**。采用 **Clean Architecture** + MVVM + 自定义 **UDF（单向数据流）**，已拆分为 **11 个模块**。所有 UI 文案、注释、API 返回信息均为中文。Git 用户：`overfloatGame`。
+Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP 8.5.2**、**Java 17**。采用 **Clean Architecture** + MVVM + 自定义 **UDF（单向数据流）**，已拆分为 **12 个 Android 模块**（`settings.gradle.kts` 里另有一个独立的 `:backend` JVM 子项目）。所有 UI 文案、注释、API 返回信息均为中文。Git 用户：`overfloatGame`。
 
 ### 模块总览
 
@@ -48,13 +48,14 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 
 ── 业务功能层（底部4个Tab） ──
 :feature-home        ← 首页：瀑布流发现页 + 搜索 + 热搜榜
-:feature-video       ← 视频：全屏沉浸播放 + 评论
+:feature-video       ← 视频：全屏沉浸播放 + 评论 + 发布
 :feature-message     ← 消息：占位页
 :feature-mine        ← 我的：个人中心 + 资料编辑
 
-── 独立功能模块 ──
+── 独立功能模块（从 Tab 或其它页面经路由进入）──
 :feature-auth        ← 登录注册：AuthEntry + Login + Register
 :feature-image       ← 图片选择：Gallery + Crop + ImagePickerActivity
+:feature-scan        ← 扫一扫：相机识别 + 相册识别 + 站内码格式契约
 
 ── 核心能力层 ──
 :core-network        ← ApiGateway 门面 + TokenHolder + 拦截器 + Retrofit API
@@ -62,7 +63,8 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 :core-datastore      ← IDataStore/AppDataStore（DataStore 封装） + Room 数据库
 
 ── 基础层 ──
-:lib-base            ← UDF 基类 + 公共 bean + Provider 接口 + 路由常量
+:lib-base            ← UDF 基类 + 公共 bean + Provider 接口 + 路由常量 + 跨模块字符串契约
+                        （`RoutePath` / `ExtraKeys` / `scan/ScanCodeFormat`）
 ```
 
 ### 模块依赖层次
@@ -147,10 +149,22 @@ grep -rho 'android:name="android\.permission\.[A-Z_]*"' --include=AndroidManifes
 
 ### 资源文件归属
 
-- **drawable**：各模块独立持有 layout 引用的 drawable，无跨模块引用
-- **styles**：各模块独立管理所需样式
-- **colors**：各 feature 模块持有实际使用的颜色值，`:app` 持有完整 Material 色板和主题
-- **主题**：`AppTheme` 保留在 `:app`，各 feature 模块的 `AndroidManifest.xml` 仅声明 Activity
+**跨模块共享的资源统一放 `lib-base`**，各模块只持有自己独有的。这不是偏好而是库模块的硬约束：
+库模块的资源必须自洽（若只依赖 `:app` 的色板，aapt 会报找不到资源），而所有模块都依赖
+`lib-base`，所以它是**唯一**能放共享资源的地方。
+
+| 资源 | 共享部分（`lib-base`） | 各模块自持 |
+|---|---|---|
+| colors | `values/colors.xml` + `values-night/colors.xml`：整套色板（`md_theme_*` 47 个基础色）+ 跨模块语义色（`brand_blue` / `brand_on_blue` / `text_on_dark_*` / `page_dark_background`） | 只放本模块独有的装饰色（feature-auth 的输入框色、feature-video 的播放页深色常量、feature-mine 的封面与资料页色、feature-message 的消息图标圆底） |
+| styles | `values/style.xml`：三个共享样式 `RadioGroupButtonStyle` / `RadioGroupButtonStyle1` / `NoMaterialButtonStyle` | 本模块独有样式（feature-home 的 `SearchInputStyle`/`SearchActionStyle`、feature-mine 的 `ShapeAppearance.Profile.Thumb`、feature-video 的 `CircleImageStyle`） |
+| drawable | 共享图形：返回箭头 `_chevron_left` / `_chevron_left_on_dark`、`_chevron_left1`、`default_avatar`、`navigation_item_selector`、`ic_launcher_background` | 本模块独有的图形 |
+
+- **主题**：`AppTheme` 保留在 `:app`；各 feature 模块的 `AndroidManifest.xml` 仅声明 Activity
+- **改色只改一处**：色板已从"每个模块各存一份、由资源合并优先级决定谁生效"收敛为单一定义。
+  历史上 `feature-message` 的 `md_theme_onSurfaceVariant` 就曾与 app 差一个色阶、**静默失效**无人察觉
+- `feature-home` / `feature-scan` / `feature-image` 已经**没有** `colors.xml`（全部用共享色板）
+- `:app` 的 `colors.xml` 现在只剩两套**无人引用**的 `_mediumContrast` / `_highContrast`
+  （M3 模板残留，文件内有注释说明），要清理可连同 `theme_overlays.xml` 一起删
 
 ## UDF 模式（`:lib-base/udf/`）
 
@@ -348,7 +362,25 @@ mainHost?.providesBottomNav   // 宿主是否常驻底部导航，决定页面�
 
 1. **R 类路径**：各模块的命名空间为 `com.example.blue_book.<module>`，R 类为 `com.example.blue_book.<module>.R`。迁移文件时必须同时更新源代码中的 `import ...R` 和 `import ...databinding.*`
 2. **ViewBinding**：layout 文件迁入模块后，DataBinding 生成的类在模块自己的包下，需要同步更新 import
-3. **跨模块资源**：共享 drawable 当前采用复制策略（各模块各持一份）。后续计划提取到 `:lib-base`
+3. **跨模块资源**：共享资源已统一到 `:lib-base`（见「资源文件归属」一节的表），
+   **不要再复制一份到各模块**。历史上色板复制过 6 份、样式 3 份、`default_avatar` 3 份
+   （其中一份还是完全不同的图），每次都是"改了一处、另一处静默失效"。新增共享资源请加到 `:lib-base`。
 4. **kapt 缓存**：新增模块或大改依赖后，如遇 kapt `NonExistentClass` 错误，执行 `./gradlew clean assembleDebug`
 5. **跨模块依赖**：feature 模块间靠「接口下沉 lib-base + Hilt 绑定 + 构造/字段注入」，
    禁止直接 `implementation(project(":feature-*"))`，也不要用服务定位器（`TheRouter.get`）绕开依赖声明
+6. **单元测试**：`lib-base` / `feature-mine` / `feature-scan` 已配 `testImplementation`
+   （junit + coroutines-test）。跑单个模块 `./gradlew :feature-mine:testDebugUnitTest`，全跑 `./gradlew test`。
+   约定：**方法名英文、断言消息中文**——JUnit 4 没有 `@DisplayName`，失败时被人读到的是断言消息。
+   测 ViewModel 需要 `MainDispatcherRule`：UDF 的 init 与 dispatch 都跑在 `viewModelScope` 上，
+   纯 JVM 里没有 `Dispatchers.Main` 会直接抛异常。Fake 的写法可参考
+   `feature-mine/src/test/.../FakeVideoProvider.kt`（未用到的接口方法**故意抛异常**，
+   这样走错数据来源会立刻炸，而不是静默拿到空数据）。
+   **可测的前提是分层干净**：ViewModel 的构造签名里不要出现下层/平台类型（见第 7 条）。
+7. **分层检查脚本**：`python tools/check_viewmodel_layer.py` 扫所有 `@HiltViewModel` 的构造签名，
+   禁止 `*RemoteDataSource` / `*Api` / `*Dao` / `ApiGateway` / `Context` / `TokenHolder` /
+   `OkHttp*` / `ExoPlayer*` 这类依赖——它们要么让 ViewModel **无法在纯 JVM 上构造**，
+   要么说明**分层被穿透**（ViewModel 越过 Repository 直接够到了数据层/平台）。
+   脚本内登记了已知欠债（当前 2 条，附原因与修法）：出现**新违规**退出码为 1，
+   欠债被消掉却还留在清单里也会报错，避免清单腐烂。**新增 ViewModel 时先跑它。**
+   已被它拦下并修掉的一例：`VideoViewModel` 曾直接注入 `VideoRemoteDataSource` 取转码状态，
+   根因是 `VideoRepository` 缺 `transcodeStatus` 方法；补上接口方法后即回可测范围。

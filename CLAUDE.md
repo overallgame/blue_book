@@ -29,6 +29,13 @@
 
 # 生成 Hilt/Dagger 组件（用于检查 DI 编译是否通过）
 ./gradlew kaptDebugKotlin
+
+# ★ 改动资源（styles/colors/drawable/values）后必须跑这个
+#   debug 变体**不做**库资源自洽校验：:lib-base:verifyReleaseResources 等任务只在 release 跑。
+#   只跑 assembleDebug 会漏掉"库模块里引用了它没声明的库的资源"这类错误——
+#   实际踩过：把 parent="Widget.MaterialComponents.Button" 的样式搬进 lib-base，
+#   而 lib-base 没声明 Material，debug 一路绿灯、release 才炸。
+./gradlew assembleRelease
 ```
 
 ## Git 提交规范

@@ -36,6 +36,12 @@ dependencies {
     // pre_video_item_view.xml 使用：布局由本模块持有，依赖也要在本模块声明
     // （否则 lint 报 MissingClass，单独构建/预览本模块会失败）
     implementation("de.hdodenhof:circleimageview:3.1.0")
+    // 同上一条规矩：values/style.xml 里的 NoMaterialButtonStyle 以
+    // `parent="Widget.MaterialComponents.Button"` 继承 Material 的样式，所以本模块必须自己声明 Material。
+    // 缺它的后果只在 **release** 变体暴露：`:lib-base:verifyReleaseResources` 会报
+    // "resource style/Widget.MaterialComponents.Button not found"，
+    // 而 `assembleDebug` 不跑这个校验任务，所以 debug 构建一路绿灯。
+    implementation("com.google.android.material:material:1.12.0")
 
     // scan/ScanCodeFormat.kt 是纯函数（无 Android 依赖），所以只要 junit，不需要 coroutines-test。
     // 它是扫码的安全边界，测试必须穷举畸形与恶意输入——这是本模块第一个测试。

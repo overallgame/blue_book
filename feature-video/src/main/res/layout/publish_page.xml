@@ -86,6 +86,61 @@
             </LinearLayout>
         </FrameLayout>
 
+        <!--
+          上次未完成的上传横幅（跨进程续传的入口）。
+          只在本地账本里查到未完成任务时显示；文案里的百分比由本地分片账本算出，不等网络。
+          动作是"填回表单"而不是"直接续传"——发布需要标题/描述，且上传完不发布只会在服务端
+          留下一个没人认领的文件（见 PublishUiState.resumable 的说明）。
+        -->
+        <LinearLayout
+            android:id="@+id/publish_resumable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@color/md_theme_surfaceContainer"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/publish_resumable_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/md_theme_onSurface"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/publish_resumable_continue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="继续"
+                    android:textColor="@color/md_theme_primary"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/publish_resumable_dismiss"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="忽略"
+                    android:textColor="@color/md_theme_onSurfaceVariant"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </LinearLayout>
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -150,6 +205,20 @@
                 android:text="0%"
                 android:textColor="@color/md_theme_onSurfaceVariant"
                 android:textSize="12sp" />
+
+            <!-- 取消上传：上传动辄几分钟，没有出口的进度条等于把用户锁在页面里 -->
+            <TextView
+                android:id="@+id/publish_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="取消"
+                android:textColor="@color/md_theme_primary"
+                android:textSize="13sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView

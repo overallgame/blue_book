@@ -32,4 +32,9 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+
+    // 验证 MIGRATION_2_3 手写的建表 SQL 与 Room 从实体推导的 schema 一致：
+    // 纯 JVM 测不了（需要真 SQLite）。版本与 :app 的 androidTest 保持一致
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
 }

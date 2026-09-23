@@ -79,3 +79,28 @@ class NetworkException(
 		}
 	}
 }
+
+/**
+ * 这次失败**值不值得重试**。
+ *
+ * 判据只有一条：只有网络类与 5xx 值得重试。其余（400/403/404，以及业务码如 15001「不是小蓝书的码」、
+ * 13002「分片缺失」）都是"请求本身有问题"——重试必然还是同样结果，
+ * 给用户一个「重试」按钮等于骗他多按一次。
+ *
+ * 认不出的 Throwable **按可重试处理**：与其丢下一句"未知错误"又没有出路，
+ * 不如让他重试一次（重试的成本远低于"卡在这一步没法动"）。
+ *
+ * 放在这里而不是各模块自己实现，是因为消费方已经有两个了（扫码校验的失败分类、
+ * 分片上传的分片重试），而"哪些错误该重试"恰恰是最容易被抄成两份、然后慢慢分叉的判断——
+ * 扫码那边为它写了 8 条用例，抄一份就等于那 8 条只保护了一半。
+ *
+ * 注意 `NetworkException.code` 同时承载两种来源：**HTTP 状态码**（`httpFailure`）
+ * 与**业务码**（2xx 响应体里 `code != 0`），所以下面既有等值比较也有区间比较。
+ */
+fun Throwable.isRetryableNetworkFailure(): Boolean {
+	val code = (this as? NetworkException)?.code ?: return true
+	return code == NetworkException.CODE_NET_ERROR ||
+		code == NetworkException.CODE_TIMEOUT ||
+		code == NetworkException.CODE_SERVER_ERROR ||
+		code in 500..599
+}

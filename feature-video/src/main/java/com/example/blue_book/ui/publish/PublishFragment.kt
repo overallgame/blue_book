@@ -41,7 +41,7 @@ class PublishFragment : Fragment() {
 				uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 			)
 		}
-		viewModel.dispatch(PublishIntent.SelectMedia(uri))
+		viewModel.dispatch(PublishIntent.SelectMedia(uri.toString()))
 	}
 
 	/** 定位权限：拒绝不阻塞发布，仅使视频不带地区 */
@@ -60,8 +60,32 @@ class PublishFragment : Fragment() {
 		initWindowInsets()
 		initMediaPicker()
 		initSubmit()
+		initResumableBanner()
+		initCancel()
 		observeViewModel()
 		requestLocationPermissionIfNeeded()
+		// 查一次本地账本里有没有上次没传完的
+		viewModel.dispatch(PublishIntent.Init)
+	}
+
+	/** 上次未完成上传的横幅：继续（填回表单）/ 忽略（作废掉） */
+	private fun initResumableBanner() {
+		binding.publishResumableContinue.setOnClickListener {
+			viewModel.dispatch(PublishIntent.OnContinueResumable)
+		}
+		binding.publishResumableDismiss.setOnClickListener {
+			viewModel.dispatch(PublishIntent.OnDismissResumable)
+		}
+	}
+
+	/**
+	 * 取消上传。
+	 *
+	 * 走 [PublishViewModel.requestCancel] 这个**直接方法**而不是 `dispatch`：UDF 的 intent
+	 * 由单一 collector 串行消费，取消如果排队排在上传后面，等它被处理时上传早就结束了。
+	 */
+	private fun initCancel() {
+		binding.publishCancel.setOnClickListener { viewModel.requestCancel() }
 	}
 
 	/** 进入发布页时静默申请定位权限（用于发布时带上城市） */
@@ -119,11 +143,26 @@ class PublishFragment : Fragment() {
 						}
 
 						val uploading = state.phase == PublishPhase.UPLOADING
-						binding.publishProgressGroup.visibility = if (uploading || state.progress > 0) View.VISIBLE else View.GONE
+						val publishing = state.phase == PublishPhase.PUBLISHING
+						binding.publishProgressGroup.visibility =
+							if (uploading || publishing || state.progress > 0) View.VISIBLE else View.GONE
 						binding.publishProgress.setProgressCompat(state.progress, true)
-						binding.publishProgressText.text = "${state.progress}%"
+						// 分片传完到 publish 返回之间还有一段时间（定位 + 一次网络往返），
+						// 用文案表明还在做事，而不是留一个停在 100% 的进度条
+						binding.publishProgressText.text = if (publishing) "发布中…" else "${state.progress}%"
+						// 取消只在**上传阶段**给：此时服务端已经落了一些分片，取消要连带 abort；
+						// 而 publish 一旦发出就没法撤回了（服务端可能已经插了行），给了按钮反而是骗人
+						binding.publishCancel.visibility = if (uploading) View.VISIBLE else View.GONE
 						binding.publishSubmit.isEnabled = !state.isBusy
 						binding.publishSubmit.alpha = if (state.isBusy) 0.5f else 1f
+
+						val resumable = state.resumable
+						binding.publishResumable.visibility =
+							if (resumable != null && !state.isBusy) View.VISIBLE else View.GONE
+						if (resumable != null) {
+							binding.publishResumableText.text =
+								"上次有一条未完成的上传（已传 ${resumable.progress}%）：${resumable.fileName}"
+						}
 					}
 				}
 				launch {

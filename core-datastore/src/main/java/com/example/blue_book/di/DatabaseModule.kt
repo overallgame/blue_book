@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.blue_book.datastore.AppDataStore
 import com.example.blue_book.datastore.IDataStore
 import com.example.blue_book.room.AppDatabase
+import com.example.blue_book.room.dao.UploadSessionDao
 import com.example.blue_book.room.dao.UserDao
 import dagger.Module
 import dagger.Provides
@@ -29,5 +30,10 @@ object DatabaseModule {
 	@Provides
 	fun provideUserDao(appDatabase: AppDatabase): UserDao {
 		return appDatabase.userDao()
+	}
+
+	@Provides
+	fun provideUploadSessionDao(appDatabase: AppDatabase): UploadSessionDao {
+		return appDatabase.uploadSessionDao()
 	}
 }

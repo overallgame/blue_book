@@ -69,12 +69,20 @@ KNOWN_DEBT = {
         "依赖 MessageRemoteDataSource。feature-message 没有 domain/repository 层，"
         "要修得先给它补一层 Repository——比 VideoViewModel 那次大，尚未做。"
     ),
-    "PublishViewModel": (
-        "依赖 PublishRemoteDataSource + @ApplicationContext Context。"
-        "RemoteDataSource 那部分可以照 VideoViewModel 的办法收进 Repository；"
-        "Context 是给 LocationHelper.currentCity 用的（平台能力），要修得先给定位抽接口。"
-    ),
 }
+
+
+def strip_comments(text):
+    """去掉注释与 KDoc。
+
+    必须做这一步：构造参数的**注释**里常常会提到 Context/DataStore 这些词
+    （例如"平台细节收在实现里，本类因此不认识 Context"），
+    不剥注释就会把解释性的文字当成依赖——本项目刚踩过：`PublishViewModel` 明明已经
+    不依赖 Context 了，却因为参数上写了一句解释而被继续判定为欠债。
+    """
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
+    text = re.sub(r"//[^\n]*", " ", text)
+    return text
 
 
 def viewmodel_constructor_signatures():
@@ -109,7 +117,7 @@ def viewmodel_constructor_signatures():
                     buf.append(ch)
                     i += 1
                 rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
-                yield name, rel, "".join(buf)
+                yield name, rel, strip_comments("".join(buf))
 
 
 def main():

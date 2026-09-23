@@ -36,5 +36,13 @@ dependencies {
     kapt("com.github.bumptech.glide:compiler:4.13.2")
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+
+    // 本模块第一个测试源集：上传编排（并发/续传/进度/重试策略）在纯 JVM 上测——
+    // 内容源换成字节数组，HTTP 用 MockWebServer。相机、文件 provider 这些不可测的部分
+    // 已经被隔到 UriUploadSource 一个文件里
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
+    // 发布页的 ViewModel 测试要驱动 viewModelScope，用 TestDispatcher 换掉主线程调度器
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 

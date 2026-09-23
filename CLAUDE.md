@@ -225,7 +225,14 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 ## 数据存储层（`:core-datastore`）
 
 - **IDataStore / AppDataStore**：通用 key-value 封装（putString/getString/putInt/getInt/putBoolean/putLong/remove/clear），底层用 DataStore Preferences
-- **Room**：`AppDatabase`（版本 1）→ `UserDao` → `UserEntity`（表名 `user`，主键 phone）
+- **Room**：`AppDatabase`（**版本 3**）→ 三张表：
+  - `UserEntity`（表名 `user`，主键 phone）—— 登录态，`UserDao`
+  - `UploadSessionEntity`（`upload_session`，主键 uri）+ `UploadPartEntity`（`upload_part`，复合主键 uri+part_index）
+    —— 本地上传会话与分片账本，`UploadSessionDao`；用于**跨进程续传**与**指纹缓存**
+    （服务端也能回答"传到哪了"，但这张表让"进页面立刻看到进度"不必等一次网络往返）
+  - 加表要同步写 `MIGRATION_*` 并跑 `:core-datastore:connectedDebugAndroidTest`
+    （`UploadMigrationTest` 会造一个旧版本库、让 Room 自己跑迁移并校验 schema——
+    手写 SQL 与实体对不上的话，用户是"一升级就崩"，纯 JVM 测不出来）
 - **IUserStore**：lib-base 定义的存储接口，由 `UserStoreProviderImpl` 实现，绑定见 `StoreModule`（`@Binds`）
 - **Hilt DI**：`DatabaseModule` 提供 IDataStore、AppDatabase、UserDao
 
@@ -235,7 +242,7 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 
 | 模块 | Hilt Module | 提供内容 |
 |------|-----------|---------|
-| `:core-datastore` | `DatabaseModule` | IDataStore、AppDatabase、UserDao |
+| `:core-datastore` | `DatabaseModule` / `StoreModule` | IDataStore、AppDatabase、UserDao、UploadSessionDao；`@Binds` IUserStore、IUploadSessionStore |
 | `:core-network` | 无（@Inject constructor 自动装配） | ApiGateway、TokenHolder、TokenInterceptor、TokenAuthenticator |
 | `:feature-auth` | `AuthRepositoryModule` | `@Binds AuthRepositoryImpl → AuthRepository` |
 | `:feature-mine` | `RepositoryModule` | `@Binds UserRepositoryImpl → UserRepository` |
@@ -387,10 +394,17 @@ mainHost?.providesBottomNav   // 宿主是否常驻底部导航，决定页面�
    禁止 `*RemoteDataSource` / `*Api` / `*Dao` / `ApiGateway` / `Context` / `TokenHolder` /
    `OkHttp*` / `ExoPlayer*` 这类依赖——它们要么让 ViewModel **无法在纯 JVM 上构造**，
    要么说明**分层被穿透**（ViewModel 越过 Repository 直接够到了数据层/平台）。
-   脚本内登记了已知欠债（当前 2 条，附原因与修法）：出现**新违规**退出码为 1，
+   脚本内登记了已知欠债（当前 1 条，附原因与修法）：出现**新违规**退出码为 1，
    欠债被消掉却还留在清单里也会报错，避免清单腐烂。**新增 ViewModel 时先跑它。**
-   已被它拦下并修掉的一例：`VideoViewModel` 曾直接注入 `VideoRemoteDataSource` 取转码状态，
-   根因是 `VideoRepository` 缺 `transcodeStatus` 方法；补上接口方法后即回可测范围。
+   已被它拦下并修掉的两例：
+   - `VideoViewModel` 曾直接注入 `VideoRemoteDataSource` 取转码状态，根因是 `VideoRepository`
+     缺 `transcodeStatus` 方法；补上接口方法后即回可测范围
+   - `PublishViewModel` 曾依赖 `@ApplicationContext Context`（给定位与构造内容源用），
+     代价是**发布页的编排完全测不了**——而它承载的恰好是"取消要真的停掉""publish 只调一次"
+     这类有真实后果的规则。把两处平台能力收进 `LocationProvider` / `UploadSourceFactory`
+     之后，构造签名里再没有任何平台类型（连 `Uri` 都换成了字符串）
+   注意脚本会**剥掉注释**再匹配：构造参数的注释里常提到 Context/DataStore 这些词，
+   不剥就会把解释性文字当成依赖（`PublishViewModel` 就因此被误报过一次）
 8. **跨语言契约检查脚本**：`python tools/check_scan_code_contract.py` 比对客户端
    `lib-base/.../scan/ScanCodeFormat.kt` 与后端 `backend/.../scan/ScanCodeFormat.kt` 里
    `CODE_HOST` / 路径段 / 长度上限 / `HTTP_URL` 正则是否一致。
@@ -405,3 +419,7 @@ mainHost?.providesBottomNav   // 宿主是否常驻底部导航，决定页面�
 10. **`clean` 前先离开 build 目录**：在 `xxx/build/...` 里执行过命令后，该目录会成为一个
     进程的当前工作目录，Windows 上无法删除——`./gradlew clean` 会以
     `Unable to delete directory` 失败（本项目已踩两次）。跑构建前先 `cd` 回仓库根。
+11. **注释里别写 `/*`**：Kotlin 的块注释**可以嵌套**，所以在 KDoc 正文里写
+    `` `/api/file/**` `` 会开一层嵌套注释、吃掉本该闭合外层注释的那个 `*/`，
+    报错是 `Unclosed comment` 且指向**文件末尾**（离真正错处很远）。
+    用 `python tools/check_kotlin_comment_nesting.py` 一秒钟定位（它会报出文件:行）。

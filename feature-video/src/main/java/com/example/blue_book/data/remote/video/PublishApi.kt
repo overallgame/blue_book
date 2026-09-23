@@ -4,10 +4,12 @@ import com.example.blue_book.network.data.ApiResponse
 import com.example.blue_book.data.remote.video.dto2.PublishRequestDto
 import com.example.blue_book.data.remote.video.dto2.UploadInitRequestDto
 import com.example.blue_book.data.remote.video.dto2.UploadInitResponseDto
+import com.example.blue_book.data.remote.video.dto2.UploadPartsResponseDto
 import com.example.blue_book.data.remote.video.dto2.Video2Dto
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -30,6 +32,23 @@ interface PublishApi {
 		@Query("uploadId") uploadId: String,
 		@Query("chunkIndex") chunkIndex: Int,
 		@Part file: MultipartBody.Part
+	): Response<ApiResponse<Any>>
+
+	/**
+	 * 只读查询权威分片状态。
+	 *
+	 * 与 init 分工不同：init 会创建/复用会话（**有副作用**），
+	 * 而"进发布页看一眼上次传到哪了"不该产生任何副作用。
+	 */
+	@GET("/api/file/upload/parts")
+	suspend fun listParts(
+		@Query("uploadId") uploadId: String
+	): Response<ApiResponse<UploadPartsResponseDto>>
+
+	/** 放弃上传：立刻释放服务端分片磁盘，不必等 24 小时的过期清理 */
+	@POST("/api/file/upload/abort")
+	suspend fun abortUpload(
+		@Query("uploadId") uploadId: String
 	): Response<ApiResponse<Any>>
 
 	@POST("/api/file/upload/complete")

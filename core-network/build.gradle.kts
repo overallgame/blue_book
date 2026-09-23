@@ -35,6 +35,10 @@ dependencies {
     api("com.squareup.retrofit2:retrofit:2.9.0")
     api("com.squareup.retrofit2:converter-gson:2.9.0")
     api("com.google.code.gson:gson:2.10.1")
+
+    // 本模块第一个测试源集：`isRetryableNetworkFailure` 是纯函数（NetworkException 不依赖 Android），
+    // 而它有两个消费方（扫码校验的失败分类、分片上传的分片重试），值得被穷举钉住
+    testImplementation("junit:junit:4.13.2")
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
 }

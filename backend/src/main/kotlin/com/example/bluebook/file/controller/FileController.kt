@@ -68,7 +68,7 @@ class FileController(
     fun listParts(@RequestParam uploadId: String): ApiResponse<UploadPartsResponse> =
         ApiResponse.ok(chunkUploadService.listParts(currentUserId(), uploadId))
 
-    /** 放弃上传：立刻释放服务端磁盘，不必等 24 小时的过期清理 */
+    /** 放弃上传：立刻释放服务端磁盘，不必等过期清理 */
     @PostMapping("/upload/abort")
     fun abortUpload(@RequestParam uploadId: String): ApiResponse<Any> {
         chunkUploadService.abortUpload(currentUserId(), uploadId)

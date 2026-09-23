@@ -34,7 +34,8 @@ import java.util.UUID
  * ## 并发约束
  *
  * 客户端按 3 片并发上传，所以：
- * 1. 会话行只在 init/续传时 `touch`——过期是 24 小时、一次上传是分钟级，
+ * 1. 会话行只在 init/续传时 `touch`——过期窗口是 48 小时
+ *    （`ScheduledTasks.EXPIRED_UPLOAD_HOURS`）、一次上传是分钟级，
  *    init 时的 touch 已把会话保鲜得足够久，不必每片都 UPDATE（同一行连续 UPDATE 会争行锁）
  * 2. 分片流式落盘，不整片读进堆（3 片并发下 `file.bytes` 会让堆上是 3×分片大小）
  * 3. 分片序号必须落在 `[0, totalChunks)`：越界的分片永远不会进入合并，只会占盘
@@ -88,7 +89,7 @@ class ChunkUploadService(
         if (pending.isPresent) {
             val session = pending.get()
             if (session.chunkSize == chunkSize && session.totalChunks == request.totalChunks) {
-                // 续传也算一次活动：推进 updatedAt，否则 24 小时的过期清理会把
+                // 续传也算一次活动：推进 updatedAt，否则过期清理会把
                 // 正在续传的会话连同已传分片一起删掉
                 uploadSessionRepository.touch(session.id)
                 return UploadInitResponse(
@@ -245,7 +246,7 @@ class ChunkUploadService(
         )
     }
 
-    /** 放弃上传：立刻释放服务端磁盘，不必等 24 小时的过期清理 */
+    /** 放弃上传：立刻释放服务端磁盘，不必等过期清理 */
     fun abortUpload(userId: Long, uploadId: String) {
         val session = requireOwnedSession(userId, uploadId)
         if (session.status == UploadStatus.DONE) {

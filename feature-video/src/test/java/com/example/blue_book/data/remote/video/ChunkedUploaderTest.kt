@@ -324,7 +324,7 @@ class ChunkedUploaderTest {
 
         job.cancelAndJoin()
 
-        assertEquals("取消后要主动收掉服务端会话，别让分片占盘等 24 小时清理", 1, server.abortCount.get())
+        assertEquals("取消后要主动收掉服务端会话，别让分片占盘等过期清理", 1, server.abortCount.get())
     }
 
 

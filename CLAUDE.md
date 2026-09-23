@@ -225,11 +225,14 @@ ViewModel 继承 `UdfViewModel<I, S, E>`，提供以下能力：
 ## 数据存储层（`:core-datastore`）
 
 - **IDataStore / AppDataStore**：通用 key-value 封装（putString/getString/putInt/getInt/putBoolean/putLong/remove/clear），底层用 DataStore Preferences
-- **Room**：`AppDatabase`（**版本 3**）→ 三张表：
+- **Room**：`AppDatabase`（**版本 4**，`MIGRATION_1_2` / `MIGRATION_2_3` / `MIGRATION_3_4`）→ 三张表：
   - `UserEntity`（表名 `user`，主键 phone）—— 登录态，`UserDao`
   - `UploadSessionEntity`（`upload_session`，主键 uri）+ `UploadPartEntity`（`upload_part`，复合主键 uri+part_index）
     —— 本地上传会话与分片账本，`UploadSessionDao`；用于**跨进程续传**与**指纹缓存**
-    （服务端也能回答"传到哪了"，但这张表让"进页面立刻看到进度"不必等一次网络往返）
+    （服务端也能回答"传到哪了"，但这张表让"进页面立刻看到进度"不必等一次网络往返）。
+    未完成会话的**保留窗口是 48 小时、两端共享**：后端 `ScheduledTasks.EXPIRED_UPLOAD_HOURS`、
+    客户端 `UploadSessionRecord.kt` 的 `UPLOAD_SESSION_RETENTION_HOURS`——改一边就要改另一边，
+    否则发布页会提示一个服务端已经清掉的续传（点下去从 0 重传）
   - 加表要同步写 `MIGRATION_*` 并跑 `:core-datastore:connectedDebugAndroidTest`
     （`UploadMigrationTest` 会造一个旧版本库、让 Room 自己跑迁移并校验 schema——
     手写 SQL 与实体对不上的话，用户是"一升级就崩"，纯 JVM 测不出来）

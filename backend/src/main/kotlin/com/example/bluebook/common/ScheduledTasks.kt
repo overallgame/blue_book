@@ -41,8 +41,14 @@ class ScheduledTasks(
          */
         const val STALE_PROCESSING_MINUTES = 120L
 
-        /** 未完成上传会话的保留时长（按最后活动时间计，见 ChunkUploadService） */
-        const val EXPIRED_UPLOAD_HOURS = 24L
+        /**
+         * 未完成上传会话的保留时长（按最后活动时间计，见 ChunkUploadService）。
+         *
+         * 48 小时是**与客户端共享的契约**：客户端也用它判断"上次没传完的那条还值不值得提示续传"
+         * （`lib-base/data/UploadSessionRecord.kt` 里的 `UPLOAD_SESSION_RETENTION_HOURS`）。两边不等
+         * 也不至于出错——客户端多提示一次、服务端其实已清空时，续传会退化成全新上传——但会让提示失准。
+         */
+        const val EXPIRED_UPLOAD_HOURS = 48L
     }
 
     @Transactional

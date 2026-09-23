@@ -294,7 +294,7 @@ class UploadApiTest {
         assertFalse(newUploadId == oldUploadId, "分片契约变了就该换一个会话，而不是复用")
         assertTrue(
             uploadSessionRepository.findById(oldUploadId).isEmpty,
-            "旧会话必须被作废（否则它的分片目录再没人认领，只能等 24 小时清理）"
+            "旧会话必须被作废（否则它的分片目录再没人认领，只能等过期清理）"
         )
         assertFalse(
             File("$STORAGE/chunks/$oldUploadId").exists(),
@@ -524,7 +524,7 @@ class UploadApiTest {
         }
 
         assertTrue(uploadSessionRepository.findById(uploadId).isEmpty, "会话行要删掉")
-        assertFalse(File("$STORAGE/chunks/$uploadId").exists(), "分片目录要立刻释放，不必等 24 小时清理")
+        assertFalse(File("$STORAGE/chunks/$uploadId").exists(), "分片目录要立刻释放，不必等过期清理")
     }
 
     @Test

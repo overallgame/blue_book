@@ -117,6 +117,24 @@ class PublishViewModelTest {
 	}
 
 	@Test
+	fun `init drops a session that is past the retention window`() = runTest {
+		// 服务端 48 小时后连分片一起清掉；本地还留着这条的话，横幅会承诺一件做不到的事
+		seedUnfinishedSession(
+			doneParts = 3, totalParts = 5, uploadId = "u-old",
+			updatedAt = System.currentTimeMillis() - 49L * 60 * 60 * 1000
+		)
+		val vm = viewModel()
+
+		vm.dispatch(PublishIntent.Init)
+
+		assertNull("过期的会话不该再提示续传", vm.uiState.value.resumable)
+		assertNull(
+			"本地账本也要清掉，免得它一直占着「最近一条未完成会话」的位置",
+			store.getSession(videoUri)
+		)
+	}
+
+	@Test
 	fun `continue puts the file back into the form so the user can publish`() = runTest {
 		seedUnfinishedSession(doneParts = 2, totalParts = 5, uploadId = "u-old")
 		val vm = viewModel()
@@ -143,7 +161,7 @@ class PublishViewModelTest {
 
 		vm.dispatch(PublishIntent.OnDismissResumable)
 
-		assertEquals("忽略要连带收掉服务端会话，别让分片占盘等 24 小时清理", listOf("u-old"), uploader.aborted)
+		assertEquals("忽略要连带收掉服务端会话，别让分片占盘等过期清理", listOf("u-old"), uploader.aborted)
 		assertNull("本地账本也要清，否则下次进来又问一遍", store.getSession(videoUri))
 		assertNull(vm.uiState.value.resumable)
 	}
@@ -284,13 +302,18 @@ class PublishViewModelTest {
 
 	// ───────────────────────── 辅助 ─────────────────────────
 
-	private suspend fun seedUnfinishedSession(doneParts: Int, totalParts: Int, uploadId: String) {
+	private suspend fun seedUnfinishedSession(
+		doneParts: Int,
+		totalParts: Int,
+		uploadId: String,
+		updatedAt: Long = System.currentTimeMillis()
+	) {
 		store.seed(
 			UploadSessionRecord(
 				uri = videoUri, fileName = "a.mp4", fileSize = 5 * 1024 * 1024,
 				fileMd5 = "md5", chunkSize = 1024 * 1024, totalChunks = totalParts,
 				uploadId = uploadId, status = UploadSessionStatus.UPLOADING,
-				updatedAt = System.currentTimeMillis()
+				updatedAt = updatedAt
 			),
 			ledger = (0 until totalParts).map { index ->
 				UploadPartRecord(

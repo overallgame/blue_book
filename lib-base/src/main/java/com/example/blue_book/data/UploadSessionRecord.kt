@@ -29,9 +29,27 @@ data class UploadSessionRecord(
 	/** 服务端会话 id；init 之前为 null */
 	val uploadId: String? = null,
 	val status: UploadSessionStatus = UploadSessionStatus.UPLOADING,
-	/** 最后活动时间（毫秒），用于"哪些会话已经没意义了" */
+	/** 最后活动时间（毫秒），用于"哪些会话已经没意义了"（判据见 [isExpired]） */
 	val updatedAt: Long = System.currentTimeMillis()
 )
+
+/**
+ * 未完成会话的保留窗口，与后端 `ScheduledTasks.EXPIRED_UPLOAD_HOURS` 对齐。
+ *
+ * 客户端也要这一条：超过窗口的会话，服务端已经连分片一起清掉了，本地却还认为"没传完"，
+ * 于是发布页会提示"继续上次未完成的上传（68%）"，用户点下去却从 0 重传。
+ * 两边数值不一致也不至于出错（最多少提示一次、或提示一次作废的），只是提示会失准。
+ */
+const val UPLOAD_SESSION_RETENTION_HOURS = 48L
+
+/**
+ * 这条会话是否已超出保留窗口。
+ *
+ * [nowMillis] 由调用方给，便于测试；窗口按 [UploadSessionRecord.updatedAt] 计，
+ * 也就是"48 小时没有活动"，而不是"创建后 48 小时"——上传中每传一片都会刷新它。
+ */
+fun UploadSessionRecord.isExpired(nowMillis: Long): Boolean =
+	nowMillis - updatedAt > UPLOAD_SESSION_RETENTION_HOURS * 60 * 60 * 1000
 
 /**
  * 会话状态。

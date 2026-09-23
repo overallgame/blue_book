@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.blue_book.data.UploadPartStatus
 import com.example.blue_book.data.device.LocationProvider
+import com.example.blue_book.data.isExpired
 import com.example.blue_book.data.remote.video.ChunkUploader
 import com.example.blue_book.data.remote.video.UploadSourceFactory
 import com.example.blue_book.data.remote.video.VideoPublisher
@@ -75,7 +76,7 @@ class PublishViewModel @Inject constructor(
 	 * 用户点"取消上传"。
 	 *
 	 * 取消后会：① 停掉上传协程（未发出的分片不再发）② 上传器在收尾时调服务端 `abort`
-	 * 释放已落盘的分片（否则要等 24 小时的定时清理）③ 丢掉本地账本（用户说了不要，就别再提示）。
+	 * 释放已落盘的分片（否则要等过期清理）③ 丢掉本地账本（用户说了不要，就别再提示）。
 	 */
 	fun requestCancel() {
 		val job = uploadJob ?: return
@@ -91,9 +92,16 @@ class PublishViewModel @Inject constructor(
 	 * 这个顺序是有意的：用户进页面立刻要看到数字，而不是"转一下圈再告诉你传到 68%"；
 	 * 而本地那份可能因为进程在"分片落盘"与"账本落库"之间被杀而略微偏低，
 	 * 所以能问就问一次。
+	 *
+	 * 超出保留窗口（[isExpired]）的那条不算：服务端已连分片一起清掉，接着传只会从头开始，
+	 * 提示"继续上次"就是假话。顺手删掉它，免得它一直占着"最近一条未完成会话"的位置。
 	 */
 	private suspend fun refreshResumable() {
 		val session = sessionStore.latestUnfinishedSession() ?: return setState { copy(resumable = null) }
+		if (session.isExpired(System.currentTimeMillis())) {
+			sessionStore.deleteSession(session.uri)
+			return setState { copy(resumable = null) }
+		}
 		val parts = sessionStore.getParts(session.uri)
 		val done = parts.count { it.status == UploadPartStatus.DONE }
 		val localProgress = if (session.totalChunks <= 0) 0 else done * 100 / session.totalChunks
@@ -187,7 +195,8 @@ class PublishViewModel @Inject constructor(
 			// 进度取 maxOf：服务端返回的已传分片不保证是前缀，续传回填可能低于当前显示值，
 			// 直接用会让进度条往回跳（观感上像丢了数据）
 			// 内容源在 UI 层构造（它需要 Context 与 Uri），上传器只认 UploadSource 抽象——
-			// 于是"怎么传"完全可测，"怎么读 content://"被隔离在一个文件里
+			// 于是"怎么传"完全可测，"怎么读 content://"被隔离在一个文件里。
+			// create 是 suspend：它内部要查 ContentResolver，切 IO 由实现负责（否则这里会卡主线程）
 			val filePath = uploader.upload(sourceFactory.create(uri)) { percent ->
 				setState { copy(progress = maxOf(progress, percent)) }
 			}

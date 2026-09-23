@@ -88,7 +88,7 @@ class ChunkedUploader internal constructor(
 		try {
 			return withContext(Dispatchers.IO) { runUpload(source, onProgress) }
 		} catch (cancel: CancellationException) {
-			// 用户取消：把服务端那条会话也收掉，别让分片占着磁盘等 24 小时的定时清理。
+			// 用户取消：把服务端那条会话也收掉，别让分片占着磁盘等过期清理。
 			// 同时**丢掉本地账本**——"取消"就是不要了，留着它下次进页面还会提示
 			// "有一条没传完（68%）"，与用户的意图相反。
 			// 必须在 NonCancellable 里做：协程已被取消，普通挂起调用会立刻再抛一次

@@ -19,7 +19,7 @@ interface ChunkUploader {
 	suspend fun upload(source: UploadSource, onProgress: (Int) -> Unit): String
 
 	/**
-	 * 放弃一个服务端会话（立刻释放它的分片磁盘，不必等 24 小时的过期清理）。
+	 * 放弃一个服务端会话（立刻释放它的分片磁盘，不必等过期清理）。
 	 *
 	 * 失败不抛给调用方：放弃上传是"我已经不要了"，为了清理失败而报错只会打扰用户。
 	 */

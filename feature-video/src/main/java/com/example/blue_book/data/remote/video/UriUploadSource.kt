@@ -41,17 +41,27 @@ class UriUploadSource(
 
 	override val size: Long = querySize() ?: error("无法读取视频文件信息，请重新选择")
 
-	/** MD5 只算一次：它决定服务端的续传/秒传命中，重算一次就要多读一遍整个文件 */
+	/**
+	 * MD5 只算一次：它决定服务端的续传/秒传命中，重算一次就要多读一遍整个文件。
+	 *
+	 * 拿不到流、或读完的字节数与 [size] 不符时必须**报错**，不能交出一个对不上号的指纹：
+	 * 指纹错了要等整段传输结束、服务端做整体校验时才被拒，等于白传一遍。
+	 */
 	override suspend fun digest(): String {
+		val input = appContext.contentResolver.openInputStream(uri)
+			?: error("无法读取视频文件，请重新选择")
 		val digest = MessageDigest.getInstance("MD5")
-		appContext.contentResolver.openInputStream(uri)?.use { input ->
+		var total = 0L
+		input.use {
 			val buffer = ByteArray(DIGEST_BUFFER)
 			while (true) {
-				val read = input.read(buffer)
+				val read = it.read(buffer)
 				if (read <= 0) break
 				digest.update(buffer, 0, read)
+				total += read
 			}
 		}
+		if (total != size) error("视频文件读取不完整，请重新选择")
 		return digest.digest().toHex()
 	}
 

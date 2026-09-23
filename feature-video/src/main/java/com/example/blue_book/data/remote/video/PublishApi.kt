@@ -47,7 +47,7 @@ interface PublishApi {
 		@Query("uploadId") uploadId: String
 	): Response<ApiResponse<UploadPartsResponseDto>>
 
-	/** 放弃上传：立刻释放服务端分片磁盘，不必等 24 小时的过期清理 */
+	/** 放弃上传：立刻释放服务端分片磁盘，不必等过期清理 */
 	@POST("/api/file/upload/abort")
 	suspend fun abortUpload(
 		@Query("uploadId") uploadId: String

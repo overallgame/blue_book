@@ -300,7 +300,7 @@ login:fail:{phone}       → String  登录失败计数
 | 1 Chunk | `POST /api/file/upload/chunk` | 上传单个分片，**客户端并发 3 片**（服务端不限制并发数，但要能承受） |
 | 2 Complete | `POST /api/file/upload/complete` | 合并分片（按序号）→ 整体 MD5 校验 → 返回 filePath |
 | — | `GET /api/file/upload/parts` | **只读**查权威分片状态（恢复时对账、进页面看进度） |
-| — | `POST /api/file/upload/abort` | 放弃上传，立刻释放分片磁盘（否则要等 24 小时的定时清理） |
+| — | `POST /api/file/upload/abort` | 放弃上传，立刻释放分片磁盘（否则要等 48 小时的定时清理） |
 
 > **本节在 2026-09 落地时按实现补齐**（原文只写了前三步，且"并发 3 片"当时只是设想——
 > 客户端一直是单流顺序）。落地时的几处修正：
@@ -315,7 +315,7 @@ login:fail:{phone}       → String  登录失败计数
 >   记录同样的信息，两处判据逐渐分叉（init 用"磁盘 ∪ Redis"、complete 只用 Redis），
 >   会拼出长度合理但内容残缺的文件。那份 Redis 记录已删
 > - **单片 `touch` 会话行已去掉**：并发 3 片会对同一行连续 UPDATE、形成行锁竞争；
->   而过期是 24 小时、一次上传是分钟级，init 时的 touch 已足够保鲜
+>   而过期窗口是 48 小时（`ScheduledTasks.EXPIRED_UPLOAD_HOURS`）、一次上传是分钟级，init 时的 touch 已足够保鲜
 > - **分片序号与归属都要校验**：此前能往 `chunks/{id}/9999` 或负数写文件，
 >   且任何登录用户拿着别人的 uploadId 就能塞分片、甚至替别人合并
 > - **分片指纹**：客户端每片带自己的 MD5（`partMd5`），服务端收到时边写边算、校验不符按
@@ -333,6 +333,22 @@ login:fail:{phone}       → String  登录失败计数
 > - 客户端侧的对应实现：`feature-video` 的 `ChunkedUploader`（并发工作池 + 随机读探测 +
 >   顺序退化）、`Reconcile`（以服务端为准的对账）、本地 `upload_session`/`upload_part`
 >   两张表（跨进程续传与指纹缓存）
+>
+> **评审提出的三条，前两条已修**：
+> - 构造内容源的那几次 `ContentResolver` 查询原先在**主线程**上跑（`uploader.upload(sourceFactory.create(uri))`
+>   的实参在进入 `withContext(Dispatchers.IO)` 之前就被求值）。现在 `UploadSourceFactory.create` 是
+>   `suspend`、由 `AndroidUploadSourceFactory` 在内部 `withContext(Dispatchers.IO)`——
+>   「构造会碰 IO」写进了类型，调用方不可能在主线程上误调
+> - `UriUploadSource.digest()` 原先在输入流打不开时返回**空文件的哈希**，要白传一整遍后才被服务端的
+>   整体 MD5 拒掉。现在拿不到流、或读完的字节数与文件大小不符都**当场报错**，不再交出对不上号的指纹
+> - **仍然没有"暂停"**（本轮明确不做）：只有「取消」（停上传 + abort 服务端会话 + 清本地账本）。
+>   自己按返回键离开发布页**等于取消**，已传分片随之释放；`UploadSessionStatus.PAUSED`
+>   是留位的枚举值，没有 UI 也没有流程。要做需先定一件事：离开页面到底算取消还是暂停。
+>
+> **会话保留 48 小时**（`ScheduledTasks.EXPIRED_UPLOAD_HOURS`，按最后活动时间计，不是创建时间）：
+> 48 小时不活动后服务端会话被定时清理、分片随之释放，用户再回来就是全新上传（已传分片不再复用）。
+> 客户端用同一个窗口（`UPLOAD_SESSION_RETENTION_HOURS`）判断要不要提示续传，并顺手删掉过期的本地账本
+> ——否则横幅会承诺"继续上次未完成的上传（已传 68%）"，点下去却从 0 重传。
 
 ### 7.2 秒传逻辑
 

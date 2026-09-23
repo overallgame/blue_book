@@ -1,6 +1,5 @@
 package com.example.blue_book.ui.video
 
-import android.content.Intent
 import android.os.Bundle
 import android.os.Build
 import android.view.LayoutInflater
@@ -20,7 +19,9 @@ import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
 import com.example.blue_book.feature_video.databinding.VideoPageBinding
+import com.example.blue_book.scan.ShareCode
 import com.example.blue_book.ui.comment.CommentBottomSheet
+import com.example.blue_book.util.sharePlainText
 import com.example.blue_book.widget.LoginGuideDialog
 import com.therouter.TheRouter
 import dagger.hilt.android.AndroidEntryPoint
@@ -175,17 +176,15 @@ class VideoFragment : Fragment() {
 		}
 	}
 
+	/**
+	 * 分享视频（R7）：文案里带**站内码链接**，对方用小蓝书扫一扫就能打开同一条视频。
+	 *
+	 * 文案里带站内码链接，对方用小蓝书扫一扫就能打开同一条视频。
+	 * 分享文案与链接的构造都在 `ShareCode`（lib-base），与扫码用的是同一个 `ScanCodeFormat`，
+	 * 所以"分享出去的码扫得回来"由同一个契约保证。
+	 */
 	private fun shareVideo(video: VideoCardInfo) {
-		val text = "分享视频：${video.description}（来自 ${video.nickname}）"
-		val intent = Intent(Intent.ACTION_SEND).apply {
-			type = "text/plain"
-			putExtra(Intent.EXTRA_TEXT, text)
-		}
-		try {
-			startActivity(Intent.createChooser(intent, "分享到"))
-		} catch (_: android.content.ActivityNotFoundException) {
-			Toast.makeText(requireContext(), "没有可用的分享应用", Toast.LENGTH_SHORT).show()
-		}
+		sharePlainText(requireContext(), ShareCode.video(title = video.description, aid = video.aid))
 	}
 
 	private fun initByArgs() {

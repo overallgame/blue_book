@@ -5,6 +5,9 @@ import com.example.blue_book.data.repository.toScanResolveFailure
 import com.example.blue_book.domain.model.ContentKind
 import com.example.blue_book.domain.repository.ScanResolveFailure
 import com.example.blue_book.network.apiCall
+import com.example.blue_book.scan.ScanCodeFormat
+import com.example.blue_book.scan.ScanTarget
+import com.example.blue_book.scan.ShareCode
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -36,7 +39,7 @@ import java.util.concurrent.TimeUnit
  * 这四件都只在"真 HTTP"这一层才暴露；一旦错了，**在真机上只表现为一句莫名其妙的提示**。
  *
  * 用 MockWebServer 而不是 JDK 的 `com.sun.net.httpserver`：Android 单元测试的编译类路径
- * 以 android.jar 为基准，`com.sun.*` 不可见（实测编译报 Unresolved reference: sun）。
+ * 以 android.jar 为基准，`com.sun.*` 不可见。
  */
 class ScanApiIntegrationTest {
 
@@ -126,6 +129,38 @@ class ScanApiIntegrationTest {
 		assertEquals(7L, content?.targetId)
 	}
 
+	// ───────────── R7 闭环：分享出去的码能扫回来 ─────────────
+
+	@Test
+	fun `code produced by the share text resolves into a jump target`() = runBlocking {
+		// 这是"分享 → 扫一扫"的**闭环**（客户端可见的那一段）：
+		// 分享文案 → 抠出链接 → 判为站内码 → 真 Retrofit 请求 → 得到跳转目标。
+		//
+		// 这条链跨了两个模块（feature-video 分享 / feature-scan 扫码），耦合**只有一个字符串**：
+		// 两端各自测绿并不保证它们对得上，所以用一条用例钉住"分享出去的码扫得回来"。
+		val shareText = ShareCode.video(title = "标题", aid = 42L)
+		val code = Regex("https?://\\S+").find(shareText)?.value
+			?: throw AssertionError("分享文案里没有链接：$shareText")
+
+		// 第一道门：扫码页只会对"站内码"发 resolve（其余三类在本地处置）。
+		// 分享产出的码若不在这里被认成站内码，后面一切都不会发生
+		val target = ScanCodeFormat.parse(code)
+		assertTrue("分享出来的码必须被判为站内码，实际：$target", target is ScanTarget.InternalCode)
+
+		server.enqueue(MockResponse().setBody(okBody(type = "VIDEO", targetId = 42L, title = "标题")))
+		val content = apiCall { api.resolve((target as ScanTarget.InternalCode).raw) }
+			.getOrThrow()
+			.toScannedContent("http://192.168.17.128:8080")
+
+		assertEquals("闭环终点：拿到了该跳转的目标", 42L, content?.targetId)
+		assertEquals(ContentKind.VIDEO, content?.kind)
+		val rawQuery = server.takeRequest().path.orEmpty().substringAfter("payload=")
+		assertEquals(
+			"服务端必须收到**完整的**原始字符串（截断了就查不出正确的内容）",
+			code, URLDecoder.decode(rawQuery, "UTF-8")
+		)
+	}
+
 	// ───────────── 失败路径 → 分类（决定给不给「重试」）─────────────
 
 	@Test
@@ -186,8 +221,7 @@ class ScanApiIntegrationTest {
 
 	@Test
 	fun `maps unreachable server to retryable failure`() = runBlocking {
-		// 手机连不上后端网段时就是这一条（本项目当前的真实处境）：
-		// 必须给"重试"，而不是一句"未知错误"且无路可走
+		// 手机连不上后端网段时就是这一条：必须给"重试"，而不是一句"未知错误"且无路可走
 		server.shutdown()
 
 		val classified = apiCall { api.resolve("x") }.exceptionOrNull()!!.toScanResolveFailure()

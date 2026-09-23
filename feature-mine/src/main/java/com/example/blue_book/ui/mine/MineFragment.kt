@@ -30,6 +30,7 @@ import com.example.blue_book.feature_mine.R
 import com.example.blue_book.feature_mine.databinding.MinePageBinding
 import com.example.blue_book.router.ExtraKeys
 import com.example.blue_book.router.RoutePath
+import com.example.blue_book.scan.ShareCode
 import com.example.blue_book.ui.mine.page.MineCollectionFragment
 import com.example.blue_book.ui.mine.page.MineLoveFragment
 import com.example.blue_book.ui.mine.page.MineWorkFragment
@@ -38,6 +39,7 @@ import com.example.blue_book.datastore.ThemeMode
 import com.example.blue_book.datastore.ThemeRepository
 import com.example.blue_book.network.CurrentUser
 import com.example.blue_book.provider.IAuthProvider
+import com.example.blue_book.util.sharePlainText
 import com.example.blue_book.widget.LoginGuideDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -229,14 +231,31 @@ class MineFragment : Fragment() {
 			}
 		}
 		binding.mineShare.setOnClickListener {
-			guardLogin {
-				Toast.makeText(requireContext(), "分享即将上线", Toast.LENGTH_SHORT).show()
-			}
+			guardLogin { shareMyProfile() }
 		}
 		binding.mineCopyId.setOnClickListener { guardLogin { copyXhsId() } }
 		// 关注/粉丝列表入口：点击用户列表项进入作者主页
 		binding.mineFocus.setOnClickListener { guardLogin { navigateFollowList("following") } }
 		binding.mineFan.setOnClickListener { guardLogin { navigateFollowList("followers") } }
+	}
+
+	/**
+	 * 分享自己的主页（R7 的"分享用户"那一半）。
+	 *
+	 * **文案与链接来自 `ShareCode`（lib-base）**，与扫码解析用的是同一个 `ScanCodeFormat`：
+	 * 分享出去的码能被扫回来由这一处契约保证。
+	 *
+	 * `guardLogin` 已保证走过这里时是登录态；昵称从 [currentUser] 取（与页面展示同源），
+	 * 他若没设昵称则由 `ShareCode` 退化成通用说法。
+	 */
+	private fun shareMyProfile() {
+		val myId = currentUser.userId ?: run {
+			// 理论上到不了（guardLogin 挡在前面），但 currentUser 是内存态，
+			// 会话刚失效的瞬间可能为空——宁可提示一句，也不要发一个 id=0 的码出去
+			Toast.makeText(requireContext(), "请先登录", Toast.LENGTH_SHORT).show()
+			return
+		}
+		sharePlainText(requireContext(), ShareCode.user(nickname = currentUser.nickname.orEmpty(), id = myId))
 	}
 
 	private fun navigateFollowList(type: String) {

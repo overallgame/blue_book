@@ -44,16 +44,22 @@ class FileController(
     fun initUpload(@RequestBody request: UploadInitRequest): ApiResponse<UploadInitResponse> =
         ApiResponse.ok(chunkUploadService.initUpload(currentUserId(), request))
 
-    /** 上传一片。同一 (uploadId, chunkIndex) 重复调用是幂等的（覆盖写） */
+    /**
+     * 上传一片。同一 (uploadId, chunkIndex) 重复调用是幂等的（覆盖写）。
+     *
+     * [partMd5] 是这一片的 MD5，**可空**：带了就在服务端校验一次（不符即 13006，客户端重传该片），
+     * 不带则跳过——老客户端不带它，仍然可用。
+     */
     @PostMapping("/upload/chunk")
     fun uploadChunk(
         @RequestParam("uploadId") uploadId: String,
         @RequestParam("chunkIndex") chunkIndex: Int,
-        @RequestParam("file") file: MultipartFile
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam(required = false) partMd5: String? = null
     ): ApiResponse<Any> {
         // 把 MultipartFile 直接交给服务层流式落盘，**不取 file.bytes**：
         // 客户端 3 片并发时，取字节数组意味着堆上同时压着 3×分片大小
-        chunkUploadService.uploadChunk(currentUserId(), uploadId, chunkIndex, file)
+        chunkUploadService.uploadChunk(currentUserId(), uploadId, chunkIndex, file, partMd5)
         return ApiResponse.ok()
     }
 

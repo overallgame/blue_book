@@ -5,6 +5,7 @@ import com.example.bluebook.common.ChunkMissingException
 import com.example.bluebook.common.FileTooLargeException
 import com.example.bluebook.common.ForbiddenException
 import com.example.bluebook.common.InvalidUploadParamsException
+import com.example.bluebook.common.PartChecksumMismatchException
 import com.example.bluebook.file.dto.UploadInitRequest
 import com.example.bluebook.file.dto.UploadInitResponse
 import com.example.bluebook.file.dto.UploadPartsResponse
@@ -58,6 +59,9 @@ class ChunkUploadService(
          * 留 2MB 余量给 multipart 的边界与头部。
          */
         const val MAX_CHUNK_SIZE = 8L * 1024 * 1024
+
+        /** 边读边算分片哈希时的缓冲大小（不让整片进堆） */
+        private const val COPY_BUFFER = 64 * 1024
     }
 
     // ───────────────────────── init：秒传 + 续传 + 分片契约对齐 ─────────────────────────
@@ -144,7 +148,23 @@ class ChunkUploadService(
 
     // ───────────────────────── 分片上传 ─────────────────────────
 
-    fun uploadChunk(userId: Long, uploadId: String, chunkIndex: Int, chunk: MultipartFile) {
+    /**
+     * 收一片。
+     *
+     * [partMd5] 可选：带了就校验"收到的字节"与"客户端声称的指纹"是否一致，不一致按 13006 拒收
+     * （客户端据此**原地重传这一片**，而不是等整个文件传完才发现）。不带则跳过校验，
+     * 老客户端因此不受影响。
+     *
+     * 落盘路径是"临时文件 → 校验 → 改名"：校验失败时不留任何字节在分片目录里，
+     * 否则那一份坏数据会被当成"已上传"。
+     */
+    fun uploadChunk(
+        userId: Long,
+        uploadId: String,
+        chunkIndex: Int,
+        chunk: MultipartFile,
+        partMd5: String? = null
+    ) {
         val session = requireOwnedSession(userId, uploadId)
         if (session.status != UploadStatus.UPLOADING) {
             throw BusinessException(13002, "上传会话状态异常")
@@ -169,13 +189,42 @@ class ChunkUploadService(
         val chunkDir = File("$storagePath/chunks/$uploadId")
         chunkDir.mkdirs()
         val chunkFile = File(chunkDir, chunkIndex.toString())
+        val tempFile = File(chunkDir, "$chunkIndex.tmp")
+
         // 流式落盘而不是 file.bytes：3 片并发时后者会让堆占用变成 3×分片大小。
-        // 同一 (uploadId, index) 重复上传直接覆盖——这就是分片级幂等，
-        // 客户端重试时不必区分"第一次"与"重传"
-        chunk.inputStream.use { input ->
-            chunkFile.outputStream().use { output -> input.copyTo(output) }
+        // 边写边算哈希，所以拿到 partMd5 时不需要把分片读进内存
+        val digest = MessageDigest.getInstance("MD5")
+        try {
+            chunk.inputStream.use { input ->
+                tempFile.outputStream().use { output ->
+                    val buffer = ByteArray(COPY_BUFFER)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read <= 0) break
+                        digest.update(buffer, 0, read)
+                        output.write(buffer, 0, read)
+                    }
+                }
+            }
+
+            if (partMd5 != null && !digest.digest().toHex().equals(partMd5.trim(), ignoreCase = true)) {
+                log.warn("上传会话 {} 的分片 {} 校验不符（客户端声称 {}）", uploadId, chunkIndex, partMd5)
+                throw PartChecksumMismatchException()
+            }
+
+            // 同一 (uploadId, index) 重复上传直接覆盖——这就是分片级幂等，
+            // 客户端重试时不必区分"第一次"与"重传"。
+            // 用 rename 而不是直接写目标文件：坏数据不会以正式分片的身份留在目录里
+            if (chunkFile.exists()) chunkFile.delete()
+            if (!tempFile.renameTo(chunkFile)) {
+                tempFile.copyTo(chunkFile, overwrite = true)
+            }
+        } finally {
+            if (tempFile.exists()) tempFile.delete()
         }
     }
+
+    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
 
     // ───────────────────────── 只读查询与放弃 ─────────────────────────
 

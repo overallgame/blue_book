@@ -6,6 +6,7 @@ import com.example.blue_book.data.UploadSessionRecord
 import com.example.blue_book.data.UploadSessionStatus
 import com.example.blue_book.data.remote.video.dto2.UploadInitRequestDto
 import com.example.blue_book.data.upload.reconcile
+import com.example.blue_book.network.exception.NetworkException
 import com.example.blue_book.network.exception.isRetryableNetworkFailure
 import com.example.blue_book.provider.IUploadSessionStore
 import kotlinx.coroutines.CancellationException
@@ -19,6 +20,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
@@ -68,6 +70,14 @@ class ChunkedUploader internal constructor(
 
 		/** 退避基数，按重试次数线性递增 */
 		const val RETRY_BASE_DELAY_MS = 1000L
+
+		/**
+		 * 服务端"收到的字节与你声称的指纹不符"。
+		 *
+		 * ★ 跨端契约：与后端 `PartChecksumMismatchException` 的码一致。客户端按它判断
+		 * "重传这一片"——这与"参数错、重试无用"（13005）是相反的处置。
+		 */
+		const val PART_CHECKSUM_MISMATCH_CODE = 13006
 
 		/** 分片总数。服务端会按同一个公式校验，对不上直接拒绝 */
 		fun chunkCount(size: Long, chunkSize: Long): Int =
@@ -173,9 +183,28 @@ class ChunkedUploader internal constructor(
 	 */
 	private suspend fun resolveDigest(source: UploadSource, key: String): String {
 		val cached = sessionStore.getSession(key)
-		if (cached != null && cached.fileSize == source.size) return cached.fileMd5
+		if (cached != null && cached.describesSameFile(source)) return cached.fileMd5
+
+		if (cached != null) {
+			// 记录描述的已经不是这个文件了（大小或改动时间变了）：它记的指纹与分片进度一起作废，
+			// 连服务端那条会话也收掉——那些分片属于用户已经改掉的内容，留着只是占盘
+			cached.uploadId?.let { abort(it) }
+			sessionStore.deleteSession(key)
+		}
 		return source.digest()
 	}
+
+	/**
+	 * 这条记录还描述同一个文件吗？
+	 *
+	 * 判据是**字节数 + 最后修改时间**。只比字节数会漏掉"原地改了内容、字节数恰好没变"：
+	 * 那种情况下缓存里的旧指纹会被当成断言发给服务端，而秒传分支**不做任何内容核对**，
+	 * 结果是把改之前的文件当成结果交出去。拿不到修改时间就不信缓存（宁可重算）。
+	 */
+	private fun UploadSessionRecord.describesSameFile(source: UploadSource): Boolean =
+		fileSize == source.size &&
+			lastModified != null &&
+			lastModified == source.lastModified
 
 	/**
 	 * 落库 + 对账：**服务端权威 + 本地账本 → 新的账本**。
@@ -247,8 +276,12 @@ class ChunkedUploader internal constructor(
 				readers.forEach { reader ->
 					launch {
 						for (part in queue) {
-							val bytes = reader.read(part.offset, part.size.toInt())
-							if (bytes.isEmpty()) error("视频文件读取不完整，请重新选择")
+							val expected = part.size.toInt()
+							val bytes = reader.read(part.offset, expected)
+							// 必须严格等长：只判"读没读到"会漏掉"读短了"，而短分片的自洽哈希
+							// 在服务端那边是校验不出来的（它只能比对"收到的"与"我声称的"），
+							// 最后要靠整体 MD5 才发现——那就退回"全量白传"了
+							if (bytes.size != expected) error("视频文件读取不完整，请重新选择")
 							uploadOnePart(uploadId, source.name, part, bytes)
 							// 每片完成就落库：这就是"分片级进度"——它错了不会崩，
 							// 但会决定下次进页面时进度条上的数字是不是真的
@@ -279,22 +312,41 @@ class ChunkedUploader internal constructor(
 			"file", "$fileName.part${part.index}",
 			bytes.toRequestBody("application/octet-stream".toMediaType())
 		)
+		// 指纹算的是"我发出去的那串字节"，所以它能抓的是传输/落盘过程中被改，
+		// 抓不到"我读错了"——后者由上面的等长断言与最后的整体 MD5 负责
+		val partMd5 = MessageDigest.getInstance("MD5").digest(bytes).toHex()
 		var attempt = 0
 		while (true) {
 			try {
-				remote.uploadChunk(uploadId, part.index, body).getOrThrow()
+				remote.uploadChunk(uploadId, part.index, body, partMd5).getOrThrow()
 				return
 			} catch (t: Throwable) {
 				if (t is CancellationException) throw t
 				attempt++
-				// 不可重试的错误立刻上抛给整链续传：原地退避只会把失败推迟三秒，
-				// 而整链续传会重新 init、跳过已经落盘的片——那条路才是有进展的
-				if (!t.isRetryableNetworkFailure() || attempt >= MAX_CHUNK_RETRY) throw t
+				// 校验不符说明这一片在传输里坏了：重传它自己即可，值得原地重试。
+				// 其余不可重试的错误（会话过期、序号越界…）立刻上抛给整链续传——
+				// 原地退避只会把失败推迟三秒，而整链续传会重新 init、跳过已落盘的片
+				val worthRetrying = t.isRetryableNetworkFailure() || t.isPartChecksumMismatch()
+				if (!worthRetrying || attempt >= MAX_CHUNK_RETRY) throw t
 				delay(RETRY_BASE_DELAY_MS * attempt)
 			}
 		}
 	}
 
+	/**
+	 * 服务端说"这一片的字节与我声称的不符"（[PART_CHECKSUM_MISMATCH_CODE]）。
+	 *
+	 * 业务码藏在响应体里（HTTP 状态是 400），所以要读 `businessCode`；
+	 * 2xx 却带业务失败的分支会把业务码放进 `code`，两个来源都看一下更稳妥。
+	 */
+	private fun Throwable.isPartChecksumMismatch(): Boolean {
+		val error = this as? NetworkException ?: return false
+		return error.businessCode == PART_CHECKSUM_MISMATCH_CODE ||
+			error.code == PART_CHECKSUM_MISMATCH_CODE
+	}
+
 	private fun percent(done: Int, total: Int): Int =
 		if (total <= 0) 100 else (done * 100 / total).coerceIn(0, 100)
 }
+
+private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }

@@ -317,6 +317,7 @@ private class FakeUploadSource(uri: String) : UploadSource {
 	override val name: String = "a.mp4"
 	override val key: String = uri
 	override val size: Long = 5L * 1024 * 1024
+	override val lastModified: Long? = 1_000L
 	override suspend fun digest(): String = "md5"
 	override fun openReader(): com.example.blue_book.data.remote.video.ChunkReader =
 		object : com.example.blue_book.data.remote.video.ChunkReader {

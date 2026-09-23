@@ -26,12 +26,14 @@ interface PublishApi {
 		@Body body: UploadInitRequestDto
 	): Response<ApiResponse<UploadInitResponseDto>>
 
+	/** [partMd5] 是这一片的 MD5：带了服务端就当场校验，不符返回 13006（客户端重传该片） */
 	@Multipart
 	@POST("/api/file/upload/chunk")
 	suspend fun uploadChunk(
 		@Query("uploadId") uploadId: String,
 		@Query("chunkIndex") chunkIndex: Int,
-		@Part file: MultipartBody.Part
+		@Part file: MultipartBody.Part,
+		@Query("partMd5") partMd5: String? = null
 	): Response<ApiResponse<Any>>
 
 	/**

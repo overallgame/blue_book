@@ -16,6 +16,13 @@ data class UploadSessionRecord(
 	val fileSize: Long,
 	/** 缓存的整文件指纹（MD5）：命中它就不必重读整个文件 */
 	val fileMd5: String,
+	/**
+	 * 缓存指纹时"这个文件"的最后修改时间（来源同 `UploadSource.lastModified`）。
+	 *
+	 * 与 [fileSize] 一起构成"这条记录还描述同一个文件吗"的判据；null 表示拿不到，
+	 * 那时**不信缓存**（宁可重读一遍文件）。
+	 */
+	val lastModified: Long? = null,
 	/** 本次会话约定的分片大小（来自服务端响应）。与当前常量不符时整条会话作废 */
 	val chunkSize: Long,
 	val totalChunks: Int,

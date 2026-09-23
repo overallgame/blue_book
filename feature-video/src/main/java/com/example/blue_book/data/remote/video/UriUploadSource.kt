@@ -2,6 +2,8 @@ package com.example.blue_book.data.remote.video
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileInputStream
@@ -34,6 +36,8 @@ class UriUploadSource(
 	override val name: String = queryName()
 
 	override val key: String = uri.toString()
+
+	override val lastModified: Long? = queryLastModified()
 
 	override val size: Long = querySize() ?: error("无法读取视频文件信息，请重新选择")
 
@@ -93,6 +97,33 @@ class UriUploadSource(
 	private fun querySize(): Long? {
 		val length = appContext.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: return null
 		return length.takeIf { it > 0 }
+	}
+
+	/**
+	 * 改动时间：`MediaStore` 用 `DATE_MODIFIED`（秒），SAF/DocumentsProvider 用
+	 * `COLUMN_LAST_MODIFIED`（毫秒）。两者只需要"变了没变"，单位不一致无妨。
+	 *
+	 * 两个列名依次试，都不认就返回 null——调用方据此**不信缓存**而不是拿旧指纹去比对。
+	 */
+	private fun queryLastModified(): Long? {
+		val columns = listOf(
+			MediaStore.MediaColumns.DATE_MODIFIED,
+			DocumentsContract.Document.COLUMN_LAST_MODIFIED
+		)
+		for (column in columns) {
+			val value = try {
+				appContext.contentResolver.query(uri, arrayOf(column), null, null, null)?.use { cursor ->
+					if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
+				}
+			} catch (_: IllegalArgumentException) {
+				// provider 不认这一列
+				null
+			} catch (_: SecurityException) {
+				null
+			}
+			if (value != null && value > 0) return value
+		}
+		return null
 	}
 
 	private fun queryName(): String {

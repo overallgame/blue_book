@@ -23,7 +23,16 @@ interface ChunkUploadRemote {
 
     suspend fun initUpload(body: UploadInitRequestDto): Result<UploadInitResponseDto>
 
-    suspend fun uploadChunk(uploadId: String, chunkIndex: Int, part: MultipartBody.Part): Result<Unit>
+    /**
+     * @param partMd5 这一片的 MD5。服务端收到后当场校验，不符按 13006 拒收 → 客户端重传该片，
+     *   而不是等整个文件传完才发现某一片坏了
+     */
+    suspend fun uploadChunk(
+        uploadId: String,
+        chunkIndex: Int,
+        part: MultipartBody.Part,
+        partMd5: String? = null
+    ): Result<Unit>
 
     suspend fun completeUpload(uploadId: String): Result<String>
 

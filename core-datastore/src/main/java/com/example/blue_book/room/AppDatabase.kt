@@ -14,7 +14,7 @@ import com.example.blue_book.room.entity.UserEntity
 
 @Database(
 	entities = [UserEntity::class, UploadSessionEntity::class, UploadPartEntity::class],
-	version = 3,
+	version = 4,
 	exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -72,6 +72,21 @@ abstract class AppDatabase : RoomDatabase() {
 			}
 		}
 
+		/**
+		 * v3 → v4：`upload_session` 增加 `last_modified`。
+		 *
+		 * 用途是判断"本地缓存的文件指纹还作不作数"——只比字节数会漏掉
+		 * "原地改了内容、字节数恰好没变"，那时旧指纹会被当成断言发给服务端，
+		 * 而秒传分支不做任何内容核对，会把改之前的文件当成结果。
+		 *
+		 * 新列可空：历史行（以及拿不到修改时间的 provider）保持 NULL，语义是"不信缓存、重算"。
+		 */
+		val MIGRATION_3_4 = object : Migration(3, 4) {
+			override fun migrate(db: SupportSQLiteDatabase) {
+				db.execSQL("ALTER TABLE `upload_session` ADD COLUMN `last_modified` INTEGER")
+			}
+		}
+
 		@Volatile
 		private var INSTANCE: AppDatabase? = null
 
@@ -81,7 +96,7 @@ abstract class AppDatabase : RoomDatabase() {
 					context.applicationContext,
 					AppDatabase::class.java,
 					"app_database"
-				).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+				).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 				.build()
 				INSTANCE = instance
 				instance

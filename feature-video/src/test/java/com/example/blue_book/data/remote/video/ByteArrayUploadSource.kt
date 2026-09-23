@@ -17,6 +17,9 @@ class ByteArrayUploadSource(
     private val bytes: ByteArray,
     override val name: String = "a.mp4",
     private val randomAccess: Boolean = true,
+    override val lastModified: Long? = 1_000L,
+    /** 每次读取少给这么多字节，用来模拟"读短了"（文件在传输中被改小/读取出错） */
+    private val shortenBy: Int = 0,
     private val digestValue: String = sha256Of(bytes)
 ) : UploadSource {
 
@@ -39,7 +42,7 @@ class ByteArrayUploadSource(
 
     override fun openReader(): ChunkReader {
         readerOpens++
-        return if (randomAccess) RandomAccessReader(bytes) else SequentialReader(bytes)
+        return if (randomAccess) RandomAccessReader(bytes, shortenBy) else SequentialReader(bytes, shortenBy)
     }
 
     fun slice(offset: Long, size: Int): ByteArray {
@@ -48,20 +51,21 @@ class ByteArrayUploadSource(
         return bytes.copyOfRange(from, to)
     }
 
-    private class RandomAccessReader(private val bytes: ByteArray) : ChunkReader {
+    private class RandomAccessReader(private val bytes: ByteArray, private val shortenBy: Int) : ChunkReader {
         override val supportsRandomAccess: Boolean = true
 
         override fun read(offset: Long, size: Int): ByteArray {
             val from = offset.toInt()
             if (from >= bytes.size) return ByteArray(0)
-            return bytes.copyOfRange(from, minOf(from + size, bytes.size))
+            val to = (minOf(from + size, bytes.size) - shortenBy).coerceAtLeast(from)
+            return bytes.copyOfRange(from, to)
         }
 
         override fun close() = Unit
     }
 
     /** 只能向前：回退直接抛，避免"退化路径其实没被走到"这种假绿 */
-    private class SequentialReader(private val bytes: ByteArray) : ChunkReader {
+    private class SequentialReader(private val bytes: ByteArray, private val shortenBy: Int) : ChunkReader {
         private var position = 0
 
         override val supportsRandomAccess: Boolean = false
@@ -72,7 +76,7 @@ class ByteArrayUploadSource(
             }
             position = offset.toInt()
             if (position >= bytes.size) return ByteArray(0)
-            val to = minOf(position + size, bytes.size)
+            val to = (minOf(position + size, bytes.size) - shortenBy).coerceAtLeast(position)
             val slice = bytes.copyOfRange(position, to)
             position = to
             return slice

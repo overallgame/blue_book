@@ -21,6 +21,8 @@ data class UploadSessionEntity(
     @ColumnInfo(name = "file_size") val fileSize: Long,
     /** 缓存的整文件指纹：命中它就不必为了续传重读整个文件 */
     @ColumnInfo(name = "file_md5") val fileMd5: String,
+    /** 缓存指纹时文件的最后修改时间；与 file_size 一起判断这条记录是否还描述同一个文件 */
+    @ColumnInfo(name = "last_modified") val lastModified: Long?,
     @ColumnInfo(name = "chunk_size") val chunkSize: Long,
     @ColumnInfo(name = "total_chunks") val totalChunks: Int,
     @ColumnInfo(name = "upload_id") val uploadId: String?,

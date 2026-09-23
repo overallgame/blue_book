@@ -22,6 +22,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -84,9 +85,15 @@ class ChunkedUploaderTest {
         )
     }
 
-    private fun source(randomAccess: Boolean = true) = ByteArrayUploadSource(
+    private fun source(
+        randomAccess: Boolean = true,
+        lastModified: Long? = 1_000L,
+        shortenBy: Int = 0
+    ) = ByteArrayUploadSource(
         bytes = ByteArray(FILE_SIZE.toInt()) { (it % 251).toByte() },
-        randomAccess = randomAccess
+        randomAccess = randomAccess,
+        lastModified = lastModified,
+        shortenBy = shortenBy
     )
 
     // ───────────────────────── 并发 ─────────────────────────
@@ -229,6 +236,7 @@ class ChunkedUploaderTest {
             UploadSessionRecord(
                 // 用字面量而不是 src.digest()：后者会把"算过几次"的计数变成 1，断言就失去意义了
                 uri = src.key, fileName = src.name, fileSize = src.size, fileMd5 = "cached-digest",
+                lastModified = src.lastModified,
                 chunkSize = CHUNK_SIZE, totalChunks = TOTAL_CHUNKS, uploadId = "old",
                 status = UploadSessionStatus.UPLOADING
             )
@@ -319,6 +327,89 @@ class ChunkedUploaderTest {
         assertEquals("取消后要主动收掉服务端会话，别让分片占盘等 24 小时清理", 1, server.abortCount.get())
     }
 
+
+    // ───────────────────────── 分片指纹 ─────────────────────────
+
+    @Test
+    fun `every part carries the fingerprint of the bytes it just sent`() = runBlocking {
+        uploader.upload(source()) { }
+
+        for (index in 0 until TOTAL_CHUNKS) {
+            val sent = server.partContent(index)
+            val claimed = server.partMd5Of(index)
+            assertEquals(
+                "第 $index 片的指纹必须等于它实际发出的字节的 MD5（服务端靠它判断传输有没有改坏）",
+                md5(sent), claimed
+            )
+        }
+    }
+
+    @Test
+    fun `a rejected part is retransmitted in place`() = runBlocking {
+        // 13006：服务端收到的字节与客户端声称的指纹不符。这一片重传即可，
+        // 不必像"会话过期"那样把整条链推倒重来
+        server.failChunk(index = 2, httpStatus = 400, businessCode = 13006, times = 1)
+
+        uploader.upload(source()) { }
+
+        assertEquals("只该重传那一片，不该重新 init", 1, server.initCount)
+        assertEquals("第 2 片应收到两次请求（一次被拒 + 一次重传）", 2, server.chunkRequests(2))
+    }
+
+    @Test
+    fun `a short read fails immediately and never sends that part`() = runBlocking {
+        // 读短了（文件在传输中被改小 / provider 读取出错）：分片指纹是抓不到它的
+        // （哈希自洽、服务端只会核对"收到的"与"我声称的"），所以必须在读到之后立刻判等长
+        val error = runCatching { uploader.upload(source(shortenBy = 100)) { } }.exceptionOrNull()
+
+        assertTrue(
+            "应当以「读取不完整」失败，实际：${error?.message}",
+            error?.message?.contains("读取不完整") == true
+        )
+        assertEquals("短读的分片一个都不该发出去", 0, server.receivedChunkIndexes().size)
+        assertEquals("更不该走到合并", 0, server.completeCount.get())
+    }
+
+    // ───────────────────────── 指纹缓存的失效判据 ─────────────────────────
+
+    @Test
+    fun `recomputes the digest when the file was modified in place`() = runBlocking {
+        // 同一个文件原地改了内容、字节数恰好没变：只比大小会命中缓存，
+        // 而那个旧指纹会被当成断言发给服务端——秒传分支不做内容核对，会把旧文件当结果交出去
+        val src = source(lastModified = 2_000L)
+        store.seed(
+            UploadSessionRecord(
+                uri = src.key, fileName = src.name, fileSize = src.size, fileMd5 = "stale-digest",
+                lastModified = 1_000L,
+                chunkSize = CHUNK_SIZE, totalChunks = TOTAL_CHUNKS, uploadId = "old",
+                status = UploadSessionStatus.UPLOADING
+            )
+        )
+
+        uploader.upload(src) { }
+
+        assertEquals("改动时间变了必须重算指纹", 1, src.digestCalls)
+        assertEquals("旧会话要收掉（它记的分片属于被改掉的内容）", 1, server.abortCount.get())
+        assertNull("旧账本也要清掉", store.getSession(src.key))
+    }
+
+    @Test
+    fun `does not trust the cache when the provider reports no modification time`() = runBlocking {
+        val src = source(lastModified = null)
+        store.seed(
+            UploadSessionRecord(
+                uri = src.key, fileName = src.name, fileSize = src.size, fileMd5 = "stale-digest",
+                lastModified = 1_000L,
+                chunkSize = CHUNK_SIZE, totalChunks = TOTAL_CHUNKS, uploadId = "old",
+                status = UploadSessionStatus.UPLOADING
+            )
+        )
+
+        uploader.upload(src) { }
+
+        assertEquals("拿不到改动时间就不信缓存（宁可多读一遍文件）", 1, src.digestCalls)
+    }
+
     @Test
     fun `abort reaches the server and swallows its failure`() = runBlocking {
         // 放弃上传是"我已经不要了"：清理失败不该让用户看到一个报错
@@ -359,6 +450,7 @@ private class UploadServer {
 
     private val chunkHits = mutableMapOf<Int, Int>()
     private val chunkPayloads = mutableMapOf<Int, ByteArray>()
+    private val chunkMd5 = mutableMapOf<Int, String>()
     private val failures = mutableMapOf<Int, Failure>()
     private val inFlight = AtomicInteger()
 
@@ -399,6 +491,9 @@ private class UploadServer {
 
     /** 取回某一片的**裸内容**（去掉 multipart 的头部与结尾边界），用于逐字节比对 */
     fun partContent(index: Int): ByteArray = synchronized(chunkPayloads) { chunkPayloads.getValue(index) }
+
+    /** 这一片请求里带的指纹（客户端声称的 MD5） */
+    fun partMd5Of(index: Int): String? = synchronized(chunkMd5) { chunkMd5[index] }
 
     fun failChunk(index: Int, httpStatus: Int, businessCode: Int = 14999, times: Int = 1) {
         failures[index] = Failure(httpStatus, businessCode, times)
@@ -443,6 +538,10 @@ private class UploadServer {
             }
 
             synchronized(chunkPayloads) { chunkPayloads[index] = extractPartContent(body) }
+            synchronized(chunkMd5) {
+                chunkMd5[index] = Regex("partMd5=([0-9a-fA-F]{32})").find(path)
+                    ?.groupValues?.get(1).orEmpty()
+            }
             uploadedOnServer += index
             return ok("null")
         } finally {
@@ -496,6 +595,9 @@ private class UploadServer {
  * 换成"让数据源 open 好继承"或"把 Retrofit 从生产实现里抽出来"都是为了测试改生产结构，
  * 而这一层本来就有"窄接口 + 实现"的正当理由（见 [ChunkUploadRemote]）。
  */
+private fun md5(bytes: ByteArray): String =
+    java.security.MessageDigest.getInstance("MD5").digest(bytes).joinToString("") { "%02x".format(it) }
+
 private class RealHttpChunkRemote(baseUrl: String) : ChunkUploadRemote {
 
     private val api = Retrofit.Builder()
@@ -507,8 +609,12 @@ private class RealHttpChunkRemote(baseUrl: String) : ChunkUploadRemote {
 
     override suspend fun initUpload(body: UploadInitRequestDto) = apiCall { api.initUpload(body) }
 
-    override suspend fun uploadChunk(uploadId: String, chunkIndex: Int, part: MultipartBody.Part) =
-        apiUnitCall { api.uploadChunk(uploadId, chunkIndex, part) }
+    override suspend fun uploadChunk(
+        uploadId: String,
+        chunkIndex: Int,
+        part: MultipartBody.Part,
+        partMd5: String?
+    ) = apiUnitCall { api.uploadChunk(uploadId, chunkIndex, part, partMd5) }
 
     override suspend fun completeUpload(uploadId: String) = apiCall { api.completeUpload(uploadId) }
 

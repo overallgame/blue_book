@@ -33,6 +33,16 @@ class InvalidFileTypeException : BusinessException(13003, "不支持的文件格
  */
 class InvalidUploadParamsException(message: String) : BusinessException(13005, message)
 
+/**
+ * 分片内容与客户端声称的指纹不符：**收到的字节不是它发出去的字节**。
+ *
+ * 由客户端在分片级别**原地重传**（它按 13006 这个码判断），所以 HTTP 状态是 400
+ * 但语义上是"这次传输有问题、值得重试"，与 13005（参数错，重试无用）相反。
+ * ★ 这个码是跨端契约：客户端 `ChunkedUploader` 里有一个同名常量按它分流。
+ */
+class PartChecksumMismatchException :
+    BusinessException(13006, "分片校验失败，请重传该分片")
+
 // 扫一扫相关 15001-15999
 //
 // 「这不是小蓝书的二维码」必须由**服务端**回答，而不是客户端先解析出 id 再传过来（设计方案 6.2）：

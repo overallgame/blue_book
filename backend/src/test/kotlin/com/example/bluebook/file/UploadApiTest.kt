@@ -135,13 +135,20 @@ class UploadApiTest {
         header("Authorization", "Bearer $token")
     }
 
-    private fun uploadChunk(uploadId: String, index: Int, bytes: ByteArray, token: String = aliceToken) =
-        mockMvc.multipart("/api/file/upload/chunk") {
-            param("uploadId", uploadId)
-            param("chunkIndex", index.toString())
-            file(MockMultipartFile("file", "chunk$index", "application/octet-stream", bytes))
-            header("Authorization", "Bearer $token")
-        }
+    private fun uploadChunk(
+        uploadId: String,
+        index: Int,
+        bytes: ByteArray,
+        token: String = aliceToken,
+        partMd5: String? = md5(bytes)
+    ) = mockMvc.multipart("/api/file/upload/chunk") {
+        param("uploadId", uploadId)
+        param("chunkIndex", index.toString())
+        // 默认带上正确的分片指纹（新客户端都会带）；传 null 模拟老客户端
+        if (partMd5 != null) param("partMd5", partMd5)
+        file(MockMultipartFile("file", "chunk$index", "application/octet-stream", bytes))
+        header("Authorization", "Bearer $token")
+    }
 
     private fun complete(uploadId: String, token: String = aliceToken) =
         mockMvc.post("/api/file/upload/complete") {
@@ -337,6 +344,56 @@ class UploadApiTest {
         uploadChunk(uploadId, 0, ByteArray(0)).andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value(13005) }
+        }
+    }
+
+
+    // ───────────────────────── 分片指纹 ─────────────────────────
+
+    @Test
+    fun `a part whose checksum does not match is rejected and not recorded`() {
+        val uploadId = initJson(initRequest())["uploadId"]!!
+
+        uploadChunk(uploadId, 0, chunkBytes(0), partMd5 = "0".repeat(32)).andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value(13006) }
+            jsonPath("$.message") { value("分片校验失败，请重传该分片") }
+        }
+
+        assertFalse(
+            File("$STORAGE/chunks/$uploadId/0").exists(),
+            "校验失败的分片不能留在磁盘上（否则它会被当成已上传，最后只能靠整体 MD5 才发现）"
+        )
+        assertFalse(
+            File("$STORAGE/chunks/$uploadId/0.tmp").exists(),
+            "临时文件也要清掉"
+        )
+        // 拒收之后这一片不算已传：客户端重传它即可，不必整链重来
+        assertTrue(
+            uploadSessionRepository.findById(uploadId).isPresent,
+            "被拒的分片不该让会话消失（客户端只是重传这一片）"
+        )
+    }
+
+    @Test
+    fun `a part with a correct checksum is accepted`() {
+        val uploadId = initJson(initRequest())["uploadId"]!!
+
+        uploadChunk(uploadId, 0, chunkBytes(0)).andExpect {
+            status { isOk() }
+            jsonPath("$.code") { value(0) }
+        }
+
+        assertTrue(File("$STORAGE/chunks/$uploadId/0").exists(), "校验通过的分片要落盘")
+    }
+
+    @Test
+    fun `a part without checksum is still accepted for older clients`() {
+        val uploadId = initJson(initRequest())["uploadId"]!!
+
+        uploadChunk(uploadId, 0, chunkBytes(0), partMd5 = null).andExpect {
+            status { isOk() }
+            jsonPath("$.code") { value(0) }
         }
     }
 

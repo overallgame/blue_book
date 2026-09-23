@@ -15,23 +15,26 @@ import retrofit2.Response
 @PublishedApi
 internal fun httpFailure(response: Response<*>): NetworkException {
 	val code = response.code()
-	val message = serverMessage(response) ?: when {
+	val body = errorBody(response)
+	val message = body?.first ?: when {
 		code == 401 || code == ResponseState.FORBIDDEN -> "登录状态已失效，请重新登录"
 		code == 404 -> "内容不存在或已删除"
 		code in 500..599 -> "服务器繁忙，请稍后重试"
 		else -> "请求失败($code)"
 	}
-	return NetworkException(code, message)
+	return NetworkException(code, message, businessCode = body?.second)
 }
 
 /**
- * 解析服务端错误体里的业务文案。
+ * 解析服务端错误体，产出 `(文案, 业务码)`。
+ *
+ * 两者都从同一个响应体里来，所以只解析一次。
  * 后端对业务异常返回非 2xx（密码错误 400、用户不存在 404、未登录 401 等），
  * 具体原因（"手机号或密码错误""验证码错误或已过期""视频正在转码中"）只在响应体 message 里，
  * 不解析就只能给用户看"请求失败(400)"。
  */
 @PublishedApi
-internal fun serverMessage(response: Response<*>): String? = try {
+internal fun errorBody(response: Response<*>): Pair<String, Int?>? = try {
 	val raw = response.errorBody()?.string().orEmpty()
 	if (raw.isBlank()) {
 		null
@@ -40,7 +43,9 @@ internal fun serverMessage(response: Response<*>): String? = try {
 		// 原先那句 `as? Map<*, *>` 是多余的——编译器会直接报 "No cast needed"。
 		// 这里仍然用 ?. 取字段：平台类型可能为 null（raw 是 "null" 或标量时）。
 		val parsed = Gson().fromJson(raw, Map::class.java)
-		(parsed?.get("message") as? String)?.trim()?.takeIf { it.isNotEmpty() && it != "success" }
+		val text = (parsed?.get("message") as? String)?.trim()?.takeIf { it.isNotEmpty() && it != "success" }
+		val businessCode = (parsed?.get("code") as? Number)?.toInt()
+		if (text == null && businessCode == null) null else (text ?: "请求失败") to businessCode
 	}
 } catch (_: Throwable) {
 	null
@@ -58,7 +63,7 @@ suspend inline fun <T> apiCall(
 			// 服务端用业务码表达失败时自带中文文案，直接透出；
 			// 不能让它走 NetworkException.from（会把消息换成"数据解析错误"，丢掉原因）
 			return Result.failure(
-				NetworkException(body.code, body.message.ifBlank { "请求失败" })
+				NetworkException(body.code, body.message.ifBlank { "请求失败" }, businessCode = body.code)
 			)
 		}
 		val data = body.data
@@ -84,7 +89,7 @@ suspend inline fun apiUnitCall(
 			?: return Result.failure(NetworkException(NetworkException.CODE_PARSE_ERROR, "响应体为空"))
 		if (body.code != ResponseState.API_SUCCESS) {
 			return Result.failure(
-				NetworkException(body.code, body.message.ifBlank { "请求失败" })
+				NetworkException(body.code, body.message.ifBlank { "请求失败" }, businessCode = body.code)
 			)
 		}
 		Result.success(Unit)
@@ -106,7 +111,11 @@ suspend inline fun <T> commonCall(
 		val code = body.code
 		if (code != ResponseState.COMMON_SUCCESS) {
 			return Result.failure(
-				NetworkException(code ?: NetworkException.CODE_SERVER_ERROR, body.msg ?: "业务失败")
+				NetworkException(
+					code ?: NetworkException.CODE_SERVER_ERROR,
+					body.msg ?: "业务失败",
+					businessCode = code
+				)
 			)
 		}
 		val data = body.data

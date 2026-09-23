@@ -18,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * `MIGRATION_2_3` 的真实性验证——**在真机上造一个 v2 库，让 Room 自己跑迁移并校验结果**。
+ * `MIGRATION_2_3` / `MIGRATION_3_4` 的真实性验证——**在真机上造一个 v2 库，让 Room 自己跑迁移并校验结果**。
  *
  * ## 为什么这条必须有
  *
@@ -77,9 +77,9 @@ class UploadMigrationTest {
 	fun migratingV2ToV3_keepsExistingDataAndCreatesUploadTables() = runBlocking {
 		createV2Database()
 
-		// Room 打开时会执行 MIGRATION_2_3 并校验结果 schema——不一致就在这里抛
+		// Room 打开时会按顺序执行 2→3→4 并校验结果 schema——不一致就在这里抛
 		val database = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-			.addMigrations(AppDatabase.MIGRATION_2_3)
+			.addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
 			// 测试里省掉线程调度；生产走 Room 的默认（非主线程）
 			.allowMainThreadQueries()
 			.build()
@@ -98,12 +98,17 @@ class UploadMigrationTest {
 				UploadSessionEntity(
 					uri = uri, fileName = "a.mp4", fileSize = 5_000_000, fileMd5 = "md5",
 					chunkSize = 1_000_000, totalChunks = 5, uploadId = "u-1",
+					lastModified = 1_700_000_000_000L,
 					status = UploadSessionStatus.UPLOADING.name, updatedAt = 123L
 				)
 			)
 			val session = dao.session(uri)
 			assertEquals("会话要能按 uri 读回来", "u-1", session?.uploadId)
-			assertEquals("分片大小是本次新增的列，必须存得进也读得出", 1_000_000L, session?.chunkSize)
+			assertEquals("分片大小是新增的列，必须存得进也读得出", 1_000_000L, session?.chunkSize)
+			assertEquals(
+				"改动时间（v4 新增）也要能存能读——它决定缓存的文件指纹还作不作数",
+				1_700_000_000_000L, session?.lastModified
+			)
 			assertEquals("状态以枚举名存字符串", UploadSessionStatus.UPLOADING.name, session?.status)
 			assertEquals(
 				"没有上传中会话时，latestUnfinishedSession 不该返回已完成的那条",

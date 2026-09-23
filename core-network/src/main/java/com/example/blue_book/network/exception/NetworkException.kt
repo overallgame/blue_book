@@ -13,7 +13,16 @@ import java.net.UnknownHostException
 class NetworkException(
 	val code: Int,
 	override val message: String,
-	cause: Throwable? = null
+	cause: Throwable? = null,
+	/**
+	 * 服务端响应体里的**业务码**（`ApiResponse.code`），只要拿得到就填。
+	 *
+	 * 与 [code] 的区别：[code] 在非 2xx 时是 HTTP 状态码（400/404/5xx），
+	 * 而业务码藏在响应体里（例如 400 + `{"code":13006}`）。绝大多数场景只看 HTTP 状态就够了，
+	 * 但"同一个状态码下要区分不同业务原因"时（如 13006 分片校验不符要重传该片、
+	 * 而 13005 参数错重试无用，两者都是 400）就必须看它。
+	 */
+	val businessCode: Int? = null
 ) : RuntimeException(message, cause) {
 
 	companion object {

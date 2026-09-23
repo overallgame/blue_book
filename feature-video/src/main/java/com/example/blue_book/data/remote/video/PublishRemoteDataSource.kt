@@ -22,8 +22,12 @@ class PublishRemoteDataSource @Inject constructor(
 	override suspend fun initUpload(body: UploadInitRequestDto): Result<UploadInitResponseDto> =
 		apiGateway.apiResult { api.initUpload(body) }
 
-	override suspend fun uploadChunk(uploadId: String, chunkIndex: Int, part: okhttp3.MultipartBody.Part): Result<Unit> =
-		apiGateway.apiUnitResult { api.uploadChunk(uploadId, chunkIndex, part) }
+	override suspend fun uploadChunk(
+		uploadId: String,
+		chunkIndex: Int,
+		part: okhttp3.MultipartBody.Part,
+		partMd5: String?
+	): Result<Unit> = apiGateway.apiUnitResult { api.uploadChunk(uploadId, chunkIndex, part, partMd5) }
 
 	override suspend fun listParts(uploadId: String): Result<UploadPartsResponseDto> =
 		apiGateway.apiResult { api.listParts(uploadId) }

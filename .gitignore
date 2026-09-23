@@ -47,8 +47,11 @@ __pycache__/
 keystore/
 
 # ── ① 目录级：后端运行时数据 ────────────────────────────────────────────
-# 上传文件、HLS 转码产物、封面
-upload/
+# 后端的上传文件（app.upload.storage-path 默认 ./upload，即 backend/upload/）。
+# ★ 必须锚定到仓库根部：不写前导斜杠时 `upload/` 会匹配**任意层级**的 upload 目录，
+#   把 `lib-base/.../data/upload/` 这样的源码目录一起忽略掉（本项目踩过一次：
+#   那个目录下的对账逻辑一直没被 git 跟踪，差点没能入库）
+/backend/upload/
 # 日志目录；不带前导斜杠，因此 backend/logs/ 一并盖住（原先单列一行是冗余的）
 logs/
 

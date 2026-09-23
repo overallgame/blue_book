@@ -1,13 +1,13 @@
 package com.example.blue_book.data
 
-import com.example.blue_book.datastore.AppDataStore
+import com.example.blue_book.datastore.IDataStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /** 搜索历史：本地 datastore 保存，最多 [MAX_ITEMS] 条，最新在前、去重 */
 @Singleton
 class SearchHistoryStore @Inject constructor(
-	private val dataStore: AppDataStore
+	private val dataStore: IDataStore
 ) {
 
 	suspend fun get(): List<String> {

@@ -30,4 +30,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // 通知 DTO → domain 的映射测试（头像绝对化那条以前是漏的）
+    testImplementation("junit:junit:4.13.2")
 }

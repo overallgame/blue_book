@@ -3,15 +3,10 @@ package com.example.blue_book.data.mapper
 import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.data.remote.comment.dto.CommentDto
 import com.example.blue_book.domain.model.Comment
+import com.example.blue_book.util.absoluteUrl
 
-private fun getBaseUrl(): String = ApiGateway.BASE_URL.trimEnd('/')
-
-private fun abs(url: String?): String {
-	val u = url?.trim().orEmpty()
-	if (u.isBlank()) return ""
-	if (u.startsWith("http://") || u.startsWith("https://")) return u
-	return if (u.startsWith("/")) "${getBaseUrl()}$u" else "${getBaseUrl()}/$u"
-}
+/** 空/空串 → ""（调用方直接喂给 Glide）；已经是绝对地址的原样返回 */
+private fun abs(url: String?): String = absoluteUrl(ApiGateway.BASE_URL, url) ?: ""
 
 private fun CommentDto.toDomain(): Comment {
 	return Comment(

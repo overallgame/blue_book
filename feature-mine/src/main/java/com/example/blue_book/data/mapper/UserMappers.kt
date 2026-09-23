@@ -4,18 +4,14 @@ import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.data.UserAccount
 import com.example.blue_book.data.remote.user.dto2.UserV2MeDto
 import com.example.blue_book.data.remote.user.dto2.UserV2ProfileDto
+import com.example.blue_book.util.absoluteUrl
 
 fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
-	val base = ApiGateway.BASE_URL.trimEnd('/')
 	fun n(s: String?): String? {
 		val v = s?.trim().orEmpty()
 		return v.ifBlank { null }
 	}
-	fun abs(url: String?): String? {
-		val v = n(url) ?: return null
-		if (v.startsWith("http://") || v.startsWith("https://")) return v
-		return if (v.startsWith("/")) "$base$v" else "$base/$v"
-	}
+	fun abs(url: String?): String? = absoluteUrl(ApiGateway.BASE_URL, url)
 	return UserAccount(
 		id = id,
 		phone = phone,
@@ -39,16 +35,11 @@ fun UserV2ProfileDto.toDomain(phone: String = ""): UserAccount {
 }
 
 fun UserV2MeDto.toDomain(): UserAccount {
-	val base = ApiGateway.BASE_URL.trimEnd('/')
 	fun n(s: String?): String? {
 		val v = s?.trim().orEmpty()
 		return v.ifBlank { null }
 	}
-	fun abs(url: String?): String? {
-		val v = n(url) ?: return null
-		if (v.startsWith("http://") || v.startsWith("https://")) return v
-		return if (v.startsWith("/")) "$base$v" else "$base/$v"
-	}
+	fun abs(url: String?): String? = absoluteUrl(ApiGateway.BASE_URL, url)
 	return UserAccount(
 		id = id,
 		phone = phone,

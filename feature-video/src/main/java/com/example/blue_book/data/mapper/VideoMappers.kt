@@ -3,15 +3,10 @@ package com.example.blue_book.data.mapper
 import com.example.blue_book.network.ApiGateway
 import com.example.blue_book.domain.model.Video
 import com.example.blue_book.data.remote.video.dto2.Video2Dto
+import com.example.blue_book.util.absoluteUrl
 
 fun List<Video2Dto>.toDomainVideos(): List<Video> {
-	val base = ApiGateway.BASE_URL.trimEnd('/')
-	fun abs(url: String?): String {
-		val u = url?.trim().orEmpty()
-		if (u.isBlank()) return ""
-		if (u.startsWith("http://") || u.startsWith("https://")) return u
-		return if (u.startsWith("/")) "$base$u" else "$base/$u"
-	}
+	fun abs(url: String?): String = absoluteUrl(ApiGateway.BASE_URL, url) ?: ""
 	return map { v ->
 		Video(
 			aid = v.videoId,

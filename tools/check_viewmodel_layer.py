@@ -64,12 +64,14 @@ FORBIDDEN = [
 
 # 已登记的技术债：键是 ViewModel 类名，值是「为什么还在 + 修它要做什么」。
 # 出现在这里会让检查通过，但**每一条都应当被消掉**，而不是当作永久豁免。
-KNOWN_DEBT = {
-    "MessageViewModel": (
-        "依赖 MessageRemoteDataSource。feature-message 没有 domain/repository 层，"
-        "要修得先给它补一层 Repository——比 VideoViewModel 那次大，尚未做。"
-    ),
-}
+# 已清空：最后一条（MessageViewModel 依赖 MessageRemoteDataSource）已通过
+# 给 feature-message 补上 domain/repository 层修掉。出现新的违规时**不要往这里加**，
+# 而是照下面两例的办法把分层补回去：
+#   - VideoViewModel：曾直接注入 VideoRemoteDataSource 取转码状态 → 给仓库补 transcodeStatus 方法
+#   - PublishViewModel：曾依赖 @ApplicationContext Context（定位 + 构造内容源）
+#     → 把两处平台能力收进 LocationProvider / UploadSourceFactory
+#   - MessageViewModel：曾直接注入 MessageRemoteDataSource → 补 MessageRepository
+KNOWN_DEBT = {}
 
 
 def strip_comments(text):
@@ -164,7 +166,10 @@ def main():
         failed = True
 
     if not failed:
-        print("✅ 通过（已知欠债 %d 条，均已在脚本内登记）" % len(KNOWN_DEBT))
+        if KNOWN_DEBT:
+            print("✅ 通过（已知欠债 %d 条，已登记在脚本内并附原因与修法）" % len(KNOWN_DEBT))
+        else:
+            print("✅ 通过：所有 ViewModel 的构造签名都干净，已知欠债已清零")
     return 1 if failed else 0
 
 

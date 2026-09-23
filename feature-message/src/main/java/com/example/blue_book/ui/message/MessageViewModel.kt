@@ -1,7 +1,7 @@
 package com.example.blue_book.ui.message
 
-import com.example.blue_book.data.dto.NotificationDto
-import com.example.blue_book.data.remote.MessageRemoteDataSource
+import com.example.blue_book.domain.model.Notification
+import com.example.blue_book.domain.repository.MessageRepository
 import com.example.blue_book.udf.UdfViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -9,7 +9,7 @@ import javax.inject.Inject
 /** 消息中心：真实通知数据（游标分页 + 单条已读 + 未读数） */
 @HiltViewModel
 class MessageViewModel @Inject constructor(
-	private val remote: MessageRemoteDataSource
+	private val repository: MessageRepository
 ) : UdfViewModel<MessageIntent, MessageUiState, MessageEffect>(MessageUiState()) {
 
 	/** 加载更多失败是否已提示过（成功时复位），避免一次失败弹一串 toast */
@@ -29,7 +29,7 @@ class MessageViewModel @Inject constructor(
 	private suspend fun refresh() {
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null, cursorId = null, hasMore = true) } },
-			call = { remote.list(cursorId = null, size = uiState.value.pageSize) },
+			call = { repository.list(cursorId = null, size = uiState.value.pageSize) },
 			onSuccess = { dto ->
 				// 复位加载更多的失败提示标记：刷新成功意味着分页状态已经重置，
 				// 之后第一次加载更多失败必须重新提示，不能被上一轮的标记吞掉
@@ -46,7 +46,7 @@ class MessageViewModel @Inject constructor(
 					)
 				}
 				// 拉取全局未读数（含未加载分页）
-				remote.unreadCount().onSuccess { count ->
+				repository.unreadCount().onSuccess { count ->
 					setState { copy(unreadCount = count.toInt()) }
 				}
 			},
@@ -64,7 +64,7 @@ class MessageViewModel @Inject constructor(
 		if (state.isLoading || !state.hasMore) return
 		runResult(
 			onStart = { setState { copy(isLoading = true, message = null) } },
-			call = { remote.list(cursorId = state.cursorId, size = state.pageSize) },
+			call = { repository.list(cursorId = state.cursorId, size = state.pageSize) },
 			onSuccess = { dto ->
 				loadMoreErrorNotified = false
 				val mapped = dto.items.map { it.toUi() }
@@ -100,7 +100,7 @@ class MessageViewModel @Inject constructor(
 				unreadCount = (unreadCount - 1).coerceAtLeast(0)
 			)
 		}
-		remote.markRead(id)
+		repository.markRead(id)
 	}
 
 	/** 删除单条：乐观移除，失败回滚并提示 */
@@ -114,7 +114,7 @@ class MessageViewModel @Inject constructor(
 				unreadCount = (unreadCount - if (target.isRead) 0 else 1).coerceAtLeast(0)
 			)
 		}
-		remote.delete(id).onFailure { e ->
+		repository.delete(id).onFailure { e ->
 			setState { copy(items = previous.items, isEmpty = previous.isEmpty, unreadCount = previous.unreadCount) }
 			sendEffect(MessageEffect.ShowToast(e.message ?: "删除失败"))
 		}
@@ -125,7 +125,7 @@ class MessageViewModel @Inject constructor(
 		val previous = uiState.value
 		if (previous.items.isEmpty()) return
 		setState { copy(items = emptyList(), isEmpty = true, unreadCount = 0, cursorId = null, hasMore = true) }
-		remote.clearAll().onFailure { e ->
+		repository.clearAll().onFailure { e ->
 			setState {
 				copy(items = previous.items, isEmpty = previous.isEmpty, unreadCount = previous.unreadCount)
 			}
@@ -133,7 +133,7 @@ class MessageViewModel @Inject constructor(
 		}
 	}
 
-	private fun NotificationDto.toUi(): MessageItem = MessageItem(
+	private fun Notification.toUi(): MessageItem = MessageItem(
 		id = id,
 		type = when (type.uppercase()) {
 			"FOLLOW" -> MessageType.Follow
@@ -143,10 +143,10 @@ class MessageViewModel @Inject constructor(
 			else -> MessageType.System
 		},
 		senderId = senderId,
-		avatar = senderAvatar,
-		nickname = senderNickname,
+		avatar = avatar,
+		nickname = nickname,
 		content = content,
-		time = createdAt,
+		time = time,
 		isRead = isRead,
 		videoId = videoId
 	)

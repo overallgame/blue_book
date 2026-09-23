@@ -56,7 +56,7 @@ Android 应用，最低支持 API 31（Android 12），**Kotlin 1.9.24**、**AGP
 ── 业务功能层（底部4个Tab） ──
 :feature-home        ← 首页：瀑布流发现页 + 搜索 + 热搜榜
 :feature-video       ← 视频：全屏沉浸播放 + 评论 + 发布
-:feature-message     ← 消息：占位页
+:feature-message     ← 消息：通知列表
 :feature-mine        ← 我的：个人中心 + 资料编辑
 
 ── 独立功能模块（从 Tab 或其它页面经路由进入）──
@@ -394,15 +394,18 @@ mainHost?.providesBottomNav   // 宿主是否常驻底部导航，决定页面�
    禁止 `*RemoteDataSource` / `*Api` / `*Dao` / `ApiGateway` / `Context` / `TokenHolder` /
    `OkHttp*` / `ExoPlayer*` 这类依赖——它们要么让 ViewModel **无法在纯 JVM 上构造**，
    要么说明**分层被穿透**（ViewModel 越过 Repository 直接够到了数据层/平台）。
-   脚本内登记了已知欠债（当前 1 条，附原因与修法）：出现**新违规**退出码为 1，
+   已知欠债**当前为 0 条**：出现**新违规**退出码为 1，
    欠债被消掉却还留在清单里也会报错，避免清单腐烂。**新增 ViewModel 时先跑它。**
-   已被它拦下并修掉的两例：
+   已被它拦下并修掉的三例：
    - `VideoViewModel` 曾直接注入 `VideoRemoteDataSource` 取转码状态，根因是 `VideoRepository`
      缺 `transcodeStatus` 方法；补上接口方法后即回可测范围
    - `PublishViewModel` 曾依赖 `@ApplicationContext Context`（给定位与构造内容源用），
      代价是**发布页的编排完全测不了**——而它承载的恰好是"取消要真的停掉""publish 只调一次"
      这类有真实后果的规则。把两处平台能力收进 `LocationProvider` / `UploadSourceFactory`
      之后，构造签名里再没有任何平台类型（连 `Uri` 都换成了字符串）
+   - `MessageViewModel` 曾直接注入 `MessageRemoteDataSource`（`feature-message` 没有
+     domain/repository 层）→ 补了 `MessageRepository` 与 DTO→domain 映射，
+     顺带修掉一条潜伏 bug：通知头像此前没做绝对化，Glide 一直加载不出来
    注意脚本会**剥掉注释**再匹配：构造参数的注释里常提到 Context/DataStore 这些词，
    不剥就会把解释性文字当成依赖（`PublishViewModel` 就因此被误报过一次）
 8. **跨语言契约检查脚本**：`python tools/check_scan_code_contract.py` 比对客户端

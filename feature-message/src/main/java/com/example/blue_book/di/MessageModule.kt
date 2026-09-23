@@ -1,8 +1,10 @@
 package com.example.blue_book.di
 
-import com.example.blue_book.data.remote.MessageRemoteDataSource
+import com.example.blue_book.data.repository.MessageRepositoryImpl
+import com.example.blue_book.domain.repository.MessageRepository
 import com.example.blue_book.provider.INotificationProvider
 import com.example.blue_book.provider.NotificationProviderImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,10 +17,17 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-object MessageModule {
+abstract class MessageModule {
 
-	@Provides
+	@Binds
 	@Singleton
-	fun provideNotificationProvider(remote: MessageRemoteDataSource): INotificationProvider =
-		NotificationProviderImpl(remote)
+	abstract fun bindMessageRepository(impl: MessageRepositoryImpl): MessageRepository
+
+	companion object {
+
+		@Provides
+		@Singleton
+		fun provideNotificationProvider(repository: MessageRepository): INotificationProvider =
+			NotificationProviderImpl(repository)
+	}
 }

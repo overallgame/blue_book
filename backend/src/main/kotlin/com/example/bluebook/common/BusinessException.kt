@@ -24,6 +24,15 @@ class FileTooLargeException : BusinessException(13001, "文件大小超过限制
 class ChunkMissingException : BusinessException(13002, "分片缺失，请重新上传缺失的分片")
 class InvalidFileTypeException : BusinessException(13003, "不支持的文件格式")
 
+/**
+ * 分片参数不自洽：分片大小越界、分片数与文件大小对不上、分片序号越界、单片超限。
+ *
+ * message 由调用方给出**具体**原因（例如"分片序号越界：9999（应为 0…49）"）：
+ * 这类错误只可能来自客户端 bug 或版本不一致，笼统的"请求参数有误"无法据此定位。
+ * HTTP 状态为 400（落在 GlobalExceptionHandler 的 else 分支）。
+ */
+class InvalidUploadParamsException(message: String) : BusinessException(13005, message)
+
 // 扫一扫相关 15001-15999
 //
 // 「这不是小蓝书的二维码」必须由**服务端**回答，而不是客户端先解析出 id 再传过来（设计方案 6.2）：

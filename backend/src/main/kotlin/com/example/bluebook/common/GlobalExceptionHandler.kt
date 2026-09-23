@@ -11,6 +11,7 @@ import org.springframework.web.bind.ServletRequestBindingException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 import java.time.format.DateTimeParseException
 
 @RestControllerAdvice
@@ -72,6 +73,17 @@ class GlobalExceptionHandler {
         // 堆栈放 debug：客户端入参错误会很多，但排查服务端 IAE 时需要调用点
         log.debug("请求参数异常堆栈", ex)
         return ResponseEntity.badRequest().body(ApiResponse.fail(14003, "请求参数有误"))
+    }
+
+    /**
+     * 上传体超过 multipart 限制：客户端把分片切大了，或声明的大小与实际不符，属入参问题，返回 400。
+     *
+     * 分片上传的客户端按服务端下发的 `chunkSize` 切片，所以走到这里通常意味着客户端没遵守契约。
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    fun handleUploadTooLarge(ex: MaxUploadSizeExceededException): ResponseEntity<ApiResponse<Any>> {
+        log.warn("上传体超过 multipart 限制: {}", ex.message)
+        return ResponseEntity.badRequest().body(ApiResponse.fail(13001, "分片过大，请减小分片大小后重试"))
     }
 
     @ExceptionHandler(Exception::class)

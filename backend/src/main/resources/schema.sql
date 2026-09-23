@@ -150,8 +150,24 @@ CREATE TABLE upload_session (
     file_size BIGINT,
     file_md5 VARCHAR(32),
     total_chunks INT,
+    -- 本次会话的分片大小。服务端必须记住它：合并是按序号硬拼的，
+    -- 前后分片大小不一致会拼出"长度对、内容错"的文件，所以续传时要靠它判断契约是否变了
+    chunk_size BIGINT,
     status ENUM('UPLOADING','MERGING','DONE','EXPIRED'),
-    video_id BIGINT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 已部署数据库的升级语句（生产用 ddl-auto=validate，不改库会启动失败）
+--
+-- 全新安装不需要执行（上面的 CREATE TABLE 已包含新列）。
+-- 如果是从旧版本升级，执行：
+--
+--   ALTER TABLE upload_session ADD COLUMN chunk_size BIGINT;
+--   ALTER TABLE upload_session DROP COLUMN video_id;
+--
+-- 注意：旧的 UPLOADING 会话 chunk_size 为 NULL。服务端在续传匹配时把 NULL 视为
+-- "与当前分片契约不一致"，会作废并重建会话（客户端表现为从头重传一次，不会出错）。
+-- DONE 的会话不受影响——它们的会话行只在合并时用过，秒传只看 file_md5。
+-- ─────────────────────────────────────────────────────────────────────────────

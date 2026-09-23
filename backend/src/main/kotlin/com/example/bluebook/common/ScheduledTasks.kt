@@ -9,7 +9,6 @@ import com.example.bluebook.video.service.TranscodeRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -20,7 +19,6 @@ import java.time.LocalDateTime
 @Component
 class ScheduledTasks(
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val redisTemplate: StringRedisTemplate,
     private val videoRepository: VideoRepository,
     private val uploadSessionRepository: UploadSessionRepository,
     private val userRepository: UserRepository,
@@ -136,9 +134,9 @@ class ScheduledTasks(
     }
 
     /**
-     * 清理过期上传会话与遗留分片。
-     * 分片目录 chunks/{uploadId} 此前只在合并成功时删除，中断的上传会永久占盘。
-     * 过期按 `updated_at`（最后活动时间）判断——`uploadChunk` 与续传分支都会刷新它。
+     * 清理过期上传会话与遗留分片：中断的上传不会走到合并，它的分片目录只能靠这里回收。
+     * 过期按 `updated_at`（最后活动时间）判断——`initUpload` 的续传分支会刷新它。
+     * 分片的权威记录是 `chunks/{uploadId}` 目录本身，除它之外没有需要一并清理的记录。
      */
     @Transactional
     @Scheduled(fixedRate = 3600000)
@@ -151,7 +149,6 @@ class ScheduledTasks(
         log.info("清理 {} 个过期上传会话", expired.size)
         expired.forEach { session ->
             File("$storagePath/chunks/${session.id}").deleteRecursively()
-            redisTemplate.delete("upload:${session.id}")
             uploadSessionRepository.delete(session)
         }
     }

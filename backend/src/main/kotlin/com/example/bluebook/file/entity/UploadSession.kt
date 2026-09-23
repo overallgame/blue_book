@@ -25,12 +25,19 @@ class UploadSession(
     @Column(name = "total_chunks")
     var totalChunks: Int? = null,
 
+    /**
+     * 本次会话使用的分片大小（字节）。
+     *
+     * 服务端**必须记住它**，不能交给客户端每次自己决定：合并是按 index 顺序硬拼，
+     * 前后分片大小不一致会拼出一个"长度对、内容错"的文件。有了这一列，续传时才能判断
+     * "这次的分片契约与上次是否相同"，不同就作废重来（见 `ChunkUploadService.initUpload`）。
+     */
+    @Column(name = "chunk_size")
+    var chunkSize: Long? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     var status: UploadStatus = UploadStatus.UPLOADING,
-
-    @Column(name = "video_id")
-    var videoId: Long? = null,
 
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(),

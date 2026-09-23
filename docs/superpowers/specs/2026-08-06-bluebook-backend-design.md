@@ -296,15 +296,42 @@ login:fail:{phone}       → String  登录失败计数
 
 | 步骤 | 接口 | 说明 |
 |------|------|------|
-| 0 Init | `POST /api/file/upload/init` | 上报 fileName/fileSize/fileMd5/totalChunks → 返回 uploadId + 已完成分片列表 |
-| 1 Chunk | `POST /api/file/upload/chunk` | 上传单个分片（2MB/片），支持并发 3 片 |
-| 2 Complete | `POST /api/file/upload/complete` | 合并分片 → MD5 校验 → 创建 video 记录 |
+| 0 Init | `POST /api/file/upload/init` | 上报 fileName/fileSize/fileMd5/totalChunks/**chunkSize** → 返回 uploadId + **生效的 chunkSize** + 已落盘分片列表 |
+| 1 Chunk | `POST /api/file/upload/chunk` | 上传单个分片，**客户端并发 3 片**（服务端不限制并发数，但要能承受） |
+| 2 Complete | `POST /api/file/upload/complete` | 合并分片（按序号）→ 整体 MD5 校验 → 返回 filePath |
+| — | `GET /api/file/upload/parts` | **只读**查权威分片状态（恢复时对账、进页面看进度） |
+| — | `POST /api/file/upload/abort` | 放弃上传，立刻释放分片磁盘（否则要等 24 小时的定时清理） |
+
+> **本节在 2026-09 落地时按实现补齐**（原文只写了前三步，且"并发 3 片"当时只是设想——
+> 客户端一直是单流顺序）。落地时的几处修正：
+>
+> - **分片大小由客户端提议、服务端校验并回显生效值**：越界（允许 1MB–8MB）直接 400，
+>   **不做静默钳制**——客户端发请求前就得算好 `totalChunks`，它无从预知钳制值，
+>   所以"钳制 + 一致性校验"并存时钳制等于死代码
+> - **续传时校验分片契约**（chunkSize + totalChunks）：不一致就作废旧会话重建。
+>   此前只按 md5 + size 匹配，App 升级改了分片大小后会把两种大小的分片拼在一起，
+>   而最后报的是"文件校验失败"（与真正原因无关）
+> - **分片状态的唯一真相是磁盘上的 `chunks/{uploadId}` 目录**：此前另有一份 Redis hash
+>   记录同样的信息，两处判据逐渐分叉（init 用"磁盘 ∪ Redis"、complete 只用 Redis），
+>   会拼出长度合理但内容残缺的文件。那份 Redis 记录已删
+> - **单片 `touch` 会话行已去掉**：并发 3 片会对同一行连续 UPDATE、形成行锁竞争；
+>   而过期是 24 小时、一次上传是分钟级，init 时的 touch 已足够保鲜
+> - **分片序号与归属都要校验**：此前能往 `chunks/{id}/9999` 或负数写文件，
+>   且任何登录用户拿着别人的 uploadId 就能塞分片、甚至替别人合并
+> - 客户端侧的对应实现：`feature-video` 的 `ChunkedUploader`（并发工作池 + 随机读探测 +
+>   顺序退化）、`Reconcile`（以服务端为准的对账）、本地 `upload_session`/`upload_part`
+>   两张表（跨进程续传与指纹缓存）
 
 ### 7.2 秒传逻辑
 
 - Init 时上报完整文件 MD5
 - 服务端查 upload_session 表中相同 MD5 + DONE 的记录
 - 存在 → 返回 `skipUpload: true`，跳过上传，复用已有文件
+
+> **客户端侧**：`fileMd5` 缓存在本地 `upload_session` 表里，续传时**不必重读整个文件**算指纹——
+> 1GB 视频算一次 MD5 要几十秒，而它发生在任何上传动作之前（用户点了发布先卡几十秒）。
+> 只在文件大小一致时才信缓存；且任何**不可重试**的失败都会丢掉缓存，
+> 所以不会出现"缓存错了 → 一直失败"的死结。
 
 ### 7.3 转码流程
 
@@ -373,11 +400,19 @@ login:fail:{phone}       → String  登录失败计数
 #### 文件 (`/api/file`)
 | 方法 | 路径 | 说明 | 鉴权 |
 |------|------|------|------|
-| POST | /upload/image | 上传图片 | 是 |
-| POST | /upload/init | 初始化分片上传 | 是 |
-| POST | /upload/chunk | 上传分片 | 是 |
-| GET | /upload/progress | 查询进度 | 是 |
-| POST | /upload/complete | 合并分片 | 是 |
+| POST | /upload/image | 上传图片（单请求，不走分片） | 是 |
+| POST | /upload/init | 初始化或**复用**分片上传会话；返回生效的 chunkSize 与已落盘分片 | 是 |
+| POST | /upload/chunk | 上传分片；同一 (uploadId, chunkIndex) 幂等（覆盖写） | 是 |
+| GET | /upload/parts | **只读**查询权威分片状态（恢复对账、看进度） | 是 |
+| POST | /upload/abort | 放弃上传，立刻释放该会话的分片磁盘 | 是 |
+| POST | /upload/complete | 合并分片 → 整体 MD5 校验 → 返回 filePath | 是 |
+
+> 原文写的 `GET /upload/progress` **从未实现过**（进度一直是从 `init` 的响应里拿的）。
+> 2026-09 落地时按实现改成上表：`/upload/parts` 与 `/upload/abort` 是这次真正加上去的两个接口，
+> 前者的存在理由是"只读"——`init` 有副作用（可能新建会话、可能作废旧会话），
+> 而"进页面看一眼传到哪了"不该产生任何副作用。
+> 另外：`/api/file/` 下的接口都要求登录，服务层另做**归属校验**
+> （否则知道 uploadId 就能操作别人的会话）。
 
 #### 通知 (`/api/v2/notifications`)
 | 方法 | 路径 | 说明 | 鉴权 |

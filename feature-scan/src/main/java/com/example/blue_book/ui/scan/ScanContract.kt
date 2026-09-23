@@ -9,10 +9,10 @@ import com.example.blue_book.udf.UiState
 /**
  * 用户操作与平台回调。
  *
- * 注意 [OnCameraPermissionResult] / [OnCameraUnavailable] / [OnCameraStarted] 这三个：
- * **权限与相机是平台事实，不是业务判断**——Activity 负责问系统、拿到结论后报给状态机，
- * 由状态机决定"这意味着什么、用户有什么出路"。反过来（在 Activity 里 if/else 决定 UI）
- * 就是把失败矩阵拆成两处，测不到也不会有单一真相。
+ * [OnCameraPermissionResult] / [OnCameraUnavailable] / [OnCameraStarted] 这三个是
+ * **权限与相机的平台事实，不是业务判断**——Activity 负责问系统、拿到结论后报给状态机，
+ * 由状态机决定"这意味着什么、用户有什么出路"；在 Activity 里 if/else 决定 UI
+ * 会把失败矩阵拆成两处，既测不到也没有单一真相。
  */
 sealed interface ScanIntent : UiIntent {
 
@@ -73,10 +73,9 @@ sealed interface ScanPhase {
 	/**
 	 * 相机不可用（无后置相机 / 被占用 / 打开失败）。
 	 *
-	 * ★ 与 [PermissionDenied] **分成两个分支**是按本设计的 5.1 原则来的：
-	 * "某个状态的不同取值会导致不同的行为，它就必须是显式字段"。
-	 * 设备没有相机时去申请权限、去设置里翻权限都是徒劳——**能给的出路只有相册**，
-	 * 这与"权限被拒"是两套按钮。都塞进 `PermissionDenied` 就只能靠文案区分，
+	 * 与 [PermissionDenied] **分成两个分支**：某个状态的不同取值会导致不同行为时，
+	 * 它就必须是显式字段。设备没有相机时去申请权限、去设置里翻权限都是徒劳——
+	 * **能给的出路只有相册**，这与"权限被拒"是两套按钮。都塞进 `PermissionDenied` 就只能靠文案区分，
 	 * 而文案拦不住"给了一个按了没用的按钮"。
 	 */
 	data object CameraUnavailable : ScanPhase

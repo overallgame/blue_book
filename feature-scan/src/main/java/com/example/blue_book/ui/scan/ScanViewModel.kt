@@ -25,7 +25,7 @@ import javax.inject.Inject
  * 三者分开的直接好处是失败矩阵（7.2 的 11 行）能在纯 JVM 上逐行断言，
  * 而"给没给对的出路"这件事**只由状态决定**，不会在 Activity 里再散一份。
  *
- * ★ 构造签名里只有一个接口 [ScanRepository]：没有 RemoteDataSource、没有 Context、
+ * 构造签名里只有一个接口 [ScanRepository]：没有 RemoteDataSource、没有 Context、
  * 没有 ApiGateway，所以它能在纯 JVM 上测（`tools/check_viewmodel_layer.py` 管的就是这件事）。
  * 相机与识别器都在 UI 层：Activity 拿帧/拿图后把**字符串**喂进来。
  */

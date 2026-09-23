@@ -12,9 +12,8 @@ package com.example.blue_book.util
  * - 已经是 `http(s)://` 的**绝对地址原样返回**（服务端有时直接下发完整外链）
  * - 以 `/` 开头直接接 host，否则补一个 `/`
  *
- * **为什么放在 lib-base**：这条规则此前在 4 个 mapper 里各写了一份局部函数
- * （feature-auth / feature-mine ×2 / feature-video ×2），扫码的数据层需要第 5 份——
- * 与其再抄一遍，不如给出一条共享实现。纯函数、零依赖，可纯 JVM 单测。
+ * 放在 lib-base 是因为多个模块都要用它（feature-auth / feature-mine / feature-video /
+ * 扫码的数据层），各自写一份必然会漂移。纯函数、零依赖，可纯 JVM 单测。
  *
  * @param baseUrl 当前服务地址，如 `http://192.168.17.128:8080/`（尾部斜杠可有可无）
  */

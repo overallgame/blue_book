@@ -3,7 +3,7 @@ package com.example.blue_book.data.remote.dto
 /**
  * `GET /api/v2/scan/resolve` 的响应形状（设计方案 5.4）。
  *
- * ★ **只活在 data 层**：ViewModel 拿到的是 `ScannedContent`，不是它。
+ * **只活在 data 层**：ViewModel 拿到的是 `ScannedContent`，不是它。
  *
  * 字段全可空是**防御性的**，不是契约允许服务端下发 null：
  * 服务端保证 type/targetId/title 有值，但客户端不能把"对面一定守约"当作前提——

@@ -7,8 +7,7 @@ import org.junit.Test
 /**
  * [absoluteUrl] 的单测。
  *
- * 这段逻辑此前在 4 个 mapper 里各有一份局部实现，靠"抄得一样"维持一致——
- * 它的失败方式很隐蔽：**不崩、不报错，只是图不显示**（URL 拼出 `/`/`//` 或少了 host），
+ * 它错了的表现很隐蔽：不崩、不报错，只是图不显示（URL 拼出 `/` 或 `//`、或少了 host），
  * 所以三种输入形态各钉一条。
  */
 class UrlsTest {
@@ -27,10 +26,9 @@ class UrlsTest {
 
 	@Test
 	fun `tolerates trailing slash on base url`() {
-		// ★ JUnit 4 的签名是 assertEquals(message, expected, actual)——消息在**第一个**，
-		// 与 JUnit 5（消息在最后）相反。写反了不会编译失败：Kotlin 会把三个参数
-		// 依次绑成 message/expected/actual，于是断言"看起来通过了"却在报错信息里
-		// 拿断言消息当实际值。本项目同时有 JUnit 4（Android 模块）与 JUnit 5（:backend）。
+		// JUnit 4 的签名是 assertEquals(message, expected, actual)——消息在**第一个**，
+		// 与 JUnit 5（消息在最后）相反。写反了不会编译失败（Kotlin 会把三个参数依次
+		// 绑成 message/expected/actual），于是断言看着通过、报错信息里却是拿消息当实际值。
 		assertEquals(
 			"BASE_URL 尾部斜杠不该拼出双斜杠",
 			"$base/hls/a.jpg", absoluteUrl("$base/", "/hls/a.jpg")

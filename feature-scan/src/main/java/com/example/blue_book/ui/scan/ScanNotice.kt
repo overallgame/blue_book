@@ -33,14 +33,8 @@ enum class NoticeAction {
 /**
  * 提示卡片的**展示模型**：标题 +（可选）原文 + 最多两个动作。
  *
- * ## 为什么要有这一层，而不是在 Activity 里 `when(state)`
- *
- * 失败矩阵（设计方案 7.2 的 11 行）是**需求**，不是收尾工作。写在 Activity 的 `when` 里
- * 就意味着它只能靠人肉在真机上复现——而这里每一行都是一条可断言的用例
- * （`ScanNoticeTest`）。**"失败时用户看得懂吗、有出路吗"是本功能的灵魂之一（2.4）**，
- * 灵魂不该待在一个测不到的地方。
- *
- * 分工：[ScanUiState.toNotice] 决定**给什么**（纯函数、可穷举测试），
+ * 失败矩阵（设计方案 7.2 的 11 行）在这一层落地：这里的每一行都是一条可断言的用例
+ * （`ScanNoticeTest`）。分工是 [ScanUiState.toNotice] 决定**给什么**（纯函数、可穷举测试），
  * Activity 只负责把 [NoticeAction] 翻译成系统调用（不可测，也不需要测）。
  *
  * 卡片一次只表达一件事：错误优先于扫到的内容——网络失败时 `detected` 仍有值
@@ -81,7 +75,7 @@ data class ScanNotice(
  */
 fun ScanUiState.toNotice(): ScanNotice? {
 	// 错误优先：有错误时它才是用户此刻要知道的事
-	// （注意网络失败时 `detected` 仍有值——那是刚才那个站内码，不是此刻该展示的东西）
+	// （网络失败时 `detected` 仍有值——那是刚才那个站内码，不是此刻该展示的东西）
 	error?.let { return it.toNotice() }
 
 	return when (val current = phase) {
